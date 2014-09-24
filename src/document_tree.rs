@@ -10,16 +10,20 @@
 trait IElement; //TODO: needed?
 
 ///A document’s direct children
-trait SubDocument: IElement;
+trait SubDocument:   IElement;
 ///body elements, topics, sidebars, transitions
-trait SubStructure: SubDocument;
-trait SubSection:   IElement;
-trait SubTopic:     IElement;
-trait SubSidebar:   IElement;
-trait SubDLItem:    IElement;
-trait SubField:     IElement;
-trait SubOption:    IElement;
-trait SubLineBlock: IElement;
+trait SubStructure:  SubDocument;
+trait SubSection:    IElement;
+//title and body elements
+trait SubTopic:      IElement;
+trait SubSidebar:    IElement;
+trait SubDLItem:     IElement;
+trait SubField:      IElement;
+trait SubOption:     IElement;
+trait SubLineBlock:  IElement;
+trait SubBlockQuote: IElement;
+//label and body elements
+trait SubFootnote:   IElement;
 
 //-----------------\\
 //Element hierarchy\\
@@ -41,7 +45,7 @@ virtual struct BodyOrStructuralElement: Element;
 virtual struct StructuralElement: BodyOrStructuralElement;
 virtual struct StructuralSubElement: SubDocument;
 
-virtual struct BodyElement: BodyOrStructuralElement, SubStructure, SubSection, SubTopic, SubSidebar;
+virtual struct BodyElement: BodyOrStructuralElement, SubStructure, SubSection, SubTopic, SubSidebar, SubBlockQuote, SubFootnote;
 virtual struct SimpleBodyElement: BodyElement;
 virtual struct CompoundBodyElement: BodyElement;
 
@@ -90,6 +94,10 @@ trait OptionListModel:  HasChildren<OptionListItem>;
 trait OptionGroupModel: HasChildren<Option_>;
 trait OptionModel:      HasChildren<SubOption>;
 
+trait BlockQuoteModel:  HasChildren<SubBlockQuote>;
+trait FootnoteModel:    HasChildren<SubFootnote>;
+trait FigureModel:      HasChildren<SubFigure>;
+
 //--------\\
 //Elements\\
 //--------\\
@@ -126,15 +134,15 @@ struct Footer: DecorationElement, BodyModel;
 
 struct Paragraph:              SimpleBodyElement, TextModel;
 struct LiteralBlock:           SimpleBodyElement, TextModel { space: FixedSpace };
-struct Comment:                SimpleBodyElement { space: FixedSpace };
-struct DoctestBlock:           SimpleBodyElement { space: FixedSpace };
+struct DoctestBlock:           SimpleBodyElement, TextModel { space: FixedSpace };
 struct Image:                  SimpleBodyElement;
 struct MathBlock:              SimpleBodyElement;
-struct Pending:                SimpleBodyElement;
 struct Raw:                    SimpleBodyElement { space: FixedSpace };
-struct Rubric:                 SimpleBodyElement;
-struct SubstitutionDefinition: SimpleBodyElement;
-struct Target:                 SimpleBodyElement;
+struct Rubric:                 SimpleBodyElement, TextModel;
+struct Target:                 SimpleBodyElement, TextModel {} //TODO
+struct SubstitutionDefinition: SimpleBodyElement, TextModel { ltrim: bool, rtrim: bool }
+struct Comment:                SimpleBodyElement, TextModel { space: FixedSpace };
+struct Pending:                SimpleBodyElement;
 
 
 struct Compound:       CompoundBodyElement, BodyModel;
@@ -147,22 +155,22 @@ struct FieldList:      CompoundBodyElement, FieldListModel;
 struct OptionList:     CompoundBodyElement, OptionListModel;
 
 struct LineBlock:      CompoundBodyElement, LineBlockModel, SubLineBlock;
-struct Admonition:     CompoundBodyElement;
-struct Attention:      CompoundBodyElement;
-struct BlockQuote:     CompoundBodyElement;
-struct Caution:        CompoundBodyElement;
-struct Citation:       CompoundBodyElement;
-struct Danger:         CompoundBodyElement;
-struct Error:          CompoundBodyElement;
-struct Figure:         CompoundBodyElement;
-struct Footnote:       CompoundBodyElement;
-struct Hint:           CompoundBodyElement;
-struct Important:      CompoundBodyElement;
-struct Note:           CompoundBodyElement;
-struct SystemMessage:  CompoundBodyElement;
+struct BlockQuote:     CompoundBodyElement, BlockQuoteModel;
+struct Admonition:     CompoundBodyElement, TopicModel;
+struct Attention:      CompoundBodyElement, BodyModel;
+struct Hint:           CompoundBodyElement, BodyModel;
+struct Note:           CompoundBodyElement, BodyModel;
+struct Caution:        CompoundBodyElement, BodyModel;
+struct Danger:         CompoundBodyElement, BodyModel;
+struct Error:          CompoundBodyElement, BodyModel;
+struct Important:      CompoundBodyElement, BodyModel;
+struct Tip:            CompoundBodyElement, BodyModel;
+struct Warning:        CompoundBodyElement, BodyModel;
+struct Footnote:       CompoundBodyElement, FootnoteModel {} //TODO
+struct Citation:       CompoundBodyElement, FootnoteModel {} //TODO
+struct SystemMessage:  CompoundBodyElement, BodyModel { } //TODO
+struct Figure:         CompoundBodyElement, FigureModel { width: uint } //TODO
 struct Table:          CompoundBodyElement;
-struct Tip:            CompoundBodyElement;
-struct Warning:        CompoundBodyElement;
 
 
 struct ListItem:           BodySubElement, BodyModel;
@@ -184,7 +192,11 @@ struct OptionString:       BodySubElement, TextModel, SubOption;
 struct OptionArgument:     BodySubElement, TextModel, SubOption { delimiter: String };
 
 struct Line:               BodySubElement, TextModel, SubLineBlock;
+struct Attribution:        BodySubElement, TextModel, SubBlockQuote;
+struct Label_:             BodySubElement, TextModel, SubFootnote;
 
+struct Caption:            BodySubElement, TextModel, SubFigure;
+struct Legend:             BodySubElement, BodyModel, SubFigure;
 
 struct Abbreviation:          InlineElement;
 struct Acronym:               InlineElement;
@@ -192,7 +204,7 @@ struct CitationReference:     InlineElement;
 struct Emphasis:              InlineElement;
 struct FootnoteReference:     InlineElement;
 struct Generated:             InlineElement;
-struct Image:                 InlineElement;
+struct Image:                 InlineElement,          SubFigure;
 struct Inline:                InlineElement;
 struct Literal:               InlineElement;
 struct Math:                  InlineElement;
