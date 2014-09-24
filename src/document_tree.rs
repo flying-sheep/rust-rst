@@ -241,6 +241,10 @@ enum FixedSpace { Default, Preserve }
 //impl\\
 //----\\
 
+impl Default for Element {
+	fn default() -> Element
+}
+
 impl Field {
 	get_name(&self) {
 		let name_elem = self.children[0];
