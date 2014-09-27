@@ -1,6 +1,8 @@
 ///http://docutils.sourceforge.net/docs/ref/doctree.html
 ///serves as AST
 
+//bools usually are XML yesorno. “auto” however either exists and is set to something random like “1” or doesn’t exist
+
 #![feature(struct_inherit)]
 
 //----------\\
@@ -166,11 +168,11 @@ struct Error:          CompoundBodyElement, BodyModel;
 struct Important:      CompoundBodyElement, BodyModel;
 struct Tip:            CompoundBodyElement, BodyModel;
 struct Warning:        CompoundBodyElement, BodyModel;
-struct Footnote:       CompoundBodyElement, FootnoteModel {} //TODO
-struct Citation:       CompoundBodyElement, FootnoteModel {} //TODO
-struct SystemMessage:  CompoundBodyElement, BodyModel { } //TODO
-struct Figure:         CompoundBodyElement, FigureModel { width: uint } //TODO
-struct Table:          CompoundBodyElement;
+struct Footnote:       CompoundBodyElement, FootnoteModel { backrefs: Vec<ID>, auto: bool }
+struct Citation:       CompoundBodyElement, FootnoteModel { backrefs: Vec<ID> }
+struct SystemMessage:  CompoundBodyElement, BodyModel { backrefs: Vec<ID>, level: uint, line: uint, type_: NameToken }
+struct Figure:         CompoundBodyElement, FigureModel { align: AlignH, width: uint }
+struct Table:          CompoundBodyElement; //TODO
 
 
 struct ListItem:           BodySubElement, BodyModel;
@@ -204,7 +206,15 @@ struct CitationReference:     InlineElement;
 struct Emphasis:              InlineElement;
 struct FootnoteReference:     InlineElement;
 struct Generated:             InlineElement;
-struct Image:                 InlineElement,          SubFigure;
+struct Image:                 InlineElement,          SubFigure {
+	align: AlignHV,
+	uri: String,
+	alt: String,
+	height: Measure,
+	width: Measure,
+	scale: float,
+	//TODO: URI type
+}
 struct Inline:                InlineElement;
 struct Literal:               InlineElement;
 struct Math:                  InlineElement;
@@ -216,7 +226,7 @@ struct SubstitutionReference: InlineElement;
 struct Superscript:           InlineElement;
 struct Target:                InlineElement;
 struct TitleReference:        InlineElement;
-struct Raw:                   InlineElement;
+struct Raw:                   InlineElement { space: FixedSpace, format: Vec<NameToken> }
 
 struct TextElement: TextOrInlineElement;
 
@@ -236,6 +246,17 @@ enum EnumeratedListType {
 
 enum FixedSpace { Default, Preserve }
 
+enum AlignH { Left, Center, Right}
+enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
+
+struct ID(String);
+struct NameToken(String);
+
+enum Measure {
+	Pixel(uint),
+	Em(uint),
+	//TODO
+}
 
 //----\\
 //impl\\
