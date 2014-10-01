@@ -5,6 +5,8 @@
 
 #![feature(struct_inherit)]
 
+use url::Url;
+
 //----------\\
 //Categories\\
 //----------\\
@@ -137,14 +139,21 @@ struct Footer: DecorationElement, BodyModel;
 struct Paragraph:              SimpleBodyElement, TextModel;
 struct LiteralBlock:           SimpleBodyElement, TextModel { space: FixedSpace };
 struct DoctestBlock:           SimpleBodyElement, TextModel { space: FixedSpace };
-struct Image:                  SimpleBodyElement;
 struct MathBlock:              SimpleBodyElement;
-struct Raw:                    SimpleBodyElement { space: FixedSpace };
 struct Rubric:                 SimpleBodyElement, TextModel;
-struct Target:                 SimpleBodyElement, TextModel {} //TODO
 struct SubstitutionDefinition: SimpleBodyElement, TextModel { ltrim: bool, rtrim: bool }
 struct Comment:                SimpleBodyElement, TextModel { space: FixedSpace };
 struct Pending:                SimpleBodyElement;
+struct Target:                 SimpleBodyElement { refuri: Url, refid: ID, refname: Vec<NameToken>, anonymous: bool }
+struct Raw:                    SimpleBodyElement { space: FixedSpace, format: Vec<NameToken> }
+struct Image:                  SimpleBodyElement, SubFigure {
+	align: AlignHV,
+	uri: Url,
+	alt: String,
+	height: Measure,
+	width: Measure,
+	scale: float,
+}
 
 
 struct Compound:       CompoundBodyElement, BodyModel;
@@ -200,33 +209,34 @@ struct Label_:             BodySubElement, TextModel, SubFootnote;
 struct Caption:            BodySubElement, TextModel, SubFigure;
 struct Legend:             BodySubElement, BodyModel, SubFigure;
 
-struct Abbreviation:          InlineElement;
-struct Acronym:               InlineElement;
-struct CitationReference:     InlineElement;
-struct Emphasis:              InlineElement;
-struct FootnoteReference:     InlineElement;
-struct Generated:             InlineElement;
-struct Image:                 InlineElement,          SubFigure {
+struct Emphasis:              InlineElement, TextModel;
+struct Strong:                InlineElement, TextModel;
+struct Literal:               InlineElement, TextModel;
+struct Reference:             InlineElement, TextModel { name: String, refuri: Url, refid: ID, refname: Vec<NameToken> }
+struct FootnoteReference:     InlineElement, TextModel { refid: ID, refname: Vec<NameToken>, auto: bool }
+struct CitationReference:     InlineElement, TextModel { refid: ID, refname: Vec<NameToken> }
+struct SubstitutionReference: InlineElement, TextModel { refname: Vec<NameToken> }
+struct TitleReference:        InlineElement, TextModel;
+struct Abbreviation:          InlineElement, TextModel;
+struct Acronym:               InlineElement, TextModel;
+struct Superscript:           InlineElement, TextModel;
+struct Subscript:             InlineElement, TextModel;
+struct Inline:                InlineElement, TextModel;
+struct Problematic:           InlineElement, TextModel { refid: ID }
+struct Generated:             InlineElement, TextModel;
+struct Math:                  InlineElement;
+
+//also have non-inline versions. Inline image is no figure child, inline target has content
+struct TargetInline:          InlineElement, TextModel { refuri: Url, refid: ID, refname: Vec<NameToken>, anonymous: bool }
+struct RawInline:             InlineElement { space: FixedSpace, format: Vec<NameToken> }
+struct ImageInline:           InlineElement {
 	align: AlignHV,
-	uri: String,
+	uri: Url,
 	alt: String,
 	height: Measure,
 	width: Measure,
 	scale: float,
-	//TODO: URI type
 }
-struct Inline:                InlineElement;
-struct Literal:               InlineElement;
-struct Math:                  InlineElement;
-struct Problematic:           InlineElement;
-struct Reference:             InlineElement;
-struct Strong:                InlineElement;
-struct Subscript:             InlineElement;
-struct SubstitutionReference: InlineElement;
-struct Superscript:           InlineElement;
-struct Target:                InlineElement;
-struct TitleReference:        InlineElement;
-struct Raw:                   InlineElement { space: FixedSpace, format: Vec<NameToken> }
 
 struct TextElement: TextOrInlineElement;
 
