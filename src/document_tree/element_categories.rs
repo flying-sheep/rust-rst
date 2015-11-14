@@ -1,9 +1,10 @@
 use super::elements::*;
 
 pub trait HasChildren<C> {
-	fn children(&mut self) -> &mut Vec<C>;
+	fn children(& self) -> &Vec<C>;
+	fn children_mut(&mut self) -> &mut Vec<C>;
 	fn append_child<R: Into<C>>(&mut self, child: R) {
-		self.children().push(child.into());
+		self.children_mut().push(child.into());
 	}
 }
 

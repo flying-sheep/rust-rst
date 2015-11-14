@@ -39,9 +39,8 @@ macro_rules! impl_element(($name:ident) => {
 
 macro_rules! impl_children(($name:ident, $childtype:ident) => {
 	impl HasChildren<$childtype> for $name {
-		fn children(&mut self) -> &mut Vec<$childtype> {
-			&mut self.children
-		}
+		fn children    (&    self) -> &    Vec<$childtype> { &    self.children }
+		fn children_mut(&mut self) -> &mut Vec<$childtype> { &mut self.children }
 	}
 });
 
