@@ -62,7 +62,7 @@
 // 	OptionListItem, OptionGroup, Description, Option_, OptionString,
 // 	OptionArgument { delimiter: String },
 //
-// 	Line, Attribution, Label_,
+// 	Line, Attribution, Label,
 //
 // 	Caption, Legend,
 //

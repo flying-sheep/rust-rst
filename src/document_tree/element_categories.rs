@@ -1,7 +1,10 @@
 use super::elements::*;
 
 pub trait HasChildren<C> {
-	fn add_child<R: Into<C>>(&mut self, R);
+	fn children(&mut self) -> &mut Vec<C>;
+	fn append_child<R: Into<C>>(&mut self, child: R) {
+		self.children().push(child.into());
+	}
 }
 
 macro_rules! synonymous_enum {( $name:ident { $( $entry:ident ),* } ) => (
@@ -55,5 +58,5 @@ synonymous_enum!(SubOptionListItem { OptionGroup, Description });
 synonymous_enum!(SubOption { OptionString, OptionArgument });
 synonymous_enum!(SubLineBlock { LineBlock, Line });
 synonymous_enum!(SubBlockQuote { Attribution, BodyElement });
-synonymous_enum!(SubFootnote { Label_, BodyElement });
+synonymous_enum!(SubFootnote { Label, BodyElement });
 synonymous_enum!(SubFigure { Image, Caption, Legend, BodyElement });

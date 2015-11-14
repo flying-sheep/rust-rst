@@ -9,7 +9,7 @@ fn test() {
 	
 	let mut doc = dt::Document::default();
 	let title = dt::Title::default();
-	doc.add_child(title);
+	doc.append_child(title);
 	
 	println!("{:?}", doc);
 }

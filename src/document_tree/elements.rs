@@ -39,8 +39,8 @@ macro_rules! impl_element(($name:ident) => {
 
 macro_rules! impl_children(($name:ident, $childtype:ident) => {
 	impl HasChildren<$childtype> for $name {
-		fn add_child<R: Into<$childtype>>(&mut self, child: R) {
-			self.children.push(Box::new(child.into()));
+		fn children(&mut self) -> &mut Vec<$childtype> {
+			&mut self.children
 		}
 	}
 });
@@ -69,12 +69,12 @@ macro_rules! impl_elem(
 	};
 	($name:ident, $childtype:ident) => {
 		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes, children: Vec<Box<$childtype>> }
+		pub struct $name { common: CommonAttributes, children: Vec<$childtype> }
 		impl_element!($name); impl_children!($name, $childtype);
 	};
 	($name:ident, $childtype:ident; +) => {
 		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<Box<$childtype>> }
+		pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> }
 		impl_element!($name); impl_extra!($name); impl_children!($name, $childtype);
 	};
 );
@@ -82,6 +82,11 @@ macro_rules! impl_elem(
 macro_rules! impl_elems(( $( ($($args:tt)*) )* ) => {
 	$( impl_elem!($($args)*); )*
 });
+
+
+#[derive(Default,Debug)]
+pub struct Document { children: Vec<StructuralSubElement> }
+impl_children!(Document, StructuralSubElement);
 
 impl_elems!(
 	//structual elements
@@ -123,8 +128,8 @@ impl_elems!(
 	(Comment,                TextOrInlineElement; +)
 	(Pending)
 	(Target; +)
-	(Raw; +)
-	(Image; *)
+	(Raw;    +)
+	(Image;  *)
 	
 	//compound body elements
 	(Compound,  BodyElement)
@@ -151,7 +156,7 @@ impl_elems!(
 	(Footnote,      SubFootnote; +)
 	(Citation,      SubFootnote; +)
 	(SystemMessage, BodyElement; +)
-	(Figure,        SubFigure; +)
+	(Figure,        SubFigure;   +)
 	(Table; +) //TODO
 	
 	//body sub elements
@@ -174,7 +179,7 @@ impl_elems!(
 	
 	(Line,        TextOrInlineElement)
 	(Attribution, TextOrInlineElement)
-	(Label_,      TextOrInlineElement)
+	(Label,       TextOrInlineElement)
 	
 	(Caption, TextOrInlineElement)
 	(Legend,  BodyElement)
@@ -199,7 +204,7 @@ impl_elems!(
 	
 	//also have non-inline versions. Inline image is no figure child, inline target has content
 	(TargetInline, TextOrInlineElement; +)
-	(RawInline; +)
+	(RawInline;   +)
 	(ImageInline; *)
 	
 	//text element
