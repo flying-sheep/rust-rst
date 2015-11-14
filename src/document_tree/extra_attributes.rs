@@ -3,7 +3,8 @@ use url::Url;
 use super::attribute_types::{FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
-	fn extra(&self) -> &A;
+	fn extra    (&    self) -> &    A;
+	fn extra_mut(&mut self) -> &mut A;
 }
 
 #[derive(Default,Debug)] pub struct Address { pub space: FixedSpace }

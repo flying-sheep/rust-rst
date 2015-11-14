@@ -9,19 +9,23 @@ use super::element_categories::*;
 //-----------------\\
 
 pub trait Element {
-	fn ids(&self)     -> &Vec<String>;
-	fn names(&self)   -> &Vec<String>;
-	fn source(&self)  -> &Option<Url>;
-	fn classes(&self) -> &Vec<String>;
+	fn     ids    (&    self) -> &    Vec<String>;
+	fn     ids_mut(&mut self) -> &mut Vec<String>;
+	fn   names    (&    self) -> &    Vec<String>;
+	fn   names_mut(&mut self) -> &mut Vec<String>;
+	fn  source    (&    self) -> &    Option<Url>;
+	fn  source_mut(&mut self) -> &mut Option<Url>;
+	fn classes    (&    self) -> &    Vec<String>;
+	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
 
 #[derive(Default,Debug)]
 pub struct CommonAttributes {
-	ids: Vec<String>,
-	names: Vec<String>,
-	//left out dupnames
-	source: Option<Url>,
+	ids:     Vec<String>,
+	names:   Vec<String>,
+	source:  Option<Url>,
 	classes: Vec<String>,
+	//left out dupnames
 }
 
 //----\\
@@ -30,10 +34,14 @@ pub struct CommonAttributes {
 
 macro_rules! impl_element(($name:ident) => {
 	impl Element for $name {
-		fn ids(&self)     -> &Vec<String> { &self.common.ids }
-		fn names(&self)   -> &Vec<String> { &self.common.names }
-		fn source(&self)  -> &Option<Url> { &self.common.source }
-		fn classes(&self) -> &Vec<String> { &self.common.classes }
+		fn     ids    (&    self) -> &    Vec<String> { &    self.common.ids     }
+		fn     ids_mut(&mut self) -> &mut Vec<String> { &mut self.common.ids     }
+		fn   names    (&    self) -> &    Vec<String> { &    self.common.names   }
+		fn   names_mut(&mut self) -> &mut Vec<String> { &mut self.common.names   }
+		fn  source    (&    self) -> &    Option<Url> { &    self.common.source  }
+		fn  source_mut(&mut self) -> &mut Option<Url> { &mut self.common.source  }
+		fn classes    (&    self) -> &    Vec<String> { &    self.common.classes }
+		fn classes_mut(&mut self) -> &mut Vec<String> { &mut self.common.classes }
 	}
 });
 
@@ -46,7 +54,8 @@ macro_rules! impl_children(($name:ident, $childtype:ident) => {
 
 macro_rules! impl_extra(($name:ident) => {
 	impl ExtraAttributes<extra_attributes::$name> for $name {
-		fn extra(&self) -> &extra_attributes::$name { &self.extra }
+		fn extra    (&    self) -> &    extra_attributes::$name { &    self.extra }
+		fn extra_mut(&mut self) -> &mut extra_attributes::$name { &mut self.extra }
 	}
 });
 
