@@ -3,6 +3,7 @@ use std::fmt::{self,Debug,Formatter};
 use super::elements::*;
 
 pub trait HasChildren<C> {
+	fn with_children(Vec<C>) -> Self;
 	fn children(& self) -> &Vec<C>;
 	fn children_mut(&mut self) -> &mut Vec<C>;
 	fn append_child<R: Into<C>>(&mut self, child: R) {

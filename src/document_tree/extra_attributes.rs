@@ -3,6 +3,7 @@ use url::Url;
 use super::attribute_types::{FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
+//	fn with_extra(extra: A) -> Self;
 	fn extra    (&    self) -> &    A;
 	fn extra_mut(&mut self) -> &mut A;
 }
