@@ -4,6 +4,5 @@ name = "rst"
 version = "0.0.0"
 authors = [ "Phil Schaf <flying-sheep@web.de>" ]
 
-[[bin]]
-
-name = "rst"
+[dependencies]
+url = "0.2.37"
