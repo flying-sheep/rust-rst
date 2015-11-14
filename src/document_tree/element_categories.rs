@@ -6,6 +6,13 @@ pub trait HasChildren<C> {
 	fn append_child<R: Into<C>>(&mut self, child: R) {
 		self.children_mut().push(child.into());
 	}
+	fn append_children<R: Into<C> + Clone>(&mut self, more: &[R]) {
+		let mut children = self.children_mut();
+		children.reserve(more.len());
+		for child in more {
+			children.push(child.clone().into());
+		}
+	}
 }
 
 macro_rules! synonymous_enum {( $name:ident { $( $entry:ident ),* } ) => (
