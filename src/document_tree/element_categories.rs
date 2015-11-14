@@ -1,3 +1,5 @@
+use std::fmt::{self,Debug,Formatter};
+
 use super::elements::*;
 
 pub trait HasChildren<C> {
@@ -16,11 +18,16 @@ pub trait HasChildren<C> {
 }
 
 macro_rules! synonymous_enum {( $name:ident { $( $entry:ident ),* } ) => (
-	#[derive(Debug)]
 	pub enum $name {
-		$(
-			$entry($entry),
-		)*
+		$( $entry($entry), )*
+	}
+	
+	impl Debug for $name {
+		fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
+			match self {
+				$( &$name::$entry(ref inner) => inner.fmt(fmt), )*
+			}
+		}
 	}
 	
 	$(
@@ -46,7 +53,7 @@ synonymous_enum!(BodyElement {
 synonymous_enum!(BibliographicElement { Author, Authors, Organization, Address, Contact, Version, Revision, Status, Date, Copyright, Field });
 
 synonymous_enum!(TextOrInlineElement {
-	TextElement, Emphasis, Strong, Literal, Reference, FootnoteReference, CitationReference, SubstitutionReference, TitleReference, Abbreviation, Acronym, Superscript, Subscript, Inline, Problematic, Generated, Math,
+	String, Emphasis, Strong, Literal, Reference, FootnoteReference, CitationReference, SubstitutionReference, TitleReference, Abbreviation, Acronym, Superscript, Subscript, Inline, Problematic, Generated, Math,
 	//also have non-inline versions. Inline image is no figure child, inline target has content
 	TargetInline, RawInline, ImageInline
 });

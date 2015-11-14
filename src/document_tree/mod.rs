@@ -16,7 +16,8 @@ fn test() {
 	use document_tree::HasChildren;
 	
 	let mut doc = dt::Document::default();
-	let title = dt::Title::default();
+	let mut title = dt::Title::default();
+	title.append_child("Hi");
 	doc.append_child(title);
 	
 	println!("{:?}", doc);

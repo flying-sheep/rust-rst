@@ -130,14 +130,14 @@ impl_elems!(
 	(Paragraph,              TextOrInlineElement)
 	(LiteralBlock,           TextOrInlineElement; +)
 	(DoctestBlock,           TextOrInlineElement; +)
-	(MathBlock)
+	(MathBlock,              String)
 	(Rubric,                 TextOrInlineElement)
 	(SubstitutionDefinition, TextOrInlineElement; +)
 	(Comment,                TextOrInlineElement; +)
 	(Pending)
 	(Target; +)
-	(Raw;    +)
-	(Image;  *)
+	(Raw, String; +)
+	(Image; *)
 	
 	//compound body elements
 	(Compound,  BodyElement)
@@ -182,8 +182,8 @@ impl_elems!(
 	(OptionGroup,    Option_)
 	(Description,    BodyElement)
 	(Option_,        SubOption)
-	(OptionString,   TextOrInlineElement)
-	(OptionArgument, TextOrInlineElement; +)
+	(OptionString,   String)
+	(OptionArgument, String; +)
 	
 	(Line,        TextOrInlineElement)
 	(Attribution, TextOrInlineElement)
@@ -208,13 +208,18 @@ impl_elems!(
 	(Inline,                TextOrInlineElement)
 	(Problematic,           TextOrInlineElement; +)
 	(Generated,             TextOrInlineElement)
-	(Math)
+	(Math,                  String)
 	
 	//also have non-inline versions. Inline image is no figure child, inline target has content
-	(TargetInline, TextOrInlineElement; +)
-	(RawInline;   +)
+	(TargetInline, String; +)
+	(RawInline,    String; +)
 	(ImageInline; *)
 	
-	//text element
-	(TextElement)
+	//text element = String
 );
+
+impl<'a> From<&'a str> for TextOrInlineElement {
+	fn from(s: &'a str) -> TextOrInlineElement {
+		s.to_owned().into()
+	}
+}
