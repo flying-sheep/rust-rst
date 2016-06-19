@@ -1,3 +1,4 @@
+<!DOCTYPE dtd [
 <!--
 ======================================================================
     Docutils Generic DTD
@@ -605,3 +606,4 @@ indent-tabs-mode: nil
 fill-column: 70
 End:
 -->
+]>

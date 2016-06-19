@@ -32,7 +32,7 @@ pub struct CommonAttributes {
 //impl\\
 //----\\
 
-macro_rules! impl_element(($name:ident) => {
+macro_rules! impl_element { ($name:ident) => (
 	impl Element for $name {
 		fn     ids    (&    self) -> &    Vec<String> { &    self.common.ids     }
 		fn     ids_mut(&mut self) -> &mut Vec<String> { &mut self.common.ids     }
@@ -43,70 +43,61 @@ macro_rules! impl_element(($name:ident) => {
 		fn classes    (&    self) -> &    Vec<String> { &    self.common.classes }
 		fn classes_mut(&mut self) -> &mut Vec<String> { &mut self.common.classes }
 	}
-});
+)}
 
-macro_rules! impl_children(($name:ident, $childtype:ident) => {
+macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 	impl HasChildren<$childtype> for $name {
 		fn with_children(children: Vec<$childtype>) -> $name { $name { children: children, ..Default::default() } }
 		fn children    (&    self) -> &    Vec<$childtype> { &    self.children }
 		fn children_mut(&mut self) -> &mut Vec<$childtype> { &mut self.children }
 	}
-});
+)}
 
-macro_rules! impl_extra(($name:ident) => {
+macro_rules! impl_extra { ($name:ident) => (
 	impl ExtraAttributes<extra_attributes::$name> for $name {
 //		fn with_extra(extra: extra_attributes::$name) -> $name { $name { extra: extra, ..Default::default() } }
 		fn extra    (&    self) -> &    extra_attributes::$name { &    self.extra }
 		fn extra_mut(&mut self) -> &mut extra_attributes::$name { &mut self.extra }
 	}
-});
+)}
 
-macro_rules! impl_elem(
+macro_rules! impl_new {(
+	$(#[$attr:meta])*
+	pub struct $name:ident { $( $field:ident : $typ:path ),*
+}) => (
+	$(#[$attr])*
+	pub struct $name { $( $field: $typ, )* }
+	impl $name {
+		pub fn new( $( $field: $typ, )* ) -> $name { $name { $( $field: $field, )* } }
+	}
+)}
+
+macro_rules! impl_elem {
 	($name:ident) => {
-		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes }
-		impl $name {
-			pub fn new(common: CommonAttributes) -> $name { $name { common: common } }
-		}
+		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes });
 		impl_element!($name);
 	};
 	($name:ident; +) => {
-		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes, extra: extra_attributes::$name }
-		impl $name {
-			pub fn new(common: CommonAttributes, extra: extra_attributes::$name ) -> $name { $name { common: common, extra: extra } }
-		}
+		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
 		impl_element!($name); impl_extra!($name);
 	};
 	($name:ident; *) => { //same as above with no default
-		#[derive(Debug)]
-		pub struct $name { common: CommonAttributes, extra: extra_attributes::$name }
-		impl $name {
-			pub fn new(common: CommonAttributes, extra: extra_attributes::$name ) -> $name { $name { common: common, extra: extra } }
-		}
+		impl_new!(#[derive(Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
 		impl_element!($name); impl_extra!($name);
 	};
 	($name:ident, $childtype:ident) => {
-		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes, children: Vec<$childtype> }
-		impl $name {
-			pub fn new(common: CommonAttributes, children: Vec<$childtype> ) -> $name { $name { common: common, children: children } }
-		}
+		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, children: Vec<$childtype> });
 		impl_element!($name); impl_children!($name, $childtype);
 	};
 	($name:ident, $childtype:ident; +) => {
-		#[derive(Default,Debug)]
-		pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> }
-		impl $name {
-			pub fn new(common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> ) -> $name { $name { common: common, extra: extra, children: children } }
-		}
+		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> });
 		impl_element!($name); impl_extra!($name); impl_children!($name, $childtype);
 	};
-);
+}
 
-macro_rules! impl_elems(( $( ($($args:tt)*) )* ) => {
+macro_rules! impl_elems { ( $( ($($args:tt)*) )* ) => (
 	$( impl_elem!($($args)*); )*
-});
+)}
 
 
 #[derive(Default,Debug)]

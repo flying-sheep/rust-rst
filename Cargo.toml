@@ -1,8 +1,9 @@
 [package]
-
-name = "rst"
-version = "0.0.0"
-authors = [ "Phil Schaf <flying-sheep@web.de>" ]
+name = 'rst'
+version = '0.0.0'
+authors = [ 'Phil Schaf <flying-sheep@web.de>' ]
 
 [dependencies]
-url = "0.2.37"
+url = '0.5'
+bitflags = '0.5'
+unicode_categories = '0.1.0'
