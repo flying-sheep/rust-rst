@@ -16,17 +16,17 @@
 
 //http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bullet-lists
 
-enum BulletListType { Ast, Plus, Minus, Bullet, TriBullet, HyphenBullet }
-enum EnumListChar { Arabic, AlphaUpper, AlphaLower, RomanUpper, RomanLower, Auto }
-enum EnumListType { Period, ParenEnclosed, Paren }
-enum AdornmentChar {
+pub enum BulletListType { Ast, Plus, Minus, Bullet, TriBullet, HyphenBullet }
+pub enum EnumListChar { Arabic, AlphaUpper, AlphaLower, RomanUpper, RomanLower, Auto }
+pub enum EnumListType { Period, ParenEnclosed, Paren }
+pub enum AdornmentChar {
 	Bang, DQuote, Hash, Dollar, Percent, Amp, SQuote, LParen, RParen, Ast, Plus, Comma,
 	Minus, Period, Slash, Colon, Semicolon, Less, Eq, More, Question, At, LBrack,
 	Backslash, RBrack, Caret, Underscore, Backtick, LBrace, Pipe, RBrace, Tilde,
 }
-enum FootnoteType { Numbered(usize), AutoNumber, AutoSymbol, AutoNamed(String) }
+pub enum FootnoteType { Numbered(usize), AutoNumber, AutoSymbol, AutoNamed(String) }
 
-enum TokenBlockLevel {
+pub enum TokenBlockLevel {
 	EmptyLine,
 	Indent(u8),  // plain indents mean blockquotes
 	Dedent(u8),

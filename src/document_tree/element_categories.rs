@@ -25,8 +25,8 @@ macro_rules! synonymous_enum {( $name:ident { $( $entry:ident ),* } ) => (
 	
 	impl Debug for $name {
 		fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
-			match self {
-				$( &$name::$entry(ref inner) => inner.fmt(fmt), )*
+			match *self {
+				$( $name::$entry(ref inner) => inner.fmt(fmt), )*
 			}
 		}
 	}
