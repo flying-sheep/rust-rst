@@ -4,7 +4,7 @@ version = '0.2.0'
 authors = [ 'Phil Schaf <flying-sheep@web.de>' ]
 
 description = 'a reStructuredText parser and renderer'
-license = 'GPL-3.0'
+license = 'MIT OR Apache-2.0'
 
 documentation = 'https://flying-sheep.github.io/rust-rst'
 homepage = 'https://github.com/flying-sheep/rust-rst'
