@@ -1,5 +1,10 @@
 pub mod token;
 
+#[allow(unused_imports)]
+use pest::consumes_to;
+#[allow(unused_imports)]
+use pest::parses_to;
+
 #[derive(Parser)]
 #[grammar = "rst.pest"]
 pub struct RstParser;
@@ -7,29 +12,56 @@ pub struct RstParser;
 
 
 #[test]
-fn line() {
-    use pest::Parser;
-    let result = RstParser::parse(Rule::plain, &"line\n").expect("unsuccessful parse").next().unwrap();
-    eprintln!("{}", result);
+fn plain() {
+    parses_to! {
+        parser: RstParser,
+        input:  "line\n",
+        rule:   Rule::plain,
+        tokens: [
+            plain(0, 5, [
+                inlines(0, 5, [
+                    inline(0, 4, [str(0, 4)]),
+                    EOI(5, 5)
+                ])
+            ])
+        ]
+    };
 }
 
 #[test]
 fn title() {
-    use pest::Parser;
-    let result = RstParser::parse(Rule::heading, &"\
+    parses_to! {
+        parser: RstParser,
+        input:  "\
 Title
 =====
-").expect("unsuccessful parse").next().unwrap();
-    eprintln!("{}", result);
+",
+        rule:   Rule::heading,
+        tokens: [
+            heading(0, 12, [
+                inline(0, 5, [str(0, 5)]),
+                setext_bottom(6, 12),
+            ])
+        ]
+    };
 }
 
 #[test]
 fn heading_title() {
-    use pest::Parser;
-    let result = RstParser::parse(Rule::heading_title, &"\
+    parses_to! {
+        parser: RstParser,
+        input:  "\
 -----
 Title
 -----
-").expect("unsuccessful parse").next().unwrap();
-    eprintln!("{}", result);
+",
+        rule:   Rule::heading_title,
+        tokens: [
+            heading_title(0, 18, [
+                setext_bottom(0, 6),
+                inline(6, 11, [str(6, 11)]),
+                setext_bottom(12, 18),
+            ])
+        ]
+    };
 }

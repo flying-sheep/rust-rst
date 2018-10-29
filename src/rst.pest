@@ -38,7 +38,7 @@ para = { nonindent_space ~ inlines ~ blank_line+ }
 
 plain = { inlines }
 
-setext_bottom = { ( "=" | "-" | "*" | "^" | "~" )+ ~ NEWLINE }
+setext_bottom = { ( "="+ | "-"+ | "*"+ | "^"+ | "~"+ ) ~ NEWLINE }
 
 heading_title = {
     &(setext_bottom ~ raw_line ~ setext_bottom) ~
@@ -69,7 +69,7 @@ code_block = {
     NEWLINE ~ verbatim_chunk+
 }
 
-doctest_block = { (doctest_line+ ~ (!">" ~ !blank_line ~ line)*)+ }
+doctest_block = { (doctest_line+ ~ (!(">" | blank_line) ~ line)*)+ }
 
 block_quote_raw = { ":" ~ blank_line ~ NEWLINE ~ nonblank_indented_line+ }
 
@@ -372,7 +372,7 @@ escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "
 entity = { hex_entity | dec_entity | char_entity }
 
 endline = _{ line_break | terminal_endline | normal_endline }
-normal_endline = _{ sp ~ NEWLINE ~ !blank_line ~ !">" ~ !(line ~ ("="+ | "-"+) ~ NEWLINE) }
+normal_endline = _{ sp ~ NEWLINE ~ !(blank_line | ">" | line ~ ("="+ | "-"+) ~ NEWLINE) }
 terminal_endline = _{ sp ~ NEWLINE ~ EOI }
 line_break = _{ "  " ~ normal_endline }
 
@@ -388,42 +388,42 @@ ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
 
 whitespace = { spacechar | NEWLINE }
 
-emph = { "*" ~ !whitespace ~ ( !"*" ~ inline )+ ~ "*" }
-strong = { "**" ~ !whitespace ~ ( !"**" ~ inline )+ ~ "**" }
+emph = { "*" ~ !whitespace ~ (!"*" ~ inline)+ ~ "*" }
+strong = { "**" ~ !whitespace ~ (!"**" ~ inline)+ ~ "**" }
 strike = {
     //&{ extension(EXT_STRIKE) } ~
-    "~~" ~ !whitespace ~ ( !"~~" ~ inline )+ ~ "~~"
+    "~~" ~ !whitespace ~ (!"~~" ~ inline)+ ~ "~~"
 }
 
 link = { reference_link | explicit_link | auto_link }
 
 reference_link = { unquoted_ref_link_underbar | quoted_ref_link_underbar }
 unquoted_ref_link_underbar = { unquoted_link_source ~ "_" }
-quoted_ref_link_underbar = { ( !"`_" ~ !"``_" ~ "`" ~ !"``" ) ~ quoted_ref_source ~ ( "`" ~ !"``" ) ~ "_" }
+quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ quoted_ref_source ~ ( "`" ~ !"``" ) ~ "_" }
 
 explicit_link = { label ~ "(" ~ sp ~ source ~ spnl ~ title ~ sp ~ ")" }
 
 source = { source_contents }
-source_contents = { ( ( !"(" ~ !")" ~ !">" ~ nonspacechar )+ | "(" ~ source_contents ~ ")")* }
+source_contents = { ( (!("(" | ")" | ">") ~ nonspacechar)+ | "(" ~ source_contents ~ ")" )* }
 
 title = { ( title_single | title_double | "" ) }
-title_single = { "'" ~ ( !( "'" ~ sp ~ (")" | NEWLINE) ) ~ ANY )* ~ "'" }
-title_double = { "\"" ~ ( !( "\"" ~ sp ~ (")" | NEWLINE) ) ~ ANY )* ~ "\"" }
+title_single = { "'" ~ ( !("'" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
+title_double = { "\"" ~ ( !("\"" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
 
 auto_link = { embedded_link | auto_link_url | auto_link_email }
-embedded_link = { "`" ~ embedded_ref_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ ( !NEWLINE ~ !">" ~ ANY )+ ~ ">`_" ~ "_"? }
-auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!NEWLINE ~ !">" ~ ANY)+ }
-auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!NEWLINE ~ !">" ~ ANY)+ ~ ">" }
+embedded_link = { "`" ~ embedded_ref_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">`_" ~ "_"? }
+auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
+auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
 
 reference = { quoted_reference | unquoted_reference }
 quoted_reference = { nonindent_space ~ ".. _`" ~ !"``" ~ quoted_ref_source ~ !"``:" ~ "`: " ~ ref_src ~ blank_line }
 unquoted_reference = { nonindent_space ~ ".. _" ~ ref_source ~ ": " ~ ref_src ~ blank_line }
 
-unquoted_link_source = { (!"_" ~ !":" ~ !"`" ~ nonspacechar)* }
+unquoted_link_source = { (!("_"|":"|"`") ~ nonspacechar)* }
 
-ref_source = { ( !"_" ~ !":" ~ !"`" ~ (" " | nonspacechar) )* }
-quoted_ref_source = { ( !":" ~ !"`" ~ (" " | nonspacechar) )* }
-embedded_ref_source = { ( !"<" ~ !":" ~ !"`" ~ ( " " | nonspacechar | blank_line ) )* }
+ref_source = { ( !("_"|":"|"`") ~ (" " | nonspacechar) )* }
+quoted_ref_source = { ( !(":"|"`") ~ (" " | nonspacechar) )* }
+embedded_ref_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
 
 label = {
     "[" ~ (
@@ -454,7 +454,7 @@ html_attribute = { (ASCII_ALPHANUMERIC | "-")+ ~ spnl ~ ("=" ~ spnl ~ (quoted | 
 html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
 html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
 spacechar = _{ " " | "\t" }
-nonspacechar = _{ !spacechar ~ !NEWLINE ~ ANY }
+nonspacechar = _{ !(spacechar | NEWLINE) ~ ANY }
 sp = _{ spacechar* }
 spnl = _{ sp ~ (NEWLINE ~ sp)? }
 special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
@@ -496,7 +496,7 @@ raw_line = { (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
 
 skip_block = {
     html_block |
-    ( !"#" ~ !setext_bottom ~ !blank_line ~ raw_line )+ ~ blank_line* |
+    ( !("#" | setext_bottom | blank_line) ~ raw_line )+ ~ blank_line* |
     blank_line+ |
     raw_line
 }
