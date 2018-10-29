@@ -11,6 +11,8 @@ homepage = 'https://github.com/flying-sheep/rust-rst'
 repository = 'https://github.com/flying-sheep/rust-rst.git'
 
 [dependencies]
-url = '0.5'
-bitflags = '0.5'
-unicode_categories = '0.1.0'
+url = '1.7.1'
+bitflags = '1.0.4'
+unicode_categories = '0.1.1'
+pest = '2.0.2'
+pest_derive = '2.0.1'

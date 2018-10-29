@@ -10,7 +10,7 @@ pub trait HasChildren<C> {
 		self.children_mut().push(child.into());
 	}
 	fn append_children<R: Into<C> + Clone>(&mut self, more: &[R]) {
-		let mut children = self.children_mut();
+		let children = self.children_mut();
 		children.reserve(more.len());
 		for child in more {
 			children.push(child.clone().into());

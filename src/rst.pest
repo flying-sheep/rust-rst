@@ -105,19 +105,12 @@ table = { grid_table | header_less_grid_table | simple_table }
 simple_table = { "NotImplemented" ~ "simple_table" }
 
 grid_table = { grid_table_header ~ grid_table_header_sep ~ grid_table_body+ }
-
 header_less_grid_table = { grid_table_sep ~ grid_table_body+ }
-
 grid_table_header = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line ~ grid_table_row+ }
-
 grid_table_body = { ( grid_table_row ~ grid_table_sep )+ }
-
 grid_table_row = { sp ~ "|" ~ sp ~ ( table_cell ~ sp ~ "|" )+ ~ blank_line }
-
 table_cell = { ( ":" | ">" | "<" | "/" | "-" | spacechar | escaped_char | alphanumeric )+ }
-
 grid_table_header_sep = { sp ~ "+" ~ ( "="+ ~ "+" )+ ~ blank_line }
-
 grid_table_sep = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line }
 
 bullet = { !horizontal_rule ~ nonindent_space ~ ("+" | "*" | "-") ~ spacechar+ }
@@ -125,11 +118,9 @@ bullet = { !horizontal_rule ~ nonindent_space ~ ("+" | "*" | "-") ~ spacechar+ }
 bullet_list = { &bullet ~ (list_tight | list_loose) }
 
 list_tight = { list_item_tight+ ~ blank_line* ~ !(bullet | enumerator | def_marker) }
-
 list_loose = { ( list_item ~ blank_line* )+ }
 
 list_item = { (bullet | enumerator | def_marker) ~ list_block ~ list_continuation_block* }
-
 list_item_tight = {
     (bullet | enumerator | def_marker) ~
     list_block ~
@@ -329,9 +320,7 @@ html_block_in_tags = {
 }
 
 html_block = { &"<" ~ ( html_block_in_tags | html_comment | html_block_self_closing ) ~ blank_line+ }
-
 html_block_self_closing = { "<" ~ spnl ~ html_block_type ~ spnl ~ html_attribute* ~ "/" ~ spnl ~ ">" }
-
 html_block_type = {
     "address" | "block_quote" | "center" | "dir" | "div" | "dl" | "fieldset" | "form" | "h1" | "h2" | "h3" |
     "h4" | "h5" | "h6" | "hr" | "isindex" | "menu" | "noframes" | "noscript" | "ol" | "p" | "pre" | "table" |
@@ -369,12 +358,10 @@ inline = {
     | symbol
 }
 
-space = { spacechar+ }
+space = _{ spacechar+ }
 
 str = { normal_char+ ~ str_chunk* }
-
-str_chunk = { (normal_char | "_"+ ~ &alphanumeric)+ | apos_chunk }
-
+str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ | apos_chunk }
 apos_chunk = {
     // &{ extension(EXT_SMART) } ~
     "'" ~ &alphanumeric
@@ -384,13 +371,10 @@ escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "
 
 entity = { hex_entity | dec_entity | char_entity }
 
-endline = { line_break | terminal_endline | normal_endline }
-
-normal_endline = { sp ~ NEWLINE ~ !blank_line ~ !">" ~ !(line ~ ("="+ | "-"+) ~ NEWLINE) }
-
-terminal_endline = { sp ~ NEWLINE ~ EOI }
-
-line_break = { "  " ~ normal_endline }
+endline = _{ line_break | terminal_endline | normal_endline }
+normal_endline = _{ sp ~ NEWLINE ~ !blank_line ~ !">" ~ !(line ~ ("="+ | "-"+) ~ NEWLINE) }
+terminal_endline = _{ sp ~ NEWLINE ~ EOI }
+line_break = _{ "  " ~ normal_endline }
 
 symbol = { special_char }
 
@@ -405,9 +389,7 @@ ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
 whitespace = { spacechar | NEWLINE }
 
 emph = { "*" ~ !whitespace ~ ( !"*" ~ inline )+ ~ "*" }
-
 strong = { "**" ~ !whitespace ~ ( !"**" ~ inline )+ ~ "**" }
-
 strike = {
     //&{ extension(EXT_STRIKE) } ~
     "~~" ~ !whitespace ~ ( !"~~" ~ inline )+ ~ "~~"
@@ -471,12 +453,12 @@ quoted = {
 html_attribute = { (ASCII_ALPHANUMERIC | "-")+ ~ spnl ~ ("=" ~ spnl ~ (quoted | (!">" ~ nonspacechar)+))? ~ spnl }
 html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
 html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
-spacechar = { " " | "\t" }
-nonspacechar = { !spacechar ~ !NEWLINE ~ ANY }
-sp = { spacechar* }
-spnl = { sp ~ (NEWLINE ~ sp)? }
-special_char = { "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
-normal_char = { !( special_char | spacechar | NEWLINE ) ~ ANY }
+spacechar = _{ " " | "\t" }
+nonspacechar = _{ !spacechar ~ !NEWLINE ~ ANY }
+sp = _{ spacechar* }
+spnl = _{ sp ~ (NEWLINE ~ sp)? }
+special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
+normal_char = _{ !( special_char | spacechar | NEWLINE ) ~ ANY }
 alphanumeric = {
     ASCII_ALPHANUMERIC |
     "\u{200}" | "\u{201}" | "\u{202}" | "\u{203}" | "\u{204}" | "\u{205}" | "\u{206}" | "\u{207}" |
@@ -501,8 +483,8 @@ hex_entity = { "&#" ~ ("X"|"x") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ ";" }
 dec_entity = { "&#" ~ ASCII_DIGIT+ ~ ";" }
 char_entity = { "&" ~ ASCII_ALPHANUMERIC+ ~ ";" }
 
-nonindent_space = { "   " | "  " | " " | "" }
-indent = { "\t" | "    " }
+nonindent_space = { "  " | " " | "" }
+indent = { "\t" | "   " }
 indented_line = { indent ~ line }
 optionally_indented_line = { indent? ~ line }
 
@@ -510,7 +492,7 @@ doctest_line = { ">>> " ~ raw_line }
 
 line = { raw_line }
 
-raw_line = { ( (!NEWLINE ~ ANY)* ~ NEWLINE | ANY+ ~ EOI ) }
+raw_line = { (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
 
 skip_block = {
     html_block |
@@ -569,18 +551,14 @@ notes = { (note | skip_block)* }
 
 raw_note_block = { ( !blank_line ~ optionally_indented_line )+ ~ blank_line* }
 
-
 definition = {
     &( (nonindent_space ~ !defmark ~ nonspacechar ~ raw_line) ~ blank_line? ~ defmark) ~
     d_list_title+ ~
     (def_tight | def_loose)
 }
-
 d_list_title = { nonindent_space ~ !defmark ~ &nonspacechar ~ (!endline ~ inline)+ ~ sp ~ NEWLINE }
-
 def_tight = { &defmark ~ list_tight }
 def_loose = { blank_line ~ &defmark ~ list_loose }
-
 defmark = { nonindent_space ~ (":" | "~") ~ spacechar+ }
 def_marker = {
     //&{ extension(EXT_DLISTS) } ~
