@@ -4,11 +4,11 @@ pub mod token;
 use pest::consumes_to;
 #[allow(unused_imports)]
 use pest::parses_to;
+use pest_derive::*;
 
 #[derive(Parser)]
 #[grammar = "rst.pest"]
 pub struct RstParser;
-
 
 
 #[test]

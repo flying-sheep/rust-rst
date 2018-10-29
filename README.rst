@@ -11,3 +11,10 @@ This project is dual-licensed under Apache 2.0 and MIT.
 
 .. note::
    If you are looking for the requirements tracking tool rst (Requirements, Specifications and Tests), have a look at the rst_app package instead.
+
+Inspiration
+-----------
+The design was inspired by the comrak_ Markdown parser library. The rST grammar was adapted from peg-rst_
+
+.. _comrak: https://github.com/kivikakk/comrak
+.. _peg-rst: https://github.com/hhatto/peg-rst
