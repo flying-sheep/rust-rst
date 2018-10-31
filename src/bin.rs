@@ -6,7 +6,7 @@ use structopt::StructOpt;
 use clap::{_clap_count_exprs, arg_enum};
 use quicli::{main, fs::read_file, prelude::Verbosity};
 
-use self::parser::{RstParser, Rule};
+use self::parser::{RstParser, Rule, serialize::PairsWrap};
 
 
 arg_enum! {
@@ -30,7 +30,8 @@ struct Cli {
 main!(|args: Cli, log_level: verbosity| {
     let content = read_file(args.file)?;
     let parsed = RstParser::parse(Rule::doc, &content)?;
+    let stdout = std::io::stdout();
     match args.format {
-        Format::json => println!("{}", parsed.to_string())
+        Format::json => serde_json::to_writer(stdout, &PairsWrap(parsed))?,
     }
 });

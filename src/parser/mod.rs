@@ -1,10 +1,11 @@
 pub mod token;
+pub mod serialize;
 
 #[allow(unused_imports)]
 use pest::consumes_to;
 #[allow(unused_imports)]
 use pest::parses_to;
-use pest_derive::*;
+use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "rst.pest"]

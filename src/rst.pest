@@ -444,7 +444,7 @@ code = { ticks_2 ~ ( (!"`" ~ nonspacechar)+ | "_" | !ticks_2 ~ "`" | !(sp ~ tick
 
 raw_html = { (html_comment | html_block_script | html_tag) }
 
-blank_line = { sp ~ NEWLINE }
+blank_line = _{ sp ~ NEWLINE }
 
 quoted = {
     "\"" ~ (!"\"" ~ ANY)* ~ "\"" |
@@ -483,16 +483,16 @@ hex_entity = { "&#" ~ ("X"|"x") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ ";" }
 dec_entity = { "&#" ~ ASCII_DIGIT+ ~ ";" }
 char_entity = { "&" ~ ASCII_ALPHANUMERIC+ ~ ";" }
 
-nonindent_space = { "  " | " " | "" }
-indent = { "\t" | "   " }
+nonindent_space = _{ "  " | " " | "" }
+indent = _{ "\t" | "   " }
 indented_line = { indent ~ line }
 optionally_indented_line = { indent? ~ line }
 
 doctest_line = { ">>> " ~ raw_line }
 
-line = { raw_line }
+line = _{ raw_line }
 
-raw_line = { (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
+raw_line = _{ (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
 
 skip_block = {
     html_block |
