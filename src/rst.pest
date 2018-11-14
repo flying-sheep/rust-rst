@@ -38,8 +38,8 @@ hanging_block = _{
 
 // Title. A block type
 title = {
-    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ POP
-    | line ~ adornments ~ NEWLINE
+    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP
+    | line ~ PEEK[..] ~ adornments ~ NEWLINE
 }
 
 // Bullet list. A block type.
