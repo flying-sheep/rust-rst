@@ -6,15 +6,17 @@
 // and pest only has one stack that we need for indentation.
 
 document = _{ SOI ~ blocks }
-blocks   = _{ block ~ (blank_line+ ~ block)* }
+blocks   = _{ block ~ (blank_line* ~ block)* }
 block    = _{ PEEK_ALL ~ hanging_block }
 
 // This is the list of all block-level elements
 // They’re defined hanging, i.e. without the first PEEK_ALL
 // This is d
 hanging_block = _{
-    // title |
-    bullet_list
+    admonition
+    | target
+    | title_double | title_single
+    | bullet_list
     | paragraph
 // TODO: implement all those things:
 // | block_quote
@@ -22,11 +24,11 @@ hanging_block = _{
 // | image
 // | code_block
 // | doctest_block
-// | note
-// | reference
+// | admonition
+// | target
 // | horizontal_rule
-// | heading_title
-// | heading
+// | title_double
+// | title_single
 // | table
 // | ordered_list
 // | bullet_list
@@ -36,11 +38,24 @@ hanging_block = _{
 // | plain
 }
 
+// Note. A block type
+
+admonition       =  { ".." ~ PUSH(" "+) ~ admonition_type ~ "::" ~ (blank_line | line) ~ admonition_body? ~ DROP }
+admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" | "admonition" }
+admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
+
+// Target. A block type
+target         =  { target_qu | target_uq }
+target_uq      = _{ ".. _"  ~         target_name_uq ~           ":" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
+target_qu      = _{ ".. _`" ~ !"``" ~ target_name_qu ~ !"``:" ~ "`:" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
+target_name_uq =  { ( !("_"|":"|"`") ~ !NEWLINE ~ ANY )* }
+target_name_qu =  { ( !(    ":"|"`") ~ !NEWLINE ~ ANY )* }
+link_target    =  { nonspacechar+ }
+
 // Title. A block type
-title = {
-    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP
-    | line ~ PEEK[..] ~ adornments ~ NEWLINE
-}
+// TODO: a bug prevents them from being merged to a single “title” rule
+title_double = { PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP }
+title_single = { line ~ PEEK[..] ~ adornments ~ NEWLINE }
 
 // Bullet list. A block type.
 bullet_list =  { bullet_item ~ (PEEK_ALL ~ bullet_item)* }
@@ -68,6 +83,7 @@ adornments = {
     // misc
     "$"+ | "@"+ | "\\"+
 }
+nonspacechar = _{ !(" " | NEWLINE) ~ ANY }
 
 // lookaheads. do not use in another position
 marker = _{ (bullet_marker | "..") ~ " " }
@@ -77,28 +93,10 @@ marker = _{ (bullet_marker | "..") ~ " " }
 
 
 
-
-// plain = { inlines }
-
-// setext_bottom = { ( "="+ | "-"+ | "*"+ | "^"+ | "~"+ ) ~ NEWLINE }
-
-// heading_title = {
-//     &(setext_bottom ~ raw_line ~ setext_bottom) ~
-//     setext_bottom ~
-//     (!endline ~ inline)+ ~ sp ~ NEWLINE ~
-//     setext_bottom
-// }
-
-// heading = {
-//     &(raw_line ~ setext_bottom) ~
-//     (!endline ~ inline)+ ~ sp ~ NEWLINE ~
-//     setext_bottom
-// }
-
 // image = {
 //     ".. image:: " ~ source ~ blank_line ~
 //     (
-//         (sp ~ ":alt:" ~ sp ~ ref_source ~ blank_line) |
+//         (sp ~ ":alt:" ~ sp ~ target_name_uq ~ blank_line) |
 //         (sp ~ ":target:" ~ sp ~ source ~ blank_line) |
 //         (sp ~ ":align:" ~ sp ~ source ~ blank_line)
 //     )*
@@ -417,7 +415,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 
 // symbol = { special_char }
 
-// application_depent = { !("`_" | "``_") ~ "`" ~ !"``" ~ quoted_ref_source ~ "`" ~ !("``" | "_") }
+// application_depent = { !("`_" | "``_") ~ "`" ~ !"``" ~ target_name_qu ~ "`" ~ !("``" | "_") }
 
 // // This keeps the parser from getting bogged down on long strings of "*" or "_",
 // // or strings of "*" or "_" with space on each side:
@@ -438,7 +436,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 
 // reference_link = { unquoted_ref_link_underbar | quoted_ref_link_underbar }
 // unquoted_ref_link_underbar = { unquoted_link_source ~ "_" }
-// quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ quoted_ref_source ~ ( "`" ~ !"``" ) ~ "_" }
+// quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ target_name_qu ~ ( "`" ~ !"``" ) ~ "_" }
 
 // explicit_link = { label ~ "(" ~ sp ~ source ~ spnl ~ title ~ sp ~ ")" }
 
@@ -454,14 +452,8 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
 // auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
 
-// reference = { quoted_reference | unquoted_reference }
-// quoted_reference = { ".. _`" ~ !"``" ~ quoted_ref_source ~ !"``:" ~ "`: " ~ ref_src ~ blank_line }
-// unquoted_reference = { ".. _" ~ ref_source ~ ": " ~ ref_src ~ blank_line }
-
 // unquoted_link_source = { (!("_"|":"|"`") ~ nonspacechar)* }
 
-// ref_source = { ( !("_"|":"|"`") ~ (" " | nonspacechar) )* }
-// quoted_ref_source = { ( !(":"|"`") ~ (" " | nonspacechar) )* }
 // embedded_ref_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
 
 // label = {
@@ -471,11 +463,8 @@ marker = _{ (bullet_marker | "..") ~ " " }
 //     ) ~ (!"]" ~ inline)* ~ "]"
 // }
 
-// ref_src = { nonspacechar+ }
 
 // empty_title = { "" }
-
-// references = { ( reference | skip_block )* }
 
 // ticks_2 = { "``" ~ !"`" }
 
@@ -491,7 +480,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
 // html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
 // spacechar = _{ " " | "\t" }
-// nonspacechar = _{ !(spacechar | NEWLINE) ~ ANY }
 // sp = _{ spacechar* }
 // spnl = _{ sp ~ (NEWLINE ~ sp)? }
 // special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
@@ -567,25 +555,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // double_quote_end = { "\"" }
 // double_quoted = { double_quote_start ~ ( !double_quote_end ~ inline )+ ~ double_quote_end }
 
-// note_reference = {
-//     //&{ extension(EXT_NOTES) } ~
-//     raw_note_reference
-// }
-
-// raw_note_reference = { "[^" ~ ( !(NEWLINE | "]") ~ ANY )+ ~ "]" }
-
-// note = {
-//     //&{ extension(EXT_NOTES) } ~
-//     raw_note_reference ~ ":" ~ sp ~
-//     raw_note_block ~
-//     ( &indent ~ raw_note_block )*
-// }
-
 // footnote = { "[#" ~ (!"]" ~ inline)+ ~ "]_" }
-
-// notes = { (note | skip_block)* }
-
-// raw_note_block = { ( !blank_line ~ optionally_indented_line )+ ~ blank_line* }
 
 // definition = {
 //     &( (!defmark ~ nonspacechar ~ raw_line) ~ blank_line? ~ defmark) ~

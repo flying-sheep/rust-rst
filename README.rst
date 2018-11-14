@@ -14,7 +14,7 @@ This project is dual-licensed under Apache 2.0 and MIT.
 
 Inspiration
 -----------
-The design was inspired by the comrak_ Markdown parser library. The rST grammar was adapted from peg-rst_
+The design was inspired by the comrak_ Markdown parser library. The rST grammar was inspired by peg-rst_
 
 .. _comrak: https://github.com/kivikakk/comrak
 .. _peg-rst: https://github.com/hhatto/peg-rst
