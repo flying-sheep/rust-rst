@@ -29,7 +29,7 @@ struct Cli {
 
 main!(|args: Cli, log_level: verbosity| {
     let content = read_file(args.file)?;
-    let parsed = RstParser::parse(Rule::doc, &content)?;
+    let parsed = RstParser::parse(Rule::document, &content)?;
     let stdout = std::io::stdout();
     match args.format {
         Format::json => serde_json::to_writer(stdout, &PairsWrap(parsed))?,

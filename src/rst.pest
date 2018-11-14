@@ -1,566 +1,602 @@
-// Original version https://github.com/hhatto/peg-rst
-// Copyright 2008 John MacFarlane (jgm at berkeley dot edu).
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License or the MIT
-// license.  See LICENSE for details.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// Entry point: the document.
 
-doc = { block* }
+// This grammar is aligned to the doctree names when possible.
+// It will however contain blocks, as we can’t parse sections:
+// Section headers define the hierarchy by their delimiters,
+// and pest only has one stack that we need for indentation.
 
-block = {
-    blank_line* ~
-    ( block_quote
-    | verbatim
-    | image
-    | code_block
-    | doctest_block
-    | note
-    | reference
-    | horizontal_rule
-    | heading_title
-    | heading
-    | table
-    | ordered_list
-    | bullet_list
-    | html_block
-    | style_block
-    | para
-    | plain
-    )
+document = _{ SOI ~ blocks }
+blocks   = _{ block ~ (blank_line+ ~ block)* }
+block    = _{ PEEK_ALL ~ hanging_block }
+
+// This is the list of all block-level elements
+// They’re defined hanging, i.e. without the first PEEK_ALL
+// This is d
+hanging_block = _{
+    // title |
+    bullet_list
+    | paragraph
+// TODO: implement all those things:
+// | block_quote
+// | verbatim
+// | image
+// | code_block
+// | doctest_block
+// | note
+// | reference
+// | horizontal_rule
+// | heading_title
+// | heading
+// | table
+// | ordered_list
+// | bullet_list
+// | html_block
+// | style_block
+// | paragraph
+// | plain
 }
 
-para = { nonindent_space ~ inlines ~ blank_line+ }
-
-plain = { inlines }
-
-setext_bottom = { ( "="+ | "-"+ | "*"+ | "^"+ | "~"+ ) ~ NEWLINE }
-
-heading_title = {
-    &(setext_bottom ~ raw_line ~ setext_bottom) ~
-    setext_bottom ~
-    (!endline ~ inline)+ ~ sp ~ NEWLINE ~
-    setext_bottom
+// Title. A block type
+title = {
+    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ POP
+    | line ~ adornments ~ NEWLINE
 }
 
-heading = {
-    &(raw_line ~ setext_bottom) ~
-    (!endline ~ inline)+ ~ sp ~ NEWLINE ~
-    setext_bottom
+// Bullet list. A block type.
+bullet_list =  { bullet_item ~ (PEEK_ALL ~ bullet_item)* }
+bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blist_body? ~ DROP }
+blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
+
+
+// paragraph. A block type.
+paragraph =  { line ~ (PEEK_ALL ~ line)* }
+// TODO: use inlines here
+line       =  { !marker ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
+blank_line = _{ !marker ~ " "* ~ NEWLINE }
+
+// character classes
+bullet_marker = _{ "+" | "*" | "-" }
+adornments = {
+    // recommended
+    "="+ | "-"+ | "`"+ | ":"+ | "."+ | "'"+ | "\""+ | "~"+ | "^"+ | "_"+ | "*"+ | "+"+ | "#"+ |
+    // parentheses
+    "("+ | ")"+ | "["+ |  "]"+ | "{"+ | "}"+ |
+    // punctuation
+    ","+ | ";"+ | "!"+ | "?"+ |
+    // operators
+    "&"+ | "|"+ | "/"+ | "%"+ | "<"+ | ">"+ |
+    // misc
+    "$"+ | "@"+ | "\\"+
 }
 
-image = {
-    nonindent_space ~
-    ".. image:: " ~ source ~ blank_line ~
-    (
-        (sp ~ ":alt:" ~ sp ~ ref_source ~ blank_line) |
-        (sp ~ ":target:" ~ sp ~ source ~ blank_line) |
-        (sp ~ ":align:" ~ sp ~ source ~ blank_line)
-    )*
-}
-
-code_block = {
-    nonindent_space ~
-    ".. code" ~ "-block"? ~ ":: " ~ source ~ blank_line ~
-    NEWLINE ~ verbatim_chunk+
-}
-
-doctest_block = { (doctest_line+ ~ (!(">" | blank_line) ~ line)*)+ }
-
-block_quote_raw = { ":" ~ blank_line ~ NEWLINE ~ nonblank_indented_line+ }
-
-block_quote_chunk = {
-    !"::" ~ ":" ~ blank_line ~
-    NEWLINE ~
-    blank_line* ~
-    nonblank_indented_line+
-}
-
-block_quote = { block_quote_chunk+ }
-
-nonblank_indented_line = { !blank_line ~ indented_line }
-
-verbatim_chunk = { blank_line* ~ nonblank_indented_line+ }
-
-verbatim = { verbatim_chunk+ }
-
-horizontal_rule = {
-    nonindent_space ~
-    ( "=" ~ sp ~ "=" ~ sp ~ "=" ~ (sp ~ "=")*
-    | "-" ~ sp ~ "-" ~ sp ~ "-" ~ (sp ~ "-")*
-    | "*" ~ sp ~ "*" ~ sp ~ "*" ~ (sp ~ "*")*
-    | "^" ~ sp ~ "^" ~ sp ~ "^" ~ (sp ~ "^")*
-    | "~" ~ sp ~ "~" ~ sp ~ "~" ~ (sp ~ "~")*
-    | "_" ~ sp ~ "_" ~ sp ~ "_" ~ (sp ~ "_")*
-    ) ~
-    sp ~ NEWLINE ~ blank_line+
-}
-
-table = { grid_table | header_less_grid_table | simple_table }
-
-simple_table = { "NotImplemented" ~ "simple_table" }
-
-grid_table = { grid_table_header ~ grid_table_header_sep ~ grid_table_body+ }
-header_less_grid_table = { grid_table_sep ~ grid_table_body+ }
-grid_table_header = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line ~ grid_table_row+ }
-grid_table_body = { ( grid_table_row ~ grid_table_sep )+ }
-grid_table_row = { sp ~ "|" ~ sp ~ ( table_cell ~ sp ~ "|" )+ ~ blank_line }
-table_cell = { ( ":" | ">" | "<" | "/" | "-" | spacechar | escaped_char | alphanumeric )+ }
-grid_table_header_sep = { sp ~ "+" ~ ( "="+ ~ "+" )+ ~ blank_line }
-grid_table_sep = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line }
-
-bullet = { !horizontal_rule ~ nonindent_space ~ ("+" | "*" | "-") ~ spacechar+ }
-
-bullet_list = { &bullet ~ (list_tight | list_loose) }
-
-list_tight = { list_item_tight+ ~ blank_line* ~ !(bullet | enumerator | def_marker) }
-list_loose = { ( list_item ~ blank_line* )+ }
-
-list_item = { (bullet | enumerator | def_marker) ~ list_block ~ list_continuation_block* }
-list_item_tight = {
-    (bullet | enumerator | def_marker) ~
-    list_block ~
-    (!blank_line ~ list_continuation_block)* ~
-    !list_continuation_block
-}
-
-list_block = { !blank_line ~ line ~ list_block_line* }
-
-list_continuation_block = { blank_line* ~ ( indent ~ list_block )+ }
-
-enumerator = { nonindent_space ~ (ASCII_DIGIT+ | "#"+) ~ "." ~ spacechar+ }
-
-ordered_list = { &enumerator ~ (list_tight | list_loose) }
-
-list_block_line = {
-    !blank_line ~
-    !( (indent? ~ (bullet | enumerator)) | def_marker ) ~
-    !horizontal_rule ~
-    optionally_indented_line
-}
-
-// Parsers for different kinds of block-level HTML content.
-// This is repetitive due to constraints of PEG grammar.
-
-html_block_open_address = { "<" ~ spnl ~ ("address" | "ADDRESS") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_address = { "<" ~ spnl ~ "/" ~ ("address" | "ADDRESS") ~ spnl ~ ">" }
-html_block_address = { html_block_open_address ~ (html_block_address | !html_block_close_address ~ ANY)* ~ html_block_close_address }
-
-html_block_open_blockquote = { "<" ~ spnl ~ ("block_quote" | "block_quote") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_blockquote = { "<" ~ spnl ~ "/" ~ ("block_quote" | "block_quote") ~ spnl ~ ">" }
-html_block_blockquote = { html_block_open_blockquote ~ (html_block_blockquote | !html_block_close_blockquote ~ ANY)* ~ html_block_close_blockquote }
-
-html_block_open_center = { "<" ~ spnl ~ ("center" | "CENTER") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_center = { "<" ~ spnl ~ "/" ~ ("center" | "CENTER") ~ spnl ~ ">" }
-html_block_center = { html_block_open_center ~ (html_block_center | !html_block_close_center ~ ANY)* ~ html_block_close_center }
+// lookaheads. do not use in another position
+marker = _{ (bullet_marker | "..") ~ " " }
 
-html_block_open_dir = { "<" ~ spnl ~ ("dir" | "DIR") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_dir = { "<" ~ spnl ~ "/" ~ ("dir" | "DIR") ~ spnl ~ ">" }
-html_block_dir = { html_block_open_dir ~ (html_block_dir | !html_block_close_dir ~ ANY)* ~ html_block_close_dir }
 
-html_block_open_div = { "<" ~ spnl ~ ("div" | "DIV") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_div = { "<" ~ spnl ~ "/" ~ ("div" | "DIV") ~ spnl ~ ">" }
-html_block_div = { html_block_open_div ~ (html_block_div | !html_block_close_div ~ ANY)* ~ html_block_close_div }
 
-html_block_open_dl = { "<" ~ spnl ~ ("dl" | "DL") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_dl = { "<" ~ spnl ~ "/" ~ ("dl" | "DL") ~ spnl ~ ">" }
-html_block_dl = { html_block_open_dl ~ (html_block_dl | !html_block_close_dl ~ ANY)* ~ html_block_close_dl }
 
-html_block_open_fieldset = { "<" ~ spnl ~ ("fieldset" | "FIELDSET") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_fieldset = { "<" ~ spnl ~ "/" ~ ("fieldset" | "FIELDSET") ~ spnl ~ ">" }
-html_block_fieldset = { html_block_open_fieldset ~ (html_block_fieldset | !html_block_close_fieldset ~ ANY)* ~ html_block_close_fieldset }
 
-html_block_open_form = { "<" ~ spnl ~ ("form" | "FORM") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_form = { "<" ~ spnl ~ "/" ~ ("form" | "FORM") ~ spnl ~ ">" }
-html_block_form = { html_block_open_form ~ (html_block_form | !html_block_close_form ~ ANY)* ~ html_block_close_form }
 
-html_block_open_h_1 = { "<" ~ spnl ~ ("h1" | "H1") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_1 = { "<" ~ spnl ~ "/" ~ ("h1" | "H1") ~ spnl ~ ">" }
-html_block_h_1 = { html_block_open_h_1 ~ (html_block_h_1 | !html_block_close_h_1 ~ ANY)* ~ html_block_close_h_1 }
 
-html_block_open_h_2 = { "<" ~ spnl ~ ("h2" | "H2") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_2 = { "<" ~ spnl ~ "/" ~ ("h2" | "H2") ~ spnl ~ ">" }
-html_block_h_2 = { html_block_open_h_2 ~ (html_block_h_2 | !html_block_close_h_2 ~ ANY)* ~ html_block_close_h_2 }
+// plain = { inlines }
 
-html_block_open_h_3 = { "<" ~ spnl ~ ("h3" | "H3") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_3 = { "<" ~ spnl ~ "/" ~ ("h3" | "H3") ~ spnl ~ ">" }
-html_block_h_3 = { html_block_open_h_3 ~ (html_block_h_3 | !html_block_close_h_3 ~ ANY)* ~ html_block_close_h_3 }
-
-html_block_open_h_4 = { "<" ~ spnl ~ ("h4" | "H4") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_4 = { "<" ~ spnl ~ "/" ~ ("h4" | "H4") ~ spnl ~ ">" }
-html_block_h_4 = { html_block_open_h_4 ~ (html_block_h_4 | !html_block_close_h_4 ~ ANY)* ~ html_block_close_h_4 }
-
-html_block_open_h_5 = { "<" ~ spnl ~ ("h5" | "H5") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_5 = { "<" ~ spnl ~ "/" ~ ("h5" | "H5") ~ spnl ~ ">" }
-html_block_h_5 = { html_block_open_h_5 ~ (html_block_h_5 | !html_block_close_h_5 ~ ANY)* ~ html_block_close_h_5 }
-
-html_block_open_h_6 = { "<" ~ spnl ~ ("h6" | "H6") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_h_6 = { "<" ~ spnl ~ "/" ~ ("h6" | "H6") ~ spnl ~ ">" }
-html_block_h_6 = { html_block_open_h_6 ~ (html_block_h_6 | !html_block_close_h_6 ~ ANY)* ~ html_block_close_h_6 }
-
-html_block_open_menu = { "<" ~ spnl ~ ("menu" | "MENU") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_menu = { "<" ~ spnl ~ "/" ~ ("menu" | "MENU") ~ spnl ~ ">" }
-html_block_menu = { html_block_open_menu ~ (html_block_menu | !html_block_close_menu ~ ANY)* ~ html_block_close_menu }
-
-html_block_open_noframes = { "<" ~ spnl ~ ("noframes" | "NOFRAMES") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_noframes = { "<" ~ spnl ~ "/" ~ ("noframes" | "NOFRAMES") ~ spnl ~ ">" }
-html_block_noframes = { html_block_open_noframes ~ (html_block_noframes | !html_block_close_noframes ~ ANY)* ~ html_block_close_noframes }
-
-html_block_open_noscript = { "<" ~ spnl ~ ("noscript" | "NOSCRIPT") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_noscript = { "<" ~ spnl ~ "/" ~ ("noscript" | "NOSCRIPT") ~ spnl ~ ">" }
-html_block_noscript = { html_block_open_noscript ~ (html_block_noscript | !html_block_close_noscript ~ ANY)* ~ html_block_close_noscript }
-
-html_block_open_ol = { "<" ~ spnl ~ ("ol" | "OL") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_ol = { "<" ~ spnl ~ "/" ~ ("ol" | "OL") ~ spnl ~ ">" }
-html_block_ol = { html_block_open_ol ~ (html_block_ol | !html_block_close_ol ~ ANY)* ~ html_block_close_ol }
-
-html_block_open_p = { "<" ~ spnl ~ ("p" | "P") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_p = { "<" ~ spnl ~ "/" ~ ("p" | "P") ~ spnl ~ ">" }
-html_block_p = { html_block_open_p ~ (html_block_p | !html_block_close_p ~ ANY)* ~ html_block_close_p }
-
-html_block_open_pre = { "<" ~ spnl ~ ("pre" | "PRE") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_pre = { "<" ~ spnl ~ "/" ~ ("pre" | "PRE") ~ spnl ~ ">" }
-html_block_pre = { html_block_open_pre ~ (html_block_pre | !html_block_close_pre ~ ANY)* ~ html_block_close_pre }
-
-html_block_open_table = { "<" ~ spnl ~ ("table" | "table") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_table = { "<" ~ spnl ~ "/" ~ ("table" | "table") ~ spnl ~ ">" }
-html_block_table = { html_block_open_table ~ (html_block_table | !html_block_close_table ~ ANY)* ~ html_block_close_table }
-
-html_block_open_ul = { "<" ~ spnl ~ ("ul" | "UL") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_ul = { "<" ~ spnl ~ "/" ~ ("ul" | "UL") ~ spnl ~ ">" }
-html_block_ul = { html_block_open_ul ~ (html_block_ul | !html_block_close_ul ~ ANY)* ~ html_block_close_ul }
-
-html_block_open_dd = { "<" ~ spnl ~ ("dd" | "DD") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_dd = { "<" ~ spnl ~ "/" ~ ("dd" | "DD") ~ spnl ~ ">" }
-html_block_dd = { html_block_open_dd ~ (html_block_dd | !html_block_close_dd ~ ANY)* ~ html_block_close_dd }
-
-html_block_open_dt = { "<" ~ spnl ~ ("dt" | "DT") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_dt = { "<" ~ spnl ~ "/" ~ ("dt" | "DT") ~ spnl ~ ">" }
-html_block_dt = { html_block_open_dt ~ (html_block_dt | !html_block_close_dt ~ ANY)* ~ html_block_close_dt }
-
-html_block_open_frameset = { "<" ~ spnl ~ ("frameset" | "FRAMESET") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_frameset = { "<" ~ spnl ~ "/" ~ ("frameset" | "FRAMESET") ~ spnl ~ ">" }
-html_block_frameset = { html_block_open_frameset ~ (html_block_frameset | !html_block_close_frameset ~ ANY)* ~ html_block_close_frameset }
-
-html_block_open_li = { "<" ~ spnl ~ ("li" | "LI") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_li = { "<" ~ spnl ~ "/" ~ ("li" | "LI") ~ spnl ~ ">" }
-html_block_li = { html_block_open_li ~ (html_block_li | !html_block_close_li ~ ANY)* ~ html_block_close_li }
-
-html_block_open_tbody = { "<" ~ spnl ~ ("tbody" | "TBODY") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_tbody = { "<" ~ spnl ~ "/" ~ ("tbody" | "TBODY") ~ spnl ~ ">" }
-html_block_tbody = { html_block_open_tbody ~ (html_block_tbody | !html_block_close_tbody ~ ANY)* ~ html_block_close_tbody }
-
-html_block_open_td = { "<" ~ spnl ~ ("td" | "TD") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_td = { "<" ~ spnl ~ "/" ~ ("td" | "TD") ~ spnl ~ ">" }
-html_block_td = { html_block_open_td ~ (html_block_td | !html_block_close_td ~ ANY)* ~ html_block_close_td }
-
-html_block_open_tfoot = { "<" ~ spnl ~ ("tfoot" | "TFOOT") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_tfoot = { "<" ~ spnl ~ "/" ~ ("tfoot" | "TFOOT") ~ spnl ~ ">" }
-html_block_tfoot = { html_block_open_tfoot ~ (html_block_tfoot | !html_block_close_tfoot ~ ANY)* ~ html_block_close_tfoot }
-
-html_block_open_th = { "<" ~ spnl ~ ("th" | "TH") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_th = { "<" ~ spnl ~ "/" ~ ("th" | "TH") ~ spnl ~ ">" }
-html_block_th = { html_block_open_th ~ (html_block_th | !html_block_close_th ~ ANY)* ~ html_block_close_th }
-
-html_block_open_thead = { "<" ~ spnl ~ ("thead" | "THEAD") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_thead = { "<" ~ spnl ~ "/" ~ ("thead" | "THEAD") ~ spnl ~ ">" }
-html_block_thead = { html_block_open_thead ~ (html_block_thead | !html_block_close_thead ~ ANY)* ~ html_block_close_thead }
-
-html_block_open_tr = { "<" ~ spnl ~ ("tr" | "TR") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_tr = { "<" ~ spnl ~ "/" ~ ("tr" | "TR") ~ spnl ~ ">" }
-html_block_tr = { html_block_open_tr ~ (html_block_tr | !html_block_close_tr ~ ANY)* ~ html_block_close_tr }
-
-html_block_open_script = { "<" ~ spnl ~ ("script" | "SCRIPT") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_script = { "<" ~ spnl ~ "/" ~ ("script" | "SCRIPT") ~ spnl ~ ">" }
-html_block_script = { html_block_open_script ~ (!html_block_close_script ~ ANY)* ~ html_block_close_script }
-
-html_block_open_head = { "<" ~ spnl ~ ("head" | "HEAD") ~ spnl ~ html_attribute* ~ ">" }
-html_block_close_head = { "<" ~ spnl ~ "/" ~ ("head" | "HEAD") ~ spnl ~ ">" }
-html_block_head = { html_block_open_head ~ (!html_block_close_head ~ ANY)* ~ html_block_close_head }
-
-html_block_in_tags = {
-    html_block_address
-    | html_block_blockquote
-    | html_block_center
-    | html_block_dir
-    | html_block_div
-    | html_block_dl
-    | html_block_fieldset
-    | html_block_form
-    | html_block_h_1
-    | html_block_h_2
-    | html_block_h_3
-    | html_block_h_4
-    | html_block_h_5
-    | html_block_h_6
-    | html_block_menu
-    | html_block_noframes
-    | html_block_noscript
-    | html_block_ol
-    | html_block_p
-    | html_block_pre
-    | html_block_table
-    | html_block_ul
-    | html_block_dd
-    | html_block_dt
-    | html_block_frameset
-    | html_block_li
-    | html_block_tbody
-    | html_block_td
-    | html_block_tfoot
-    | html_block_th
-    | html_block_thead
-    | html_block_tr
-    | html_block_script
-    | html_block_head
-}
-
-html_block = { &"<" ~ ( html_block_in_tags | html_comment | html_block_self_closing ) ~ blank_line+ }
-html_block_self_closing = { "<" ~ spnl ~ html_block_type ~ spnl ~ html_attribute* ~ "/" ~ spnl ~ ">" }
-html_block_type = {
-    "address" | "block_quote" | "center" | "dir" | "div" | "dl" | "fieldset" | "form" | "h1" | "h2" | "h3" |
-    "h4" | "h5" | "h6" | "hr" | "isindex" | "menu" | "noframes" | "noscript" | "ol" | "p" | "pre" | "table" |
-    "ul" | "dd" | "dt" | "frameset" | "li" | "tbody" | "td" | "tfoot" | "th" | "thead" | "tr" | "script" |
-    "ADDRESS" | "block_quote" | "CENTER" | "DIR" | "DIV" | "DL" | "FIELDSET" | "FORM" | "H1" | "H2" | "H3" |
-    "H4" | "H5" | "H6" | "HR" | "ISINDEX" | "MENU" | "NOFRAMES" | "NOSCRIPT" | "OL" | "P" | "PRE" | "table" |
-    "UL" | "DD" | "DT" | "FRAMESET" | "LI" | "TBODY" | "TD" | "TFOOT" | "TH" | "THEAD" | "TR" | "SCRIPT"
-}
-
-style_open = { "<" ~ spnl ~ ("style" | "STYLE") ~ spnl ~ html_attribute* ~ ">" }
-style_close = { "<" ~ spnl ~ "/" ~ ("style" | "STYLE") ~ spnl ~ ">" }
-in_style_tags = { style_open ~ (!style_close ~ ANY)* ~ style_close }
-style_block = { in_style_tags ~ blank_line* }
-
-inlines = { ( !endline ~ inline | endline ~ &inline )+ ~ endline? }
-
-inline = {
-    link
-    | str
-    | endline
-    | ul_or_star_line
-    | space
-    | strong
-    | emph
-    | strike
-    | note_reference
-    | footnote
-    //| citation
-    | code
-    | application_depent
-    | raw_html
-    | entity
-    | escaped_char
-    | smart
-    | symbol
-}
-
-space = _{ spacechar+ }
-
-str = { normal_char+ ~ str_chunk* }
-str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ | apos_chunk }
-apos_chunk = {
-    // &{ extension(EXT_SMART) } ~
-    "'" ~ &alphanumeric
-}
-
-escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "}" | "[" | "]" | "(" | ")" | "#" | "+" | "." | "!" | ">" | "<") }
-
-entity = { hex_entity | dec_entity | char_entity }
-
-endline = _{ line_break | terminal_endline | normal_endline }
-normal_endline = _{ sp ~ NEWLINE ~ !(blank_line | ">" | line ~ ("="+ | "-"+) ~ NEWLINE) }
-terminal_endline = _{ sp ~ NEWLINE ~ EOI }
-line_break = _{ "  " ~ normal_endline }
-
-symbol = { special_char }
-
-application_depent = { !("`_" | "``_") ~ "`" ~ !"``" ~ quoted_ref_source ~ "`" ~ !("``" | "_") }
-
-// This keeps the parser from getting bogged down on long strings of "*" or "_",
-// or strings of "*" or "_" with space on each side:
-ul_or_star_line = { ul_line | star_line }
-star_line = { "****" ~ "*"* | spacechar ~ "*"+ ~ &spacechar }
-ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
-
-whitespace = { spacechar | NEWLINE }
-
-emph = { "*" ~ !whitespace ~ (!"*" ~ inline)+ ~ "*" }
-strong = { "**" ~ !whitespace ~ (!"**" ~ inline)+ ~ "**" }
-strike = {
-    //&{ extension(EXT_STRIKE) } ~
-    "~~" ~ !whitespace ~ (!"~~" ~ inline)+ ~ "~~"
-}
-
-link = { reference_link | explicit_link | auto_link }
-
-reference_link = { unquoted_ref_link_underbar | quoted_ref_link_underbar }
-unquoted_ref_link_underbar = { unquoted_link_source ~ "_" }
-quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ quoted_ref_source ~ ( "`" ~ !"``" ) ~ "_" }
-
-explicit_link = { label ~ "(" ~ sp ~ source ~ spnl ~ title ~ sp ~ ")" }
-
-source = { source_contents }
-source_contents = { ( (!("(" | ")" | ">") ~ nonspacechar)+ | "(" ~ source_contents ~ ")" )* }
-
-title = { ( title_single | title_double | "" ) }
-title_single = { "'" ~ ( !("'" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
-title_double = { "\"" ~ ( !("\"" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
-
-auto_link = { embedded_link | auto_link_url | auto_link_email }
-embedded_link = { "`" ~ embedded_ref_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">`_" ~ "_"? }
-auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
-auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
-
-reference = { quoted_reference | unquoted_reference }
-quoted_reference = { nonindent_space ~ ".. _`" ~ !"``" ~ quoted_ref_source ~ !"``:" ~ "`: " ~ ref_src ~ blank_line }
-unquoted_reference = { nonindent_space ~ ".. _" ~ ref_source ~ ": " ~ ref_src ~ blank_line }
-
-unquoted_link_source = { (!("_"|":"|"`") ~ nonspacechar)* }
-
-ref_source = { ( !("_"|":"|"`") ~ (" " | nonspacechar) )* }
-quoted_ref_source = { ( !(":"|"`") ~ (" " | nonspacechar) )* }
-embedded_ref_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
-
-label = {
-    "[" ~ (
-        !"^" //~ &{ extension(EXT_NOTES) }
-        | &ANY //~ &{ extension(EXT_NOTES) }
-    ) ~ (!"]" ~ inline)* ~ "]"
-}
-
-ref_src = { nonspacechar+ }
-
-empty_title = { "" }
-
-references = { ( reference | skip_block )* }
-
-ticks_2 = { "``" ~ !"`" }
-
-code = { ticks_2 ~ ( (!"`" ~ nonspacechar)+ | "_" | !ticks_2 ~ "`" | !(sp ~ ticks_2) ~ (spacechar | NEWLINE ~ !blank_line) )+ ~ ticks_2 }
-
-raw_html = { (html_comment | html_block_script | html_tag) }
-
-blank_line = _{ sp ~ NEWLINE }
-
-quoted = {
-    "\"" ~ (!"\"" ~ ANY)* ~ "\"" |
-    "'"  ~ (!"'"  ~ ANY)* ~ "'"
-}
-html_attribute = { (ASCII_ALPHANUMERIC | "-")+ ~ spnl ~ ("=" ~ spnl ~ (quoted | (!">" ~ nonspacechar)+))? ~ spnl }
-html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
-html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
-spacechar = _{ " " | "\t" }
-nonspacechar = _{ !(spacechar | NEWLINE) ~ ANY }
-sp = _{ spacechar* }
-spnl = _{ sp ~ (NEWLINE ~ sp)? }
-special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
-normal_char = _{ !( special_char | spacechar | NEWLINE ) ~ ANY }
-alphanumeric = {
-    ASCII_ALPHANUMERIC |
-    "\u{200}" | "\u{201}" | "\u{202}" | "\u{203}" | "\u{204}" | "\u{205}" | "\u{206}" | "\u{207}" |
-    "\u{210}" | "\u{211}" | "\u{212}" | "\u{213}" | "\u{214}" | "\u{215}" | "\u{216}" | "\u{217}" |
-    "\u{220}" | "\u{221}" | "\u{222}" | "\u{223}" | "\u{224}" | "\u{225}" | "\u{226}" | "\u{227}" |
-    "\u{230}" | "\u{231}" | "\u{232}" | "\u{233}" | "\u{234}" | "\u{235}" | "\u{236}" | "\u{237}" |
-    "\u{240}" | "\u{241}" | "\u{242}" | "\u{243}" | "\u{244}" | "\u{245}" | "\u{246}" | "\u{247}" |
-    "\u{250}" | "\u{251}" | "\u{252}" | "\u{253}" | "\u{254}" | "\u{255}" | "\u{256}" | "\u{257}" |
-    "\u{260}" | "\u{261}" | "\u{262}" | "\u{263}" | "\u{264}" | "\u{265}" | "\u{266}" | "\u{267}" |
-    "\u{270}" | "\u{271}" | "\u{272}" | "\u{273}" | "\u{274}" | "\u{275}" | "\u{276}" | "\u{277}" |
-    "\u{300}" | "\u{301}" | "\u{302}" | "\u{303}" | "\u{304}" | "\u{305}" | "\u{306}" | "\u{307}" |
-    "\u{310}" | "\u{311}" | "\u{312}" | "\u{313}" | "\u{314}" | "\u{315}" | "\u{316}" | "\u{317}" |
-    "\u{320}" | "\u{321}" | "\u{322}" | "\u{323}" | "\u{324}" | "\u{325}" | "\u{326}" | "\u{327}" |
-    "\u{330}" | "\u{331}" | "\u{332}" | "\u{333}" | "\u{334}" | "\u{335}" | "\u{336}" | "\u{337}" |
-    "\u{340}" | "\u{341}" | "\u{342}" | "\u{343}" | "\u{344}" | "\u{345}" | "\u{346}" | "\u{347}" |
-    "\u{350}" | "\u{351}" | "\u{352}" | "\u{353}" | "\u{354}" | "\u{355}" | "\u{356}" | "\u{357}" |
-    "\u{360}" | "\u{361}" | "\u{362}" | "\u{363}" | "\u{364}" | "\u{365}" | "\u{366}" | "\u{367}" |
-    "\u{370}" | "\u{371}" | "\u{372}" | "\u{373}" | "\u{374}" | "\u{375}" | "\u{376}" | "\u{377}"
-}
-
-hex_entity = { "&#" ~ ("X"|"x") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ ";" }
-dec_entity = { "&#" ~ ASCII_DIGIT+ ~ ";" }
-char_entity = { "&" ~ ASCII_ALPHANUMERIC+ ~ ";" }
-
-nonindent_space = _{ "  " | " " | "" }
-indent = _{ "\t" | "   " }
-indented_line = { indent ~ line }
-optionally_indented_line = { indent? ~ line }
-
-doctest_line = { ">>> " ~ raw_line }
-
-line = _{ raw_line }
-
-raw_line = _{ (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
-
-skip_block = {
-    html_block |
-    ( !("#" | setext_bottom | blank_line) ~ raw_line )+ ~ blank_line* |
-    blank_line+ |
-    raw_line
-}
-
-// Syntax extensions
-
-extended_special_char = {
-    //&{ extension(EXT_SMART) } ~
-    ("." | "-" | "\"" | "'") |
-    //&{ extension(EXT_NOTES) } ~
-    "^"
-}
-
-smart = {
-    //&{ extension(EXT_SMART) } ~
-    ( ellipsis | dash | single_quoted | double_quoted | apostrophe )
-}
-
-apostrophe = { "'" }
-
-ellipsis = { "..." | ". . ." }
-
-dash = { em_dash | en_dash }
-en_dash = { "-" ~ &ASCII_DIGIT }
-em_dash = { "---" | "--" }
-
-single_quote_start = { "'" ~ !(spacechar | NEWLINE) }
-single_quote_end = { "'" ~ !alphanumeric }
-single_quoted = { single_quote_start ~ ( !single_quote_end ~ inline )+ ~ single_quote_end }
-
-double_quote_start = { "\"" }
-double_quote_end = { "\"" }
-double_quoted = { double_quote_start ~ ( !double_quote_end ~ inline )+ ~ double_quote_end }
-
-note_reference = {
-    //&{ extension(EXT_NOTES) } ~
-    raw_note_reference
-}
-
-raw_note_reference = { "[^" ~ ( !(NEWLINE | "]") ~ ANY )+ ~ "]" }
-
-note = {
-    //&{ extension(EXT_NOTES) } ~
-    nonindent_space ~ raw_note_reference ~ ":" ~ sp ~
-    raw_note_block ~
-    ( &indent ~ raw_note_block )*
-}
-
-footnote = { "[#" ~ (!"]" ~ inline)+ ~ "]_" }
-
-notes = { (note | skip_block)* }
-
-raw_note_block = { ( !blank_line ~ optionally_indented_line )+ ~ blank_line* }
-
-definition = {
-    &( (nonindent_space ~ !defmark ~ nonspacechar ~ raw_line) ~ blank_line? ~ defmark) ~
-    d_list_title+ ~
-    (def_tight | def_loose)
-}
-d_list_title = { nonindent_space ~ !defmark ~ &nonspacechar ~ (!endline ~ inline)+ ~ sp ~ NEWLINE }
-def_tight = { &defmark ~ list_tight }
-def_loose = { blank_line ~ &defmark ~ list_loose }
-defmark = { nonindent_space ~ (":" | "~") ~ spacechar+ }
-def_marker = {
-    //&{ extension(EXT_DLISTS) } ~
-    defmark
-}
+// setext_bottom = { ( "="+ | "-"+ | "*"+ | "^"+ | "~"+ ) ~ NEWLINE }
+
+// heading_title = {
+//     &(setext_bottom ~ raw_line ~ setext_bottom) ~
+//     setext_bottom ~
+//     (!endline ~ inline)+ ~ sp ~ NEWLINE ~
+//     setext_bottom
+// }
+
+// heading = {
+//     &(raw_line ~ setext_bottom) ~
+//     (!endline ~ inline)+ ~ sp ~ NEWLINE ~
+//     setext_bottom
+// }
+
+// image = {
+//     ".. image:: " ~ source ~ blank_line ~
+//     (
+//         (sp ~ ":alt:" ~ sp ~ ref_source ~ blank_line) |
+//         (sp ~ ":target:" ~ sp ~ source ~ blank_line) |
+//         (sp ~ ":align:" ~ sp ~ source ~ blank_line)
+//     )*
+// }
+
+// code_block = {
+//     ".. code" ~ "-block"? ~ ":: " ~ source ~ blank_line ~
+//     NEWLINE ~ verbatim_chunk+
+// }
+
+// doctest_block = { (doctest_line+ ~ (!(">" | blank_line) ~ line)*)+ }
+
+// block_quote_raw = { ":" ~ blank_line ~ NEWLINE ~ nonblank_indented_line+ }
+
+// block_quote_chunk = {
+//     !"::" ~ ":" ~ blank_line ~
+//     NEWLINE ~
+//     blank_line* ~
+//     nonblank_indented_line+
+// }
+
+// block_quote = { block_quote_chunk+ }
+
+// nonblank_indented_line = { !blank_line ~ indented_line }
+
+// verbatim_chunk = { blank_line* ~ nonblank_indented_line+ }
+
+// verbatim = { verbatim_chunk+ }
+
+// horizontal_rule = {
+//     ( "=" ~ sp ~ "=" ~ sp ~ "=" ~ (sp ~ "=")*
+//     | "-" ~ sp ~ "-" ~ sp ~ "-" ~ (sp ~ "-")*
+//     | "*" ~ sp ~ "*" ~ sp ~ "*" ~ (sp ~ "*")*
+//     | "^" ~ sp ~ "^" ~ sp ~ "^" ~ (sp ~ "^")*
+//     | "~" ~ sp ~ "~" ~ sp ~ "~" ~ (sp ~ "~")*
+//     | "_" ~ sp ~ "_" ~ sp ~ "_" ~ (sp ~ "_")*
+//     ) ~
+//     sp ~ NEWLINE ~ blank_line+
+// }
+
+// table = { grid_table | header_less_grid_table | simple_table }
+
+// simple_table = { "NotImplemented" ~ "simple_table" }
+
+// grid_table = { grid_table_header ~ grid_table_header_sep ~ grid_table_body+ }
+// header_less_grid_table = { grid_table_sep ~ grid_table_body+ }
+// grid_table_header = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line ~ grid_table_row+ }
+// grid_table_body = { ( grid_table_row ~ grid_table_sep )+ }
+// grid_table_row = { sp ~ "|" ~ sp ~ ( table_cell ~ sp ~ "|" )+ ~ blank_line }
+// table_cell = { ( ":" | ">" | "<" | "/" | "-" | spacechar | escaped_char | alphanumeric )+ }
+// grid_table_header_sep = { sp ~ "+" ~ ( "="+ ~ "+" )+ ~ blank_line }
+// grid_table_sep = { sp ~ "+" ~ ( "-"+ ~ "+" )+ ~ blank_line }
+
+// bullet = { !horizontal_rule ~ ("+" | "*" | "-") ~ spacechar+ }
+
+// bullet_list = { &bullet ~ (list_tight | list_loose) }
+
+// list_tight = { list_item_tight+ ~ blank_line* ~ !(bullet | enumerator | def_marker) }
+// list_loose = { ( list_item ~ blank_line* )+ }
+
+// list_item = { (bullet | enumerator | def_marker) ~ list_block ~ list_continuation_block* }
+// list_item_tight = {
+//     (bullet | enumerator | def_marker) ~
+//     list_block ~
+//     (!blank_line ~ list_continuation_block)* ~
+//     !list_continuation_block
+// }
+
+// list_block = { !blank_line ~ line ~ list_block_line* }
+
+// list_continuation_block = { blank_line* ~ ( indent ~ list_block )+ }
+
+// enumerator = { (ASCII_DIGIT+ | "#"+) ~ "." ~ spacechar+ }
+
+// ordered_list = { &enumerator ~ (list_tight | list_loose) }
+
+// list_block_line = {
+//     !blank_line ~
+//     !( (indent? ~ (bullet | enumerator)) | def_marker ) ~
+//     !horizontal_rule ~
+//     optionally_indented_line
+// }
+
+// // Parsers for different kinds of block-level HTML content.
+// // This is repetitive due to constraints of PEG grammar.
+
+// html_block_open_address = { "<" ~ spnl ~ ("address" | "ADDRESS") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_address = { "<" ~ spnl ~ "/" ~ ("address" | "ADDRESS") ~ spnl ~ ">" }
+// html_block_address = { html_block_open_address ~ (html_block_address | !html_block_close_address ~ ANY)* ~ html_block_close_address }
+
+// html_block_open_blockquote = { "<" ~ spnl ~ ("block_quote" | "block_quote") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_blockquote = { "<" ~ spnl ~ "/" ~ ("block_quote" | "block_quote") ~ spnl ~ ">" }
+// html_block_blockquote = { html_block_open_blockquote ~ (html_block_blockquote | !html_block_close_blockquote ~ ANY)* ~ html_block_close_blockquote }
+
+// html_block_open_center = { "<" ~ spnl ~ ("center" | "CENTER") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_center = { "<" ~ spnl ~ "/" ~ ("center" | "CENTER") ~ spnl ~ ">" }
+// html_block_center = { html_block_open_center ~ (html_block_center | !html_block_close_center ~ ANY)* ~ html_block_close_center }
+
+// html_block_open_dir = { "<" ~ spnl ~ ("dir" | "DIR") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_dir = { "<" ~ spnl ~ "/" ~ ("dir" | "DIR") ~ spnl ~ ">" }
+// html_block_dir = { html_block_open_dir ~ (html_block_dir | !html_block_close_dir ~ ANY)* ~ html_block_close_dir }
+
+// html_block_open_div = { "<" ~ spnl ~ ("div" | "DIV") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_div = { "<" ~ spnl ~ "/" ~ ("div" | "DIV") ~ spnl ~ ">" }
+// html_block_div = { html_block_open_div ~ (html_block_div | !html_block_close_div ~ ANY)* ~ html_block_close_div }
+
+// html_block_open_dl = { "<" ~ spnl ~ ("dl" | "DL") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_dl = { "<" ~ spnl ~ "/" ~ ("dl" | "DL") ~ spnl ~ ">" }
+// html_block_dl = { html_block_open_dl ~ (html_block_dl | !html_block_close_dl ~ ANY)* ~ html_block_close_dl }
+
+// html_block_open_fieldset = { "<" ~ spnl ~ ("fieldset" | "FIELDSET") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_fieldset = { "<" ~ spnl ~ "/" ~ ("fieldset" | "FIELDSET") ~ spnl ~ ">" }
+// html_block_fieldset = { html_block_open_fieldset ~ (html_block_fieldset | !html_block_close_fieldset ~ ANY)* ~ html_block_close_fieldset }
+
+// html_block_open_form = { "<" ~ spnl ~ ("form" | "FORM") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_form = { "<" ~ spnl ~ "/" ~ ("form" | "FORM") ~ spnl ~ ">" }
+// html_block_form = { html_block_open_form ~ (html_block_form | !html_block_close_form ~ ANY)* ~ html_block_close_form }
+
+// html_block_open_h_1 = { "<" ~ spnl ~ ("h1" | "H1") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_1 = { "<" ~ spnl ~ "/" ~ ("h1" | "H1") ~ spnl ~ ">" }
+// html_block_h_1 = { html_block_open_h_1 ~ (html_block_h_1 | !html_block_close_h_1 ~ ANY)* ~ html_block_close_h_1 }
+
+// html_block_open_h_2 = { "<" ~ spnl ~ ("h2" | "H2") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_2 = { "<" ~ spnl ~ "/" ~ ("h2" | "H2") ~ spnl ~ ">" }
+// html_block_h_2 = { html_block_open_h_2 ~ (html_block_h_2 | !html_block_close_h_2 ~ ANY)* ~ html_block_close_h_2 }
+
+// html_block_open_h_3 = { "<" ~ spnl ~ ("h3" | "H3") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_3 = { "<" ~ spnl ~ "/" ~ ("h3" | "H3") ~ spnl ~ ">" }
+// html_block_h_3 = { html_block_open_h_3 ~ (html_block_h_3 | !html_block_close_h_3 ~ ANY)* ~ html_block_close_h_3 }
+
+// html_block_open_h_4 = { "<" ~ spnl ~ ("h4" | "H4") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_4 = { "<" ~ spnl ~ "/" ~ ("h4" | "H4") ~ spnl ~ ">" }
+// html_block_h_4 = { html_block_open_h_4 ~ (html_block_h_4 | !html_block_close_h_4 ~ ANY)* ~ html_block_close_h_4 }
+
+// html_block_open_h_5 = { "<" ~ spnl ~ ("h5" | "H5") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_5 = { "<" ~ spnl ~ "/" ~ ("h5" | "H5") ~ spnl ~ ">" }
+// html_block_h_5 = { html_block_open_h_5 ~ (html_block_h_5 | !html_block_close_h_5 ~ ANY)* ~ html_block_close_h_5 }
+
+// html_block_open_h_6 = { "<" ~ spnl ~ ("h6" | "H6") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_h_6 = { "<" ~ spnl ~ "/" ~ ("h6" | "H6") ~ spnl ~ ">" }
+// html_block_h_6 = { html_block_open_h_6 ~ (html_block_h_6 | !html_block_close_h_6 ~ ANY)* ~ html_block_close_h_6 }
+
+// html_block_open_menu = { "<" ~ spnl ~ ("menu" | "MENU") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_menu = { "<" ~ spnl ~ "/" ~ ("menu" | "MENU") ~ spnl ~ ">" }
+// html_block_menu = { html_block_open_menu ~ (html_block_menu | !html_block_close_menu ~ ANY)* ~ html_block_close_menu }
+
+// html_block_open_noframes = { "<" ~ spnl ~ ("noframes" | "NOFRAMES") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_noframes = { "<" ~ spnl ~ "/" ~ ("noframes" | "NOFRAMES") ~ spnl ~ ">" }
+// html_block_noframes = { html_block_open_noframes ~ (html_block_noframes | !html_block_close_noframes ~ ANY)* ~ html_block_close_noframes }
+
+// html_block_open_noscript = { "<" ~ spnl ~ ("noscript" | "NOSCRIPT") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_noscript = { "<" ~ spnl ~ "/" ~ ("noscript" | "NOSCRIPT") ~ spnl ~ ">" }
+// html_block_noscript = { html_block_open_noscript ~ (html_block_noscript | !html_block_close_noscript ~ ANY)* ~ html_block_close_noscript }
+
+// html_block_open_ol = { "<" ~ spnl ~ ("ol" | "OL") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_ol = { "<" ~ spnl ~ "/" ~ ("ol" | "OL") ~ spnl ~ ">" }
+// html_block_ol = { html_block_open_ol ~ (html_block_ol | !html_block_close_ol ~ ANY)* ~ html_block_close_ol }
+
+// html_block_open_p = { "<" ~ spnl ~ ("p" | "P") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_p = { "<" ~ spnl ~ "/" ~ ("p" | "P") ~ spnl ~ ">" }
+// html_block_p = { html_block_open_p ~ (html_block_p | !html_block_close_p ~ ANY)* ~ html_block_close_p }
+
+// html_block_open_pre = { "<" ~ spnl ~ ("pre" | "PRE") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_pre = { "<" ~ spnl ~ "/" ~ ("pre" | "PRE") ~ spnl ~ ">" }
+// html_block_pre = { html_block_open_pre ~ (html_block_pre | !html_block_close_pre ~ ANY)* ~ html_block_close_pre }
+
+// html_block_open_table = { "<" ~ spnl ~ ("table" | "table") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_table = { "<" ~ spnl ~ "/" ~ ("table" | "table") ~ spnl ~ ">" }
+// html_block_table = { html_block_open_table ~ (html_block_table | !html_block_close_table ~ ANY)* ~ html_block_close_table }
+
+// html_block_open_ul = { "<" ~ spnl ~ ("ul" | "UL") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_ul = { "<" ~ spnl ~ "/" ~ ("ul" | "UL") ~ spnl ~ ">" }
+// html_block_ul = { html_block_open_ul ~ (html_block_ul | !html_block_close_ul ~ ANY)* ~ html_block_close_ul }
+
+// html_block_open_dd = { "<" ~ spnl ~ ("dd" | "DD") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_dd = { "<" ~ spnl ~ "/" ~ ("dd" | "DD") ~ spnl ~ ">" }
+// html_block_dd = { html_block_open_dd ~ (html_block_dd | !html_block_close_dd ~ ANY)* ~ html_block_close_dd }
+
+// html_block_open_dt = { "<" ~ spnl ~ ("dt" | "DT") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_dt = { "<" ~ spnl ~ "/" ~ ("dt" | "DT") ~ spnl ~ ">" }
+// html_block_dt = { html_block_open_dt ~ (html_block_dt | !html_block_close_dt ~ ANY)* ~ html_block_close_dt }
+
+// html_block_open_frameset = { "<" ~ spnl ~ ("frameset" | "FRAMESET") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_frameset = { "<" ~ spnl ~ "/" ~ ("frameset" | "FRAMESET") ~ spnl ~ ">" }
+// html_block_frameset = { html_block_open_frameset ~ (html_block_frameset | !html_block_close_frameset ~ ANY)* ~ html_block_close_frameset }
+
+// html_block_open_li = { "<" ~ spnl ~ ("li" | "LI") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_li = { "<" ~ spnl ~ "/" ~ ("li" | "LI") ~ spnl ~ ">" }
+// html_block_li = { html_block_open_li ~ (html_block_li | !html_block_close_li ~ ANY)* ~ html_block_close_li }
+
+// html_block_open_tbody = { "<" ~ spnl ~ ("tbody" | "TBODY") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_tbody = { "<" ~ spnl ~ "/" ~ ("tbody" | "TBODY") ~ spnl ~ ">" }
+// html_block_tbody = { html_block_open_tbody ~ (html_block_tbody | !html_block_close_tbody ~ ANY)* ~ html_block_close_tbody }
+
+// html_block_open_td = { "<" ~ spnl ~ ("td" | "TD") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_td = { "<" ~ spnl ~ "/" ~ ("td" | "TD") ~ spnl ~ ">" }
+// html_block_td = { html_block_open_td ~ (html_block_td | !html_block_close_td ~ ANY)* ~ html_block_close_td }
+
+// html_block_open_tfoot = { "<" ~ spnl ~ ("tfoot" | "TFOOT") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_tfoot = { "<" ~ spnl ~ "/" ~ ("tfoot" | "TFOOT") ~ spnl ~ ">" }
+// html_block_tfoot = { html_block_open_tfoot ~ (html_block_tfoot | !html_block_close_tfoot ~ ANY)* ~ html_block_close_tfoot }
+
+// html_block_open_th = { "<" ~ spnl ~ ("th" | "TH") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_th = { "<" ~ spnl ~ "/" ~ ("th" | "TH") ~ spnl ~ ">" }
+// html_block_th = { html_block_open_th ~ (html_block_th | !html_block_close_th ~ ANY)* ~ html_block_close_th }
+
+// html_block_open_thead = { "<" ~ spnl ~ ("thead" | "THEAD") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_thead = { "<" ~ spnl ~ "/" ~ ("thead" | "THEAD") ~ spnl ~ ">" }
+// html_block_thead = { html_block_open_thead ~ (html_block_thead | !html_block_close_thead ~ ANY)* ~ html_block_close_thead }
+
+// html_block_open_tr = { "<" ~ spnl ~ ("tr" | "TR") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_tr = { "<" ~ spnl ~ "/" ~ ("tr" | "TR") ~ spnl ~ ">" }
+// html_block_tr = { html_block_open_tr ~ (html_block_tr | !html_block_close_tr ~ ANY)* ~ html_block_close_tr }
+
+// html_block_open_script = { "<" ~ spnl ~ ("script" | "SCRIPT") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_script = { "<" ~ spnl ~ "/" ~ ("script" | "SCRIPT") ~ spnl ~ ">" }
+// html_block_script = { html_block_open_script ~ (!html_block_close_script ~ ANY)* ~ html_block_close_script }
+
+// html_block_open_head = { "<" ~ spnl ~ ("head" | "HEAD") ~ spnl ~ html_attribute* ~ ">" }
+// html_block_close_head = { "<" ~ spnl ~ "/" ~ ("head" | "HEAD") ~ spnl ~ ">" }
+// html_block_head = { html_block_open_head ~ (!html_block_close_head ~ ANY)* ~ html_block_close_head }
+
+// html_block_in_tags = {
+//     html_block_address
+//     | html_block_blockquote
+//     | html_block_center
+//     | html_block_dir
+//     | html_block_div
+//     | html_block_dl
+//     | html_block_fieldset
+//     | html_block_form
+//     | html_block_h_1
+//     | html_block_h_2
+//     | html_block_h_3
+//     | html_block_h_4
+//     | html_block_h_5
+//     | html_block_h_6
+//     | html_block_menu
+//     | html_block_noframes
+//     | html_block_noscript
+//     | html_block_ol
+//     | html_block_p
+//     | html_block_pre
+//     | html_block_table
+//     | html_block_ul
+//     | html_block_dd
+//     | html_block_dt
+//     | html_block_frameset
+//     | html_block_li
+//     | html_block_tbody
+//     | html_block_td
+//     | html_block_tfoot
+//     | html_block_th
+//     | html_block_thead
+//     | html_block_tr
+//     | html_block_script
+//     | html_block_head
+// }
+
+// html_block = { &"<" ~ ( html_block_in_tags | html_comment | html_block_self_closing ) ~ blank_line+ }
+// html_block_self_closing = { "<" ~ spnl ~ html_block_type ~ spnl ~ html_attribute* ~ "/" ~ spnl ~ ">" }
+// html_block_type = {
+//     "address" | "block_quote" | "center" | "dir" | "div" | "dl" | "fieldset" | "form" | "h1" | "h2" | "h3" |
+//     "h4" | "h5" | "h6" | "hr" | "isindex" | "menu" | "noframes" | "noscript" | "ol" | "p" | "pre" | "table" |
+//     "ul" | "dd" | "dt" | "frameset" | "li" | "tbody" | "td" | "tfoot" | "th" | "thead" | "tr" | "script" |
+//     "ADDRESS" | "block_quote" | "CENTER" | "DIR" | "DIV" | "DL" | "FIELDSET" | "FORM" | "H1" | "H2" | "H3" |
+//     "H4" | "H5" | "H6" | "HR" | "ISINDEX" | "MENU" | "NOFRAMES" | "NOSCRIPT" | "OL" | "P" | "PRE" | "table" |
+//     "UL" | "DD" | "DT" | "FRAMESET" | "LI" | "TBODY" | "TD" | "TFOOT" | "TH" | "THEAD" | "TR" | "SCRIPT"
+// }
+
+// style_open = { "<" ~ spnl ~ ("style" | "STYLE") ~ spnl ~ html_attribute* ~ ">" }
+// style_close = { "<" ~ spnl ~ "/" ~ ("style" | "STYLE") ~ spnl ~ ">" }
+// in_style_tags = { style_open ~ (!style_close ~ ANY)* ~ style_close }
+// style_block = { in_style_tags ~ blank_line* }
+
+// inlines = { ( !endline ~ inline | endline ~ &inline )+ ~ endline? }
+
+// inline = {
+//     link
+//     | str
+//     | endline
+//     | ul_or_star_line
+//     | space
+//     | strong
+//     | emph
+//     | strike
+//     | note_reference
+//     | footnote
+//     //| citation
+//     | code
+//     | application_depent
+//     | raw_html
+//     | entity
+//     | escaped_char
+//     | smart
+//     | symbol
+// }
+
+// space = _{ spacechar+ }
+
+// str = { normal_char+ ~ str_chunk* }
+// str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ | apos_chunk }
+// apos_chunk = {
+//     // &{ extension(EXT_SMART) } ~
+//     "'" ~ &alphanumeric
+// }
+
+// escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "}" | "[" | "]" | "(" | ")" | "#" | "+" | "." | "!" | ">" | "<") }
+
+// entity = { hex_entity | dec_entity | char_entity }
+
+// endline = _{ line_break | terminal_endline | normal_endline }
+// normal_endline = _{ sp ~ NEWLINE ~ !(blank_line | ">" | line ~ ("="+ | "-"+) ~ NEWLINE) }
+// terminal_endline = _{ sp ~ NEWLINE ~ EOI }
+// line_break = _{ "  " ~ normal_endline }
+
+// symbol = { special_char }
+
+// application_depent = { !("`_" | "``_") ~ "`" ~ !"``" ~ quoted_ref_source ~ "`" ~ !("``" | "_") }
+
+// // This keeps the parser from getting bogged down on long strings of "*" or "_",
+// // or strings of "*" or "_" with space on each side:
+// ul_or_star_line = { ul_line | star_line }
+// star_line = { "****" ~ "*"* | spacechar ~ "*"+ ~ &spacechar }
+// ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
+
+// whitespace = { spacechar | NEWLINE }
+
+// emph = { "*" ~ !whitespace ~ (!"*" ~ inline)+ ~ "*" }
+// strong = { "**" ~ !whitespace ~ (!"**" ~ inline)+ ~ "**" }
+// strike = {
+//     //&{ extension(EXT_STRIKE) } ~
+//     "~~" ~ !whitespace ~ (!"~~" ~ inline)+ ~ "~~"
+// }
+
+// link = { reference_link | explicit_link | auto_link }
+
+// reference_link = { unquoted_ref_link_underbar | quoted_ref_link_underbar }
+// unquoted_ref_link_underbar = { unquoted_link_source ~ "_" }
+// quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ quoted_ref_source ~ ( "`" ~ !"``" ) ~ "_" }
+
+// explicit_link = { label ~ "(" ~ sp ~ source ~ spnl ~ title ~ sp ~ ")" }
+
+// source = { source_contents }
+// source_contents = { ( (!("(" | ")" | ">") ~ nonspacechar)+ | "(" ~ source_contents ~ ")" )* }
+
+// title = { ( title_single | title_double | "" ) }
+// title_single = { "'" ~ ( !("'" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
+// title_double = { "\"" ~ ( !("\"" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
+
+// auto_link = { embedded_link | auto_link_url | auto_link_email }
+// embedded_link = { "`" ~ embedded_ref_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">`_" ~ "_"? }
+// auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
+// auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
+
+// reference = { quoted_reference | unquoted_reference }
+// quoted_reference = { ".. _`" ~ !"``" ~ quoted_ref_source ~ !"``:" ~ "`: " ~ ref_src ~ blank_line }
+// unquoted_reference = { ".. _" ~ ref_source ~ ": " ~ ref_src ~ blank_line }
+
+// unquoted_link_source = { (!("_"|":"|"`") ~ nonspacechar)* }
+
+// ref_source = { ( !("_"|":"|"`") ~ (" " | nonspacechar) )* }
+// quoted_ref_source = { ( !(":"|"`") ~ (" " | nonspacechar) )* }
+// embedded_ref_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
+
+// label = {
+//     "[" ~ (
+//         !"^" //~ &{ extension(EXT_NOTES) }
+//         | &ANY //~ &{ extension(EXT_NOTES) }
+//     ) ~ (!"]" ~ inline)* ~ "]"
+// }
+
+// ref_src = { nonspacechar+ }
+
+// empty_title = { "" }
+
+// references = { ( reference | skip_block )* }
+
+// ticks_2 = { "``" ~ !"`" }
+
+// code = { ticks_2 ~ ( (!"`" ~ nonspacechar)+ | "_" | !ticks_2 ~ "`" | !(sp ~ ticks_2) ~ (spacechar | NEWLINE ~ !blank_line) )+ ~ ticks_2 }
+
+// raw_html = { (html_comment | html_block_script | html_tag) }
+
+// quoted = {
+//     "\"" ~ (!"\"" ~ ANY)* ~ "\"" |
+//     "'"  ~ (!"'"  ~ ANY)* ~ "'"
+// }
+// html_attribute = { (ASCII_ALPHANUMERIC | "-")+ ~ spnl ~ ("=" ~ spnl ~ (quoted | (!">" ~ nonspacechar)+))? ~ spnl }
+// html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
+// html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
+// spacechar = _{ " " | "\t" }
+// nonspacechar = _{ !(spacechar | NEWLINE) ~ ANY }
+// sp = _{ spacechar* }
+// spnl = _{ sp ~ (NEWLINE ~ sp)? }
+// special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
+// normal_char = _{ !( special_char | spacechar | NEWLINE ) ~ ANY }
+// alphanumeric = {
+//     ASCII_ALPHANUMERIC |
+//     "\u{200}" | "\u{201}" | "\u{202}" | "\u{203}" | "\u{204}" | "\u{205}" | "\u{206}" | "\u{207}" |
+//     "\u{210}" | "\u{211}" | "\u{212}" | "\u{213}" | "\u{214}" | "\u{215}" | "\u{216}" | "\u{217}" |
+//     "\u{220}" | "\u{221}" | "\u{222}" | "\u{223}" | "\u{224}" | "\u{225}" | "\u{226}" | "\u{227}" |
+//     "\u{230}" | "\u{231}" | "\u{232}" | "\u{233}" | "\u{234}" | "\u{235}" | "\u{236}" | "\u{237}" |
+//     "\u{240}" | "\u{241}" | "\u{242}" | "\u{243}" | "\u{244}" | "\u{245}" | "\u{246}" | "\u{247}" |
+//     "\u{250}" | "\u{251}" | "\u{252}" | "\u{253}" | "\u{254}" | "\u{255}" | "\u{256}" | "\u{257}" |
+//     "\u{260}" | "\u{261}" | "\u{262}" | "\u{263}" | "\u{264}" | "\u{265}" | "\u{266}" | "\u{267}" |
+//     "\u{270}" | "\u{271}" | "\u{272}" | "\u{273}" | "\u{274}" | "\u{275}" | "\u{276}" | "\u{277}" |
+//     "\u{300}" | "\u{301}" | "\u{302}" | "\u{303}" | "\u{304}" | "\u{305}" | "\u{306}" | "\u{307}" |
+//     "\u{310}" | "\u{311}" | "\u{312}" | "\u{313}" | "\u{314}" | "\u{315}" | "\u{316}" | "\u{317}" |
+//     "\u{320}" | "\u{321}" | "\u{322}" | "\u{323}" | "\u{324}" | "\u{325}" | "\u{326}" | "\u{327}" |
+//     "\u{330}" | "\u{331}" | "\u{332}" | "\u{333}" | "\u{334}" | "\u{335}" | "\u{336}" | "\u{337}" |
+//     "\u{340}" | "\u{341}" | "\u{342}" | "\u{343}" | "\u{344}" | "\u{345}" | "\u{346}" | "\u{347}" |
+//     "\u{350}" | "\u{351}" | "\u{352}" | "\u{353}" | "\u{354}" | "\u{355}" | "\u{356}" | "\u{357}" |
+//     "\u{360}" | "\u{361}" | "\u{362}" | "\u{363}" | "\u{364}" | "\u{365}" | "\u{366}" | "\u{367}" |
+//     "\u{370}" | "\u{371}" | "\u{372}" | "\u{373}" | "\u{374}" | "\u{375}" | "\u{376}" | "\u{377}"
+// }
+
+// hex_entity = { "&#" ~ ("X"|"x") ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ ";" }
+// dec_entity = { "&#" ~ ASCII_DIGIT+ ~ ";" }
+// char_entity = { "&" ~ ASCII_ALPHANUMERIC+ ~ ";" }
+
+// indent = _{ "\t" | "   " }
+// indented_line = { indent ~ line }
+// optionally_indented_line = { indent? ~ line }
+
+// doctest_line = { ">>> " ~ raw_line }
+
+// line = _{ raw_line }
+
+// raw_line = _{ (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
+
+// skip_block = {
+//     html_block |
+//     ( !("#" | setext_bottom | blank_line) ~ raw_line )+ ~ blank_line* |
+//     blank_line+ |
+//     raw_line
+// }
+
+// // Syntax extensions
+
+// extended_special_char = {
+//     //&{ extension(EXT_SMART) } ~
+//     ("." | "-" | "\"" | "'") |
+//     //&{ extension(EXT_NOTES) } ~
+//     "^"
+// }
+
+// smart = {
+//     //&{ extension(EXT_SMART) } ~
+//     ( ellipsis | dash | single_quoted | double_quoted | apostrophe )
+// }
+
+// apostrophe = { "'" }
+
+// ellipsis = { "..." | ". . ." }
+
+// dash = { em_dash | en_dash }
+// en_dash = { "-" ~ &ASCII_DIGIT }
+// em_dash = { "---" | "--" }
+
+// single_quote_start = { "'" ~ !(spacechar | NEWLINE) }
+// single_quote_end = { "'" ~ !alphanumeric }
+// single_quoted = { single_quote_start ~ ( !single_quote_end ~ inline )+ ~ single_quote_end }
+
+// double_quote_start = { "\"" }
+// double_quote_end = { "\"" }
+// double_quoted = { double_quote_start ~ ( !double_quote_end ~ inline )+ ~ double_quote_end }
+
+// note_reference = {
+//     //&{ extension(EXT_NOTES) } ~
+//     raw_note_reference
+// }
+
+// raw_note_reference = { "[^" ~ ( !(NEWLINE | "]") ~ ANY )+ ~ "]" }
+
+// note = {
+//     //&{ extension(EXT_NOTES) } ~
+//     raw_note_reference ~ ":" ~ sp ~
+//     raw_note_block ~
+//     ( &indent ~ raw_note_block )*
+// }
+
+// footnote = { "[#" ~ (!"]" ~ inline)+ ~ "]_" }
+
+// notes = { (note | skip_block)* }
+
+// raw_note_block = { ( !blank_line ~ optionally_indented_line )+ ~ blank_line* }
+
+// definition = {
+//     &( (!defmark ~ nonspacechar ~ raw_line) ~ blank_line? ~ defmark) ~
+//     d_list_title+ ~
+//     (def_tight | def_loose)
+// }
+// d_list_title = { !defmark ~ &nonspacechar ~ (!endline ~ inline)+ ~ sp ~ NEWLINE }
+// def_tight = { &defmark ~ list_tight }
+// def_loose = { blank_line ~ &defmark ~ list_loose }
+// defmark = { (":" | "~") ~ spacechar+ }
+// def_marker = {
+//     //&{ extension(EXT_DLISTS) } ~
+//     defmark
+// }

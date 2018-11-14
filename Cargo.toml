@@ -21,14 +21,14 @@ name = "rst"
 path = "src/bin.rs"
 
 [dependencies]
-url = '1.7.1'
+url = '1.7.2'
 bitflags = '1.0.4'
 unicode_categories = '0.1.1'
-pest = '2.0.2'
-pest_derive = '2.0.1'
+pest        = { git = 'https://github.com/flying-sheep/pest', branch = 'peek-slice' }
+pest_derive = { git = 'https://github.com/flying-sheep/pest', branch = 'peek-slice' }
 serde = '1.0.80'
-serde_json = '1.0.32'
+serde_json = "1.0.33"
 
 quicli = '0.3.1'
-structopt = '0.2.12'
+structopt = '0.2.13'
 clap = '2.32.0'
