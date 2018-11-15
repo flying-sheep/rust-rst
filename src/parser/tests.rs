@@ -73,7 +73,38 @@ fn two_targets() {
             ]),
         ]
     };
+}
 
+#[test]
+fn admonitions() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. note:: In line
+   Next line
+.. admonition::
+
+   Just next line
+
+.. danger:: Just this line
+",
+        rule: Rule::document,
+        tokens: [
+            admonition(0, 31, [
+                admonition_type(3, 7),
+                line(9, 18),
+                paragraph(21, 31, [ line(21, 31) ]),
+            ]),
+            admonition(31, 66, [
+                admonition_type(34, 44),
+                paragraph(51, 66, [ line(51, 66) ]),
+            ]),
+            admonition(67, 94, [
+                admonition_type(70, 76),
+                line(78, 94),
+            ]),
+        ]
+    };
 }
 
 #[test]

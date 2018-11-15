@@ -39,7 +39,7 @@ hanging_block = _{
 
 // Note. A block type
 
-admonition       =  { ".." ~ PUSH(" "+) ~ admonition_type ~ "::" ~ (blank_line | line) ~ admonition_body? ~ DROP }
+admonition       =  { ".." ~ PUSH(" "+) ~ admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" | "admonition" }
 admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
@@ -60,7 +60,7 @@ title = {
 
 // Bullet list. A block type.
 bullet_list =  { bullet_item ~ (PEEK[..] ~ bullet_item)* }
-bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blist_body? ~ DROP }
+bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blank_line* ~ blist_body? ~ DROP }
 blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 
