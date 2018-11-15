@@ -24,8 +24,8 @@ path = "src/bin.rs"
 url = '1.7.2'
 bitflags = '1.0.4'
 unicode_categories = '0.1.1'
-pest        = { git = 'https://github.com/flying-sheep/pest', branch = 'peek-slice' }
-pest_derive = { git = 'https://github.com/flying-sheep/pest', branch = 'peek-slice' }
+pest        = { git = 'https://github.com/flying-sheep/pest', branch = 'the-future' }
+pest_derive = { git = 'https://github.com/flying-sheep/pest', branch = 'the-future' }
 serde = '1.0.80'
 serde_json = "1.0.33"
 

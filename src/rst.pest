@@ -7,15 +7,15 @@
 
 document = _{ SOI ~ blocks }
 blocks   = _{ block ~ (blank_line* ~ block)* }
-block    = _{ PEEK_ALL ~ hanging_block }
+block    = _{ PEEK[..] ~ hanging_block }
 
 // This is the list of all block-level elements
-// They’re defined hanging, i.e. without the first PEEK_ALL
+// They’re defined hanging, i.e. without the first PEEK[..]
 // This is d
 hanging_block = _{
     admonition
     | target
-    | title_double | title_single
+    | title
     | bullet_list
     | paragraph
 // TODO: implement all those things:
@@ -27,8 +27,7 @@ hanging_block = _{
 // | admonition
 // | target
 // | horizontal_rule
-// | title_double
-// | title_single
+// | title
 // | table
 // | ordered_list
 // | bullet_list
@@ -54,17 +53,19 @@ link_target    =  { nonspacechar+ }
 
 // Title. A block type
 // TODO: a bug prevents them from being merged to a single “title” rule
-title_double = { PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP }
-title_single = { line ~ PEEK[..] ~ adornments ~ NEWLINE }
+title = {
+    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP
+    | line ~ PEEK[..] ~ adornments ~ NEWLINE
+}
 
 // Bullet list. A block type.
-bullet_list =  { bullet_item ~ (PEEK_ALL ~ bullet_item)* }
+bullet_list =  { bullet_item ~ (PEEK[..] ~ bullet_item)* }
 bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blist_body? ~ DROP }
 blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 
 // paragraph. A block type.
-paragraph =  { line ~ (PEEK_ALL ~ line)* }
+paragraph =  { line ~ (PEEK[..] ~ line)* }
 // TODO: use inlines here
 line       =  { !marker ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
 blank_line = _{ !marker ~ " "* ~ NEWLINE }
