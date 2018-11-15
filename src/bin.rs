@@ -1,4 +1,4 @@
-mod parser;
+pub mod parser;
 
 
 use pest::Parser;

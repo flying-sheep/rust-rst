@@ -6,8 +6,8 @@ use super::{RstParser, Rule};
 fn plain() {
     parses_to! {
         parser: RstParser,
-        input:  "line\n",
-        rule:   Rule::paragraph,
+        input: "line\n",
+        rule: Rule::paragraph,
         tokens: [
             paragraph(0, 5, [
                 line(0, 5)
@@ -20,11 +20,11 @@ fn plain() {
 fn title() {
     parses_to! {
         parser: RstParser,
-        input:  "\
+        input: "\
 Title
 =====
 ",
-        rule:   Rule::title,
+        rule: Rule::title,
         tokens: [
             title(0, 12, [
                 line(0, 6),
@@ -38,12 +38,12 @@ Title
 fn title_overline() {
     parses_to! {
         parser: RstParser,
-        input:  "\
+        input: "\
 -----
 Title
 -----
 ",
-        rule:   Rule::title,
+        rule: Rule::title,
         tokens: [
             title(0, 17, [
                 adornments(0, 5),
@@ -51,6 +51,29 @@ Title
             ])
         ]
     };
+}
+
+#[test]
+fn two_targets() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. _a: http://example.com
+.. _`b_`: https://example.org
+",
+        rule: Rule::document,
+        tokens: [
+            target(0, 26, [
+                target_name_uq(4, 5),
+                link_target(7, 25),
+            ]),
+            target(26, 56, [
+                target_name_qu(31, 33),
+                link_target(36, 55),
+            ]),
+        ]
+    };
+
 }
 
 #[test]
