@@ -1,13 +1,12 @@
+pub mod document_tree;
 pub mod parser;
 
 
-use pest::Parser;
 use structopt::StructOpt;
 use clap::{_clap_count_exprs, arg_enum};
 use quicli::{main, fs::read_file, prelude::Verbosity};
 
-use self::parser::{RstParser, Rule, serialize::PairsWrap};
-
+use self::parser::serialize_json;
 
 arg_enum! {
     #[derive(Debug)]
@@ -29,9 +28,8 @@ struct Cli {
 
 main!(|args: Cli, log_level: verbosity| {
     let content = read_file(args.file)?;
-    let parsed = RstParser::parse(Rule::document, &content)?;
     let stdout = std::io::stdout();
     match args.format {
-        Format::json => serde_json::to_writer(stdout, &PairsWrap(parsed))?,
+        Format::json => serialize_json(&content, stdout)?,
     }
 });
