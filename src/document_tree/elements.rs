@@ -1,4 +1,12 @@
 use url::Url;
+use serde::{
+    Serialize,
+    Serializer,
+    ser::{
+        SerializeSeq,
+        SerializeStruct,
+    },
+};
 
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
@@ -72,26 +80,60 @@ macro_rules! impl_new {(
 	}
 )}
 
+macro_rules! impl_serialize {
+	($name: ident, $extra: ident, $childtype: ident) => {
+		impl Serialize for $name {
+			fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+				let mut state = serializer.serialize_struct(stringify!($name), 3)?;
+				// TODO: common attrs
+				impl_serialize_extra!($extra);
+				impl_serialize_children!($childtype, self, serializer);
+				state.end()
+			}
+		}
+	};
+}
+
+macro_rules! impl_serialize_extra {
+	(__) => {};
+	($name: ident) => {
+		// TODO extra_attributes::$name
+	};
+}
+
+macro_rules! impl_serialize_children {
+	(__, $_: ident, $__: ident) => {};
+	($childtype: ident, $self: ident, $serializer: ident) => {
+		use serde::ser::SerializeStruct;
+		$serializer.serialize_field("children", $self.children());
+	};
+}
+
 macro_rules! impl_elem {
 	($name:ident) => {
 		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes });
 		impl_element!($name);
+		impl_serialize!($name, __, __);
 	};
 	($name:ident; +) => {
 		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
 		impl_element!($name); impl_extra!($name);
+		impl_serialize!($name, $name, __);
 	};
 	($name:ident; *) => { //same as above with no default
 		impl_new!(#[derive(Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
 		impl_element!($name); impl_extra!($name);
+		impl_serialize!($name, $name, __);
 	};
 	($name:ident, $childtype:ident) => {
 		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, children: Vec<$childtype> });
 		impl_element!($name); impl_children!($name, $childtype);
+		impl_serialize!($name, __, $childtype);
 	};
 	($name:ident, $childtype:ident; +) => {
 		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> });
 		impl_element!($name); impl_extra!($name); impl_children!($name, $childtype);
+		impl_serialize!($name, $name, $childtype);
 	};
 }
 
