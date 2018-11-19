@@ -14,6 +14,7 @@ block    = _{ PEEK[..] ~ hanging_block }
 // This is d
 hanging_block = _{
     admonition
+    | admonition_gen
     | target
     | title
     | bullet_list
@@ -37,10 +38,11 @@ hanging_block = _{
 // | plain
 }
 
-// Admonition. A block type
+// Admonition. A block type. The generic one has a title
 
-admonition       =  { ".." ~ PUSH(" "+) ~ admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
-admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" | "admonition" }
+admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~               line  ~ blank_line* ~ admonition_body? ~ DROP }
+admonition_gen   =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
+admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" }
 admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
 // Target. A block type

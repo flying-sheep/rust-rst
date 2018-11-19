@@ -54,7 +54,7 @@ impl_extra!(LiteralBlock { space: FixedSpace });
 impl_extra!(DoctestBlock { space: FixedSpace });
 impl_extra!(SubstitutionDefinition { ltrim: Option<bool>, rtrim: Option<bool> });
 impl_extra!(Comment { space: FixedSpace });
-impl_extra!(Target { refuri: Option<Url>, refid: Option<ID>, refname: Vec<NameToken>, anonymous: Option<bool> });
+impl_extra!(Target { refuri: Option<Url>, refid: Option<ID>, refname: Vec<NameToken>, anonymous: bool });
 impl_extra!(Raw { space: FixedSpace, format: Vec<NameToken> });
 impl_extra!(#[derive(Debug)] Image {
 	align: Option<AlignHV>,
@@ -85,7 +85,7 @@ impl_extra!(SubstitutionReference { refname: Vec<NameToken> });
 impl_extra!(Problematic { refid: Option<ID> });
 
 //also have non-inline versions. Inline image is no figure child, inline target has content
-impl_extra!(TargetInline { refuri: Option<Url>, refid: Option<ID>, refname: Vec<NameToken>, anonymous: Option<bool> });
+impl_extra!(TargetInline { refuri: Option<Url>, refid: Option<ID>, refname: Vec<NameToken>, anonymous: bool });
 impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 impl_extra!(#[derive(Debug)] ImageInline {
 	align: Option<AlignHV>,
