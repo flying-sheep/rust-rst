@@ -2,8 +2,9 @@ use url::Url;
 use serde::{
     Serialize,
     Serializer,
-    ser::{SerializeStruct},
+    ser::SerializeStruct,
 };
+use serde_derive::Serialize;
 
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
@@ -81,15 +82,13 @@ macro_rules! impl_serialize {
 	($name: ident, $extra: ident, $childtype: ident) => {
 		impl Serialize for $name {
 			fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-				#[allow(unused_mut)]
-				let mut state = serializer.serialize_struct(stringify!($name), 3)?;
-				// TODO: common attrs
-				impl_cond__! { $extra =>
-					
-				}
-				impl_cond__! { $childtype =>
-					state.serialize_field("children", self.children())?;
-				}
+				let mut state = serializer.serialize_struct(stringify!($name), 6)?;
+				state.serialize_field("ids", self.ids())?;
+				state.serialize_field("names", self.names())?;
+				state.serialize_field("source", &self.source().as_ref().map(|uri| uri.to_string()))?;
+				state.serialize_field("classes", self.classes())?;
+				state.serialize_field("extra", &impl_cond__!($extra ? self.extra()))?;
+				state.serialize_field("children", &impl_cond__!($childtype ? self.children()))?;
 				state.end()
 			}
 		}
@@ -97,8 +96,8 @@ macro_rules! impl_serialize {
 }
 
 macro_rules! impl_cond__ {
-	(__ => $($b:tt)*) => {};
-	($thing: ident => $($b:tt)*) => { $($b)* };
+	(__ ? $($b:tt)*) => { None::<Option<()>> };
+	($thing: ident ? $($b:tt)*) => { $($b)* };
 }
 
 macro_rules! impl_elem {
@@ -134,7 +133,7 @@ macro_rules! impl_elems { ( $( ($($args:tt)*) )* ) => (
 )}
 
 
-#[derive(Default,Debug)]
+#[derive(Default,Debug,Serialize)]
 pub struct Document { children: Vec<StructuralSubElement> }
 impl_children!(Document, StructuralSubElement);
 
