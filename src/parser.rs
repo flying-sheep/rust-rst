@@ -50,11 +50,11 @@ fn convert_ssubel(pair: pest::iterators::Pair<Rule>) -> Result<StructuralSubElem
 
 fn convert_title(pair: pest::iterators::Pair<pest_rst::Rule>) -> Title {
     let mut title: Option<&str> = None;
-    let mut adornment_char: Option<char> = None;
+    let mut _adornment_char: Option<char> = None;
     for p in pair.into_inner() {
         match p.as_rule() {
             Rule::line => title = Some(p.as_str()),
-            Rule::adornments => adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
+            Rule::adornments => _adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
             rule => panic!("Unexpected rule in title: {:?}", rule),
         };
     }

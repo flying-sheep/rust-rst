@@ -37,7 +37,7 @@ hanging_block = _{
 // | plain
 }
 
-// Note. A block type
+// Admonition. A block type
 
 admonition       =  { ".." ~ PUSH(" "+) ~ admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" | "admonition" }

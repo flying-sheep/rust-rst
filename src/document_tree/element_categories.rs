@@ -1,5 +1,7 @@
 use std::fmt::{self,Debug,Formatter};
 
+use serde::{Serialize,Serializer};
+
 use super::elements::*;
 
 pub trait HasChildren<C> {
@@ -27,6 +29,14 @@ macro_rules! synonymous_enum {( $name:ident { $( $entry:ident ),* } ) => (
 		fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
 			match *self {
 				$( $name::$entry(ref inner) => inner.fmt(fmt), )*
+			}
+		}
+	}
+	
+	impl Serialize for $name {
+		fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+			match self {
+				$( $name::$entry(ref inner) => inner.serialize(serializer), )*
 			}
 		}
 	}
