@@ -125,9 +125,14 @@ pub fn parse(source: &str) -> Result<Document, Error> {
 }
 
 
-/// only until we can serialize DocumentTrees
 pub fn serialize_json<W>(source: &str, stream: W) -> Result<(), Error> where W: Write {
     let parsed = parse(source)?;
     serde_json::to_writer(stream, &parsed)?;
+    Ok(())
+}
+
+pub fn serialize_xml<W>(source: &str, stream: W) -> Result<(), Error> where W: Write {
+    let parsed = parse(source)?;
+    serde_xml_rs::serialize(&parsed, stream)?;
     Ok(())
 }
