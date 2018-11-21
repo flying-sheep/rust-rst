@@ -1,14 +1,15 @@
-use url::Url;
-use serde::{
-    Serialize,
-    Serializer,
-    ser::SerializeStruct,
-};
 use serde_derive::Serialize;
+use url::Url;
 
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
 
+fn serialize_opt_url<S>(url_opt: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error> where S: serde::ser::Serializer {
+	match url_opt {
+		Some(ref url) => serializer.serialize_some(url.as_str()),
+		None          => serializer.serialize_none(),
+	}
+}
 
 //-----------------\\
 //Element hierarchy\\
@@ -25,10 +26,11 @@ pub trait Element {
 	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
 
-#[derive(Default,Debug)]
+#[derive(Debug,Default,Serialize)]
 pub struct CommonAttributes {
 	ids:     Vec<String>,
 	names:   Vec<String>,
+	#[serde(serialize_with = "serialize_opt_url")]
 	source:  Option<Url>,
 	classes: Vec<String>,
 	//left out dupnames
@@ -69,62 +71,56 @@ macro_rules! impl_extra { ($name:ident) => (
 
 macro_rules! impl_new {(
 	$(#[$attr:meta])*
-	pub struct $name:ident { $( $field:ident : $typ:path ),*
-}) => (
+	pub struct $name:ident { $(
+		$(#[$fattr:meta])*
+		$field:ident : $typ:path
+	),* $(,)* }
+) => (
 	$(#[$attr])*
-	pub struct $name { $( $field: $typ, )* }
+	#[derive(Debug,Serialize)]
+	pub struct $name { $( 
+		$(#[$fattr])* $field: $typ,
+	)* }
 	impl $name {
 		pub fn new( $( $field: $typ, )* ) -> $name { $name { $( $field: $field, )* } }
 	}
 )}
 
-macro_rules! impl_serialize {
-	($name: ident, $extra: ident, $children: ident) => {
-		impl Serialize for $name {
-			fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-				let mut state = serializer.serialize_struct(stringify!($name), 6)?;
-				state.serialize_field("ids", self.ids())?;
-				state.serialize_field("names", self.names())?;
-				state.serialize_field("source", &self.source().as_ref().map(|uri| uri.to_string()))?;
-				state.serialize_field("classes", self.classes())?;
-				state.serialize_field("extra",    &impl_cond!($extra    ? self.extra()   ))?;
-				state.serialize_field("children", &impl_cond!($children ? self.children()))?;
-				state.end()
-			}
-		}
-	};
-}
-
-macro_rules! impl_cond {
-	(false ? $($b:tt)*) => { () };
-	(true  ? $($b:tt)*) => { $($b)* };
-}
-
 macro_rules! impl_elem {
 	($name:ident) => {
-		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes });
+		impl_new!(#[derive(Default)] pub struct $name {
+			#[serde(flatten)] common: CommonAttributes,
+		});
 		impl_element!($name);
-		impl_serialize!($name, false, false);
 	};
 	($name:ident; +) => {
-		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
+		impl_new!(#[derive(Default)] pub struct $name {
+			#[serde(flatten)] common: CommonAttributes,
+			#[serde(flatten)] extra: extra_attributes::$name,
+		});
 		impl_element!($name); impl_extra!($name);
-		impl_serialize!($name, true, false);
 	};
 	($name:ident; *) => { //same as above with no default
-		impl_new!(#[derive(Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name });
+		impl_new!(pub struct $name {
+			#[serde(flatten)] common: CommonAttributes,
+			#[serde(flatten)] extra: extra_attributes::$name
+		});
 		impl_element!($name); impl_extra!($name);
-		impl_serialize!($name, true, false);
 	};
 	($name:ident, $childtype:ident) => {
-		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, children: Vec<$childtype> });
+		impl_new!(#[derive(Default)] pub struct $name {
+			#[serde(flatten)] common: CommonAttributes,
+			children: Vec<$childtype>,
+		});
 		impl_element!($name); impl_children!($name, $childtype);
-		impl_serialize!($name, false, true);
 	};
 	($name:ident, $childtype:ident; +) => {
-		impl_new!(#[derive(Default,Debug)] pub struct $name { common: CommonAttributes, extra: extra_attributes::$name, children: Vec<$childtype> });
+		impl_new!(#[derive(Default)] pub struct $name {
+			#[serde(flatten)] common: CommonAttributes,
+			#[serde(flatten)] extra: extra_attributes::$name,
+			children: Vec<$childtype>,
+		});
 		impl_element!($name); impl_extra!($name); impl_children!($name, $childtype);
-		impl_serialize!($name, true, true);
 	};
 }
 
