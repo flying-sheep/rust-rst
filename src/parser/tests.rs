@@ -80,28 +80,27 @@ fn admonitions() {
     parses_to! {
         parser: RstParser,
         input: "\
-.. note:: In line
-   Next line
-.. admonition::
-
+.. note::
    Just next line
+.. admonition:: In line title
+
+   Next line
 
 .. danger:: Just this line
 ",
         rule: Rule::document,
         tokens: [
-            admonition(0, 31, [
+            admonition_gen(0, 28, [
                 admonition_type(3, 7),
-                line(9, 18),
-                paragraph(21, 31, [ line(21, 31) ]),
+                paragraph(13, 28, [ line(13, 28) ]),
             ]),
-            admonition(31, 66, [
-                admonition_type(34, 44),
-                paragraph(51, 66, [ line(51, 66) ]),
+            admonition(28, 72, [
+                line(43, 58),
+                paragraph(62, 72, [ line(62, 72) ]),
             ]),
-            admonition(67, 94, [
-                admonition_type(70, 76),
-                line(78, 94),
+            admonition_gen(73, 100, [
+                admonition_type(76, 82),
+                line(84, 100),
             ]),
         ]
     };

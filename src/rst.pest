@@ -5,7 +5,7 @@
 // Section headers define the hierarchy by their delimiters,
 // and pest only has one stack that we need for indentation.
 
-document = _{ SOI ~ blocks }
+document = _{ SOI ~ blocks ~ EOI }
 blocks   = _{ block ~ (blank_line* ~ block)* }
 block    = _{ PEEK[..] ~ hanging_block }
 
@@ -40,7 +40,7 @@ hanging_block = _{
 
 // Admonition. A block type. The generic one has a title
 
-admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~               line  ~ blank_line* ~ admonition_body? ~ DROP }
+admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~ !blank_line ~ line  ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_gen   =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" }
 admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
