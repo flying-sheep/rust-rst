@@ -1,8 +1,8 @@
-================
-RuSTructuredText
-================
+=========================
+RuSTructuredText |travis|
+=========================
 
-.. image:: https://travis-ci.com/flying-sheep/rust-rst.svg?branch=master
+.. |travis| image:: https://travis-ci.com/flying-sheep/rust-rst.svg?branch=master
    :target: https://travis-ci.com/flying-sheep/rust-rst
 
 Designed around the `Docutils Document Tree`_ and the `reStructuredText specification`_, this is supposed to become a library able to convert reStructuredText and Docutils XML to both each other and HTML5.
