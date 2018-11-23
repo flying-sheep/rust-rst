@@ -25,7 +25,7 @@ macro_rules! synonymous_enum {
 		synonymous_enum!($name: $super1 { $( $entry, )* });
 		$( impl Into<$super2> for $entry {
 			fn into(self) -> $super2 {
-				$super2::$super1($super1::$name($name::$entry(self)))
+				$super2::$super1($name::$entry(self).into())
 			}
 		} )*
 	};
@@ -33,7 +33,7 @@ macro_rules! synonymous_enum {
 		synonymous_enum!($name { $( $entry, )* });
 		$( impl Into<$super> for $entry {
 			fn into(self) -> $super {
-				$super::$name($name::$entry(self))
+				$super::$name($name::$entry(self).into())
 			}
 		} )*
 	};
