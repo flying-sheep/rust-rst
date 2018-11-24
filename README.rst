@@ -5,6 +5,8 @@ RuSTructuredText |travis|
 .. |travis| image:: https://travis-ci.com/flying-sheep/rust-rst.svg?branch=master
    :target: https://travis-ci.com/flying-sheep/rust-rst
 
+.. image:: rust-rst.svg
+
 Designed around the `Docutils Document Tree`_ and the `reStructuredText specification`_, this is supposed to become a library able to convert reStructuredText and Docutils XML to both each other and HTML5.
 
 This project is dual-licensed under Apache 2.0 and MIT.
