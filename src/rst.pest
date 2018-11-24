@@ -14,7 +14,7 @@ block    = _{ PEEK[..] ~ hanging_block }
 // This is d
 hanging_block = _{
     substitution_def
-    | image
+    | image_directive
     | admonition
     | admonition_gen
     | target
@@ -38,9 +38,9 @@ hanging_block = _{
 // | plain
 }
 
-substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ line ~ inline_directive ~ DROP }
+substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ inline_dirblock ~ DROP }
 substitution_name =  { !" " ~ (!(" "|"|") ~ ANY)+ ~ (" "+ ~ (!(" "|"|") ~ ANY)+)* }
-inline_directive  =  { PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } // TODO
+inline_dirblock   = _{ image }  // TODO: | replace
 
 // Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
 // .. name:: arguments ~ :options: ~ blank_line+ ~ content
@@ -50,13 +50,14 @@ common_option = { "class" | "name" }
 
 // Image. A block type
 
-image           =  { ".." ~ PUSH(" "+) ~ ^"image::" ~ line ~ blank_line+ ~ image_opt_block? ~ DROP }
+image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
+image           =  { ^"image::" ~ line ~ image_opt_block? }
 image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ ":" ~ image_option ~ ":" ~ line } //TODO: merge with other directives?
 image_option    =  { common_option | "alt" | "height" | "width" | "scale" | "align" | "target" }
 
 // Admonition. A block type. The generic one has a title
 
-admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"          ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
+admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"         ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
 admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
