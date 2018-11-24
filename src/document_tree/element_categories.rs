@@ -20,24 +20,33 @@ pub trait HasChildren<C> {
 	}
 }
 
+macro_rules! impl_into {
+	([ $( ($subentry:tt, $supcat:tt), )+ ]) => {
+		$( impl_into!($subentry => $supcat); )+
+	};
+	( ($subcat:ident :: $entry:ident) => $supcat:ident ) => {
+		impl Into<$supcat> for $entry {
+			fn into(self) -> $supcat {
+				$supcat::$subcat($subcat::$entry(self))
+			}
+		}
+	};
+}
+
 macro_rules! synonymous_enum {
-	( $name:ident : $super1:ident + $super2:ident { $( $entry:ident ),* $(,)* } ) => {
-		synonymous_enum!($name: $super1 { $( $entry, )* });
-		$( impl Into<$super2> for $entry {
-			fn into(self) -> $super2 {
-				$super2::$super1($name::$entry(self).into())
+	( $subcat:ident : $($supcat:ident),+ ; $midcat:ident : $supsupcat:ident { $($entry:ident),+ $(,)* } ) => {
+		synonymous_enum!($subcat : $( $supcat ),+ , $midcat { $($entry,)* });
+		$( impl Into<$supsupcat> for $entry {
+			fn into(self) -> $supsupcat {
+				$supsupcat::$midcat($midcat::$subcat($subcat::$entry(self)))
 			}
-		} )*
+		} )+
 	};
-	( $name:ident : $super:ident { $( $entry:ident ),* $(,)* } ) => {
-		synonymous_enum!($name { $( $entry, )* });
-		$( impl Into<$super> for $entry {
-			fn into(self) -> $super {
-				$super::$name($name::$entry(self).into())
-			}
-		} )*
+	( $subcat:ident : $($supcat:ident),+ { $($entry:ident),+ $(,)* } ) => {
+		synonymous_enum!($subcat { $( $entry, )* });
+		cartesian!(impl_into, [ $( ($subcat::$entry) ),+ ], [ $($supcat),+ ]);
 	};
-	( $name:ident { $( $entry:ident ),* $(,)* } ) => {
+	( $name:ident { $( $entry:ident ),+ $(,)* } ) => {
 		#[derive(Serialize)]
 		pub enum $name {
 			$( $entry($entry), )*
@@ -61,8 +70,7 @@ macro_rules! synonymous_enum {
 
 synonymous_enum!(StructuralSubElement { Title, Subtitle, Decoration, Docinfo, SubStructure });
 synonymous_enum!(SubStructure: StructuralSubElement { Topic, Sidebar, Transition, Section, BodyElement });
-//TODO: also implement into: SubTopic, SubSidebar, SubBlockQuote, SubFootnote, SubFigure
-synonymous_enum!(BodyElement: SubStructure + StructuralSubElement {
+synonymous_enum!(BodyElement: SubTopic, SubSidebar, SubBlockQuote, SubFootnote, SubFigure; SubStructure: StructuralSubElement {
 	//Simple
 	Paragraph, LiteralBlock, DoctestBlock, MathBlock, Rubric, SubstitutionDefinition, Comment, Pending, Target, Raw, Image,
 	//Compound
@@ -95,7 +103,7 @@ synonymous_enum!(SubOption { OptionString, OptionArgument });
 synonymous_enum!(SubLineBlock { LineBlock, Line });
 synonymous_enum!(SubBlockQuote { Attribution, BodyElement });
 synonymous_enum!(SubFootnote { Label, BodyElement });
-synonymous_enum!(SubFigure { Image, Caption, Legend, BodyElement });
+synonymous_enum!(SubFigure { Caption, Legend, BodyElement });
 
 #[cfg(test)]
 mod test {

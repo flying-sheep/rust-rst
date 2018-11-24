@@ -1,6 +1,9 @@
 ///http://docutils.sourceforge.net/docs/ref/doctree.html
 ///serves as AST
 
+#[macro_use]
+mod macro_util;
+
 pub mod elements;
 pub mod element_categories;
 pub mod extra_attributes;
