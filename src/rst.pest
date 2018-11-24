@@ -13,7 +13,9 @@ block    = _{ PEEK[..] ~ hanging_block }
 // They’re defined hanging, i.e. without the first PEEK[..]
 // This is d
 hanging_block = _{
-    admonition
+    substitution_def
+    | image
+    | admonition
     | admonition_gen
     | target
     | title
@@ -22,7 +24,7 @@ hanging_block = _{
 // TODO: implement all those things:
 // | block_quote
 // | verbatim
-// | image
+// | image ✓
 // | code_block
 // | doctest_block
 // | admonition ✓
@@ -36,12 +38,28 @@ hanging_block = _{
 // | plain
 }
 
+substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ line ~ inline_directive ~ DROP }
+substitution_name =  { !" " ~ (!(" "|"|") ~ ANY)+ ~ (" "+ ~ (!(" "|"|") ~ ANY)+)* }
+inline_directive  =  { PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } // TODO
+
+// Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
+// .. name:: arguments ~ :options: ~ blank_line+ ~ content
+// Everything except for the first argument has to be indented
+// Directives with options can have these or specific ones:
+common_option = { "class" | "name" }
+
+// Image. A block type
+
+image           =  { ".." ~ PUSH(" "+) ~ ^"image::" ~ line ~ blank_line+ ~ image_opt_block? ~ DROP }
+image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ ":" ~ image_option ~ ":" ~ line } //TODO: merge with other directives?
+image_option    =  { common_option | "alt" | "height" | "width" | "scale" | "align" | "target" }
+
 // Admonition. A block type. The generic one has a title
 
-admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~               line  ~ blank_line* ~ admonition_body? ~ DROP }
-admonition_gen   =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
-admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" }
-admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
+admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"          ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
+admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
+admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
+admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
 // Target. A block type
 target         =  { target_qu | target_uq }
