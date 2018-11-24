@@ -40,7 +40,7 @@ hanging_block = _{
 
 // Admonition. A block type. The generic one has a title
 
-admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~ !blank_line ~ line  ~ blank_line* ~ admonition_body? ~ DROP }
+admonition       =  { ".." ~ PUSH(" "+) ~ "admonition::"          ~               line  ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_gen   =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_body? ~ DROP }
 admonition_type  =  { "attention" | "caution" | "danger" | "error" | "hint" | "important" | "note" | "tip" | "warning" }
 admonition_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
@@ -69,7 +69,7 @@ blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 // paragraph. A block type.
 paragraph =  { line ~ (PEEK[..] ~ line)* }
 // TODO: use inlines here
-line       =  { !marker ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
+line       =  { !marker ~ !blank_line ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
 blank_line = _{ !marker ~ " "* ~ NEWLINE }
 
 // character classes
