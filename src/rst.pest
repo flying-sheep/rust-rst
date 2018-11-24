@@ -25,16 +25,14 @@ hanging_block = _{
 // | image
 // | code_block
 // | doctest_block
-// | admonition
-// | target
+// | admonition ✓
+// | target ✓
 // | horizontal_rule
-// | title
+// | title ✓
 // | table
 // | ordered_list
-// | bullet_list
-// | html_block
-// | style_block
-// | paragraph
+// | bullet_list ✓
+// | paragraph ✓
 // | plain
 }
 
@@ -183,198 +181,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 //     optionally_indented_line
 // }
 
-// // Parsers for different kinds of block-level HTML content.
-// // This is repetitive due to constraints of PEG grammar.
-
-// html_block_open_address = { "<" ~ spnl ~ ("address" | "ADDRESS") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_address = { "<" ~ spnl ~ "/" ~ ("address" | "ADDRESS") ~ spnl ~ ">" }
-// html_block_address = { html_block_open_address ~ (html_block_address | !html_block_close_address ~ ANY)* ~ html_block_close_address }
-
-// html_block_open_blockquote = { "<" ~ spnl ~ ("block_quote" | "block_quote") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_blockquote = { "<" ~ spnl ~ "/" ~ ("block_quote" | "block_quote") ~ spnl ~ ">" }
-// html_block_blockquote = { html_block_open_blockquote ~ (html_block_blockquote | !html_block_close_blockquote ~ ANY)* ~ html_block_close_blockquote }
-
-// html_block_open_center = { "<" ~ spnl ~ ("center" | "CENTER") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_center = { "<" ~ spnl ~ "/" ~ ("center" | "CENTER") ~ spnl ~ ">" }
-// html_block_center = { html_block_open_center ~ (html_block_center | !html_block_close_center ~ ANY)* ~ html_block_close_center }
-
-// html_block_open_dir = { "<" ~ spnl ~ ("dir" | "DIR") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_dir = { "<" ~ spnl ~ "/" ~ ("dir" | "DIR") ~ spnl ~ ">" }
-// html_block_dir = { html_block_open_dir ~ (html_block_dir | !html_block_close_dir ~ ANY)* ~ html_block_close_dir }
-
-// html_block_open_div = { "<" ~ spnl ~ ("div" | "DIV") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_div = { "<" ~ spnl ~ "/" ~ ("div" | "DIV") ~ spnl ~ ">" }
-// html_block_div = { html_block_open_div ~ (html_block_div | !html_block_close_div ~ ANY)* ~ html_block_close_div }
-
-// html_block_open_dl = { "<" ~ spnl ~ ("dl" | "DL") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_dl = { "<" ~ spnl ~ "/" ~ ("dl" | "DL") ~ spnl ~ ">" }
-// html_block_dl = { html_block_open_dl ~ (html_block_dl | !html_block_close_dl ~ ANY)* ~ html_block_close_dl }
-
-// html_block_open_fieldset = { "<" ~ spnl ~ ("fieldset" | "FIELDSET") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_fieldset = { "<" ~ spnl ~ "/" ~ ("fieldset" | "FIELDSET") ~ spnl ~ ">" }
-// html_block_fieldset = { html_block_open_fieldset ~ (html_block_fieldset | !html_block_close_fieldset ~ ANY)* ~ html_block_close_fieldset }
-
-// html_block_open_form = { "<" ~ spnl ~ ("form" | "FORM") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_form = { "<" ~ spnl ~ "/" ~ ("form" | "FORM") ~ spnl ~ ">" }
-// html_block_form = { html_block_open_form ~ (html_block_form | !html_block_close_form ~ ANY)* ~ html_block_close_form }
-
-// html_block_open_h_1 = { "<" ~ spnl ~ ("h1" | "H1") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_1 = { "<" ~ spnl ~ "/" ~ ("h1" | "H1") ~ spnl ~ ">" }
-// html_block_h_1 = { html_block_open_h_1 ~ (html_block_h_1 | !html_block_close_h_1 ~ ANY)* ~ html_block_close_h_1 }
-
-// html_block_open_h_2 = { "<" ~ spnl ~ ("h2" | "H2") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_2 = { "<" ~ spnl ~ "/" ~ ("h2" | "H2") ~ spnl ~ ">" }
-// html_block_h_2 = { html_block_open_h_2 ~ (html_block_h_2 | !html_block_close_h_2 ~ ANY)* ~ html_block_close_h_2 }
-
-// html_block_open_h_3 = { "<" ~ spnl ~ ("h3" | "H3") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_3 = { "<" ~ spnl ~ "/" ~ ("h3" | "H3") ~ spnl ~ ">" }
-// html_block_h_3 = { html_block_open_h_3 ~ (html_block_h_3 | !html_block_close_h_3 ~ ANY)* ~ html_block_close_h_3 }
-
-// html_block_open_h_4 = { "<" ~ spnl ~ ("h4" | "H4") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_4 = { "<" ~ spnl ~ "/" ~ ("h4" | "H4") ~ spnl ~ ">" }
-// html_block_h_4 = { html_block_open_h_4 ~ (html_block_h_4 | !html_block_close_h_4 ~ ANY)* ~ html_block_close_h_4 }
-
-// html_block_open_h_5 = { "<" ~ spnl ~ ("h5" | "H5") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_5 = { "<" ~ spnl ~ "/" ~ ("h5" | "H5") ~ spnl ~ ">" }
-// html_block_h_5 = { html_block_open_h_5 ~ (html_block_h_5 | !html_block_close_h_5 ~ ANY)* ~ html_block_close_h_5 }
-
-// html_block_open_h_6 = { "<" ~ spnl ~ ("h6" | "H6") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_h_6 = { "<" ~ spnl ~ "/" ~ ("h6" | "H6") ~ spnl ~ ">" }
-// html_block_h_6 = { html_block_open_h_6 ~ (html_block_h_6 | !html_block_close_h_6 ~ ANY)* ~ html_block_close_h_6 }
-
-// html_block_open_menu = { "<" ~ spnl ~ ("menu" | "MENU") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_menu = { "<" ~ spnl ~ "/" ~ ("menu" | "MENU") ~ spnl ~ ">" }
-// html_block_menu = { html_block_open_menu ~ (html_block_menu | !html_block_close_menu ~ ANY)* ~ html_block_close_menu }
-
-// html_block_open_noframes = { "<" ~ spnl ~ ("noframes" | "NOFRAMES") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_noframes = { "<" ~ spnl ~ "/" ~ ("noframes" | "NOFRAMES") ~ spnl ~ ">" }
-// html_block_noframes = { html_block_open_noframes ~ (html_block_noframes | !html_block_close_noframes ~ ANY)* ~ html_block_close_noframes }
-
-// html_block_open_noscript = { "<" ~ spnl ~ ("noscript" | "NOSCRIPT") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_noscript = { "<" ~ spnl ~ "/" ~ ("noscript" | "NOSCRIPT") ~ spnl ~ ">" }
-// html_block_noscript = { html_block_open_noscript ~ (html_block_noscript | !html_block_close_noscript ~ ANY)* ~ html_block_close_noscript }
-
-// html_block_open_ol = { "<" ~ spnl ~ ("ol" | "OL") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_ol = { "<" ~ spnl ~ "/" ~ ("ol" | "OL") ~ spnl ~ ">" }
-// html_block_ol = { html_block_open_ol ~ (html_block_ol | !html_block_close_ol ~ ANY)* ~ html_block_close_ol }
-
-// html_block_open_p = { "<" ~ spnl ~ ("p" | "P") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_p = { "<" ~ spnl ~ "/" ~ ("p" | "P") ~ spnl ~ ">" }
-// html_block_p = { html_block_open_p ~ (html_block_p | !html_block_close_p ~ ANY)* ~ html_block_close_p }
-
-// html_block_open_pre = { "<" ~ spnl ~ ("pre" | "PRE") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_pre = { "<" ~ spnl ~ "/" ~ ("pre" | "PRE") ~ spnl ~ ">" }
-// html_block_pre = { html_block_open_pre ~ (html_block_pre | !html_block_close_pre ~ ANY)* ~ html_block_close_pre }
-
-// html_block_open_table = { "<" ~ spnl ~ ("table" | "table") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_table = { "<" ~ spnl ~ "/" ~ ("table" | "table") ~ spnl ~ ">" }
-// html_block_table = { html_block_open_table ~ (html_block_table | !html_block_close_table ~ ANY)* ~ html_block_close_table }
-
-// html_block_open_ul = { "<" ~ spnl ~ ("ul" | "UL") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_ul = { "<" ~ spnl ~ "/" ~ ("ul" | "UL") ~ spnl ~ ">" }
-// html_block_ul = { html_block_open_ul ~ (html_block_ul | !html_block_close_ul ~ ANY)* ~ html_block_close_ul }
-
-// html_block_open_dd = { "<" ~ spnl ~ ("dd" | "DD") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_dd = { "<" ~ spnl ~ "/" ~ ("dd" | "DD") ~ spnl ~ ">" }
-// html_block_dd = { html_block_open_dd ~ (html_block_dd | !html_block_close_dd ~ ANY)* ~ html_block_close_dd }
-
-// html_block_open_dt = { "<" ~ spnl ~ ("dt" | "DT") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_dt = { "<" ~ spnl ~ "/" ~ ("dt" | "DT") ~ spnl ~ ">" }
-// html_block_dt = { html_block_open_dt ~ (html_block_dt | !html_block_close_dt ~ ANY)* ~ html_block_close_dt }
-
-// html_block_open_frameset = { "<" ~ spnl ~ ("frameset" | "FRAMESET") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_frameset = { "<" ~ spnl ~ "/" ~ ("frameset" | "FRAMESET") ~ spnl ~ ">" }
-// html_block_frameset = { html_block_open_frameset ~ (html_block_frameset | !html_block_close_frameset ~ ANY)* ~ html_block_close_frameset }
-
-// html_block_open_li = { "<" ~ spnl ~ ("li" | "LI") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_li = { "<" ~ spnl ~ "/" ~ ("li" | "LI") ~ spnl ~ ">" }
-// html_block_li = { html_block_open_li ~ (html_block_li | !html_block_close_li ~ ANY)* ~ html_block_close_li }
-
-// html_block_open_tbody = { "<" ~ spnl ~ ("tbody" | "TBODY") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_tbody = { "<" ~ spnl ~ "/" ~ ("tbody" | "TBODY") ~ spnl ~ ">" }
-// html_block_tbody = { html_block_open_tbody ~ (html_block_tbody | !html_block_close_tbody ~ ANY)* ~ html_block_close_tbody }
-
-// html_block_open_td = { "<" ~ spnl ~ ("td" | "TD") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_td = { "<" ~ spnl ~ "/" ~ ("td" | "TD") ~ spnl ~ ">" }
-// html_block_td = { html_block_open_td ~ (html_block_td | !html_block_close_td ~ ANY)* ~ html_block_close_td }
-
-// html_block_open_tfoot = { "<" ~ spnl ~ ("tfoot" | "TFOOT") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_tfoot = { "<" ~ spnl ~ "/" ~ ("tfoot" | "TFOOT") ~ spnl ~ ">" }
-// html_block_tfoot = { html_block_open_tfoot ~ (html_block_tfoot | !html_block_close_tfoot ~ ANY)* ~ html_block_close_tfoot }
-
-// html_block_open_th = { "<" ~ spnl ~ ("th" | "TH") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_th = { "<" ~ spnl ~ "/" ~ ("th" | "TH") ~ spnl ~ ">" }
-// html_block_th = { html_block_open_th ~ (html_block_th | !html_block_close_th ~ ANY)* ~ html_block_close_th }
-
-// html_block_open_thead = { "<" ~ spnl ~ ("thead" | "THEAD") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_thead = { "<" ~ spnl ~ "/" ~ ("thead" | "THEAD") ~ spnl ~ ">" }
-// html_block_thead = { html_block_open_thead ~ (html_block_thead | !html_block_close_thead ~ ANY)* ~ html_block_close_thead }
-
-// html_block_open_tr = { "<" ~ spnl ~ ("tr" | "TR") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_tr = { "<" ~ spnl ~ "/" ~ ("tr" | "TR") ~ spnl ~ ">" }
-// html_block_tr = { html_block_open_tr ~ (html_block_tr | !html_block_close_tr ~ ANY)* ~ html_block_close_tr }
-
-// html_block_open_script = { "<" ~ spnl ~ ("script" | "SCRIPT") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_script = { "<" ~ spnl ~ "/" ~ ("script" | "SCRIPT") ~ spnl ~ ">" }
-// html_block_script = { html_block_open_script ~ (!html_block_close_script ~ ANY)* ~ html_block_close_script }
-
-// html_block_open_head = { "<" ~ spnl ~ ("head" | "HEAD") ~ spnl ~ html_attribute* ~ ">" }
-// html_block_close_head = { "<" ~ spnl ~ "/" ~ ("head" | "HEAD") ~ spnl ~ ">" }
-// html_block_head = { html_block_open_head ~ (!html_block_close_head ~ ANY)* ~ html_block_close_head }
-
-// html_block_in_tags = {
-//     html_block_address
-//     | html_block_blockquote
-//     | html_block_center
-//     | html_block_dir
-//     | html_block_div
-//     | html_block_dl
-//     | html_block_fieldset
-//     | html_block_form
-//     | html_block_h_1
-//     | html_block_h_2
-//     | html_block_h_3
-//     | html_block_h_4
-//     | html_block_h_5
-//     | html_block_h_6
-//     | html_block_menu
-//     | html_block_noframes
-//     | html_block_noscript
-//     | html_block_ol
-//     | html_block_p
-//     | html_block_pre
-//     | html_block_table
-//     | html_block_ul
-//     | html_block_dd
-//     | html_block_dt
-//     | html_block_frameset
-//     | html_block_li
-//     | html_block_tbody
-//     | html_block_td
-//     | html_block_tfoot
-//     | html_block_th
-//     | html_block_thead
-//     | html_block_tr
-//     | html_block_script
-//     | html_block_head
-// }
-
-// html_block = { &"<" ~ ( html_block_in_tags | html_comment | html_block_self_closing ) ~ blank_line+ }
-// html_block_self_closing = { "<" ~ spnl ~ html_block_type ~ spnl ~ html_attribute* ~ "/" ~ spnl ~ ">" }
-// html_block_type = {
-//     "address" | "block_quote" | "center" | "dir" | "div" | "dl" | "fieldset" | "form" | "h1" | "h2" | "h3" |
-//     "h4" | "h5" | "h6" | "hr" | "isindex" | "menu" | "noframes" | "noscript" | "ol" | "p" | "pre" | "table" |
-//     "ul" | "dd" | "dt" | "frameset" | "li" | "tbody" | "td" | "tfoot" | "th" | "thead" | "tr" | "script" |
-//     "ADDRESS" | "block_quote" | "CENTER" | "DIR" | "DIV" | "DL" | "FIELDSET" | "FORM" | "H1" | "H2" | "H3" |
-//     "H4" | "H5" | "H6" | "HR" | "ISINDEX" | "MENU" | "NOFRAMES" | "NOSCRIPT" | "OL" | "P" | "PRE" | "table" |
-//     "UL" | "DD" | "DT" | "FRAMESET" | "LI" | "TBODY" | "TD" | "TFOOT" | "TH" | "THEAD" | "TR" | "SCRIPT"
-// }
-
-// style_open = { "<" ~ spnl ~ ("style" | "STYLE") ~ spnl ~ html_attribute* ~ ">" }
-// style_close = { "<" ~ spnl ~ "/" ~ ("style" | "STYLE") ~ spnl ~ ">" }
-// in_style_tags = { style_open ~ (!style_close ~ ANY)* ~ style_close }
-// style_block = { in_style_tags ~ blank_line* }
-
 // inlines = { ( !endline ~ inline | endline ~ &inline )+ ~ endline? }
 
 // inline = {
@@ -391,7 +197,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 //     //| citation
 //     | code
 //     | application_depent
-//     | raw_html
 //     | entity
 //     | escaped_char
 //     | smart
@@ -473,15 +278,11 @@ marker = _{ (bullet_marker | "..") ~ " " }
 
 // code = { ticks_2 ~ ( (!"`" ~ nonspacechar)+ | "_" | !ticks_2 ~ "`" | !(sp ~ ticks_2) ~ (spacechar | NEWLINE ~ !blank_line) )+ ~ ticks_2 }
 
-// raw_html = { (html_comment | html_block_script | html_tag) }
 
 // quoted = {
 //     "\"" ~ (!"\"" ~ ANY)* ~ "\"" |
 //     "'"  ~ (!"'"  ~ ANY)* ~ "'"
 // }
-// html_attribute = { (ASCII_ALPHANUMERIC | "-")+ ~ spnl ~ ("=" ~ spnl ~ (quoted | (!">" ~ nonspacechar)+))? ~ spnl }
-// html_comment = { "<!--" ~ (!"-->" ~ ANY)* ~ "-->" }
-// html_tag = { "<" ~ spnl ~ "/"? ~ ASCII_ALPHANUMERIC+ ~ spnl ~ html_attribute* ~ "/"? ~ spnl ~ ">" }
 // spacechar = _{ " " | "\t" }
 // sp = _{ spacechar* }
 // spnl = _{ sp ~ (NEWLINE ~ sp)? }
@@ -520,13 +321,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // line = _{ raw_line }
 
 // raw_line = _{ (!NEWLINE ~ ANY)* ~ NEWLINE | (!EOI ~ ANY)+ ~ EOI }
-
-// skip_block = {
-//     html_block |
-//     ( !("#" | setext_bottom | blank_line) ~ raw_line )+ ~ blank_line* |
-//     blank_line+ |
-//     raw_line
-// }
 
 // // Syntax extensions
 
