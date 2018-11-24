@@ -21,13 +21,13 @@ pub trait HasChildren<C> {
 }
 
 macro_rules! impl_into {
-	([ $( ($subentry:tt, $supcat:tt), )+ ]) => {
-		$( impl_into!($subentry => $supcat); )+
+	([ $( (($subcat:ident :: $entry:ident), $supcat:ident), )+ ]) => {
+		$( impl_into!($subcat::$entry => $supcat); )+
 	};
-	( ($subcat:ident :: $entry:ident) => $supcat:ident ) => {
+	($subcat:ident :: $entry:ident => $supcat:ident ) => {
 		impl Into<$supcat> for $entry {
 			fn into(self) -> $supcat {
-				$supcat::$subcat($subcat::$entry(self))
+				$supcat::$subcat(self.into())
 			}
 		}
 	};
@@ -36,11 +36,7 @@ macro_rules! impl_into {
 macro_rules! synonymous_enum {
 	( $subcat:ident : $($supcat:ident),+ ; $midcat:ident : $supsupcat:ident { $($entry:ident),+ $(,)* } ) => {
 		synonymous_enum!($subcat : $( $supcat ),+ , $midcat { $($entry,)* });
-		$( impl Into<$supsupcat> for $entry {
-			fn into(self) -> $supsupcat {
-				$supsupcat::$midcat($midcat::$subcat($subcat::$entry(self)))
-			}
-		} )+
+		$( impl_into!($midcat::$entry => $supsupcat); )+
 	};
 	( $subcat:ident : $($supcat:ident),+ { $($entry:ident),+ $(,)* } ) => {
 		synonymous_enum!($subcat { $( $entry, )* });
