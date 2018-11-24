@@ -32,18 +32,11 @@ fn convert_ssubel(pair: Pair<Rule>) -> Result<c::StructuralSubElement, Error> {
     // TODO: This is just a proof of concep. Keep closely to DTD in final version!
     match pair.as_rule() {
         Rule::title => Ok(convert_title(pair).into()),
-        Rule::paragraph => Ok(to_ssub(e::Paragraph::with_children(vec![pair.as_str().into()]))),
-        Rule::target => Ok(to_ssub(convert_target(pair)?)),
-        Rule::admonition_gen => Ok(to_ssub(convert_admonition_gen(pair)?)),
+        Rule::paragraph => Ok(e::Paragraph::with_children(vec![pair.as_str().into()]).into()),
+        Rule::target => Ok(convert_target(pair)?.into()),
+        Rule::admonition_gen => Ok(convert_admonition_gen(pair)?.into()),
         rule => Err(ConversionError::UnknownRuleError { rule }.into()),
     }
-}
-
-
-fn to_ssub<E>(elem: E) -> c::StructuralSubElement where E: Into<c::BodyElement> {
-    let belm: c::BodyElement = elem.into();
-    let sstruc: c::SubStructure = belm.into();
-    sstruc.into()
 }
 
 
