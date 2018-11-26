@@ -106,6 +106,9 @@ fn admonitions() {
     };
 }
 
+// TODO: substitutions
+// TODO: images
+
 #[test]
 fn nested_lists() {
     parses_to! {

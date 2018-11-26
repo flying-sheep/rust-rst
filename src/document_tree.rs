@@ -3,6 +3,7 @@
 
 #[macro_use]
 mod macro_util;
+mod serde_util;
 
 pub mod elements;
 pub mod element_categories;

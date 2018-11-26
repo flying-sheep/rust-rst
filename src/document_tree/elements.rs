@@ -1,15 +1,10 @@
 use serde_derive::Serialize;
 use url::Url;
 
+use super::serde_util::serialize_opt_url;
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
 
-fn serialize_opt_url<S>(url_opt: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error> where S: serde::ser::Serializer {
-	match url_opt {
-		Some(ref url) => serializer.serialize_some(url.as_str()),
-		None          => serializer.serialize_none(),
-	}
-}
 
 //-----------------\\
 //Element hierarchy\\
@@ -61,9 +56,9 @@ macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 	}
 )}
 
-macro_rules! impl_extra { ($name:ident) => (
+macro_rules! impl_extra { ($name:ident $($more:tt)*) => (
 	impl ExtraAttributes<extra_attributes::$name> for $name {
-//		fn with_extra(extra: extra_attributes::$name) -> $name { $name { extra: extra, ..Default::default() } }
+		fn with_extra(extra: extra_attributes::$name) -> $name { $name { common: Default::default(), extra: extra $($more)* } }
 		fn extra    (&    self) -> &    extra_attributes::$name { &    self.extra }
 		fn extra_mut(&mut self) -> &mut extra_attributes::$name { &mut self.extra }
 	}
@@ -98,7 +93,7 @@ macro_rules! impl_elem {
 			#[serde(flatten)] common: CommonAttributes,
 			#[serde(flatten)] extra: extra_attributes::$name,
 		});
-		impl_element!($name); impl_extra!($name);
+		impl_element!($name); impl_extra!($name, ..Default::default());
 	};
 	($name:ident; *) => { //same as above with no default
 		impl_new!(pub struct $name {
@@ -120,7 +115,7 @@ macro_rules! impl_elem {
 			#[serde(flatten)] extra: extra_attributes::$name,
 			children: Vec<$childtype>,
 		});
-		impl_element!($name); impl_extra!($name); impl_children!($name, $childtype);
+		impl_element!($name); impl_extra!($name, ..Default::default()); impl_children!($name, $childtype);
 	};
 }
 

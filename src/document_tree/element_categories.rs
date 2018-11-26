@@ -117,7 +117,13 @@ mod test {
 	}
 	
 	#[test]
+	fn test_convert_even_more() {
+		let _: StructuralSubElement = Paragraph::default().into();
+	}
+	
+	#[test]
 	fn test_convert_super() {
-		let _: StructuralSubElement = BodyElement::Paragraph(Paragraph::default()).into();
+		let be: BodyElement = Paragraph::default().into();
+		let _: StructuralSubElement = be.into();
 	}
 }
