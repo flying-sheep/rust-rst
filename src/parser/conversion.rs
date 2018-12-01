@@ -1,4 +1,3 @@
-use url::Url;
 use failure::{Error,bail};
 use failure_derive::Fail;
 use pest::iterators::{Pairs,Pair};
@@ -13,12 +12,27 @@ use crate::document_tree::{
 
 use super::pest_rst::Rule;
 
+
 #[derive(Debug, Fail)]
 enum ConversionError {
     #[fail(display = "unknown rule: {:?}", rule)]
     UnknownRuleError {
         rule: Rule,
     },
+}
+
+
+trait PairExt<R> where R: pest::RuleType {
+    fn parse<T, E>(&self) -> Result<T, pest::error::Error<R>> where T: std::str::FromStr<Err = E>, E: ToString;
+}
+impl<'l, R> PairExt<R> for Pair<'l, R> where R: pest::RuleType {
+    fn parse<T, E>(&self) -> Result<T, pest::error::Error<R>> where T: std::str::FromStr<Err = E>, E: ToString {
+        self.as_str().parse().map_err(|e: T::Err| {
+            use pest::error::{Error,ErrorVariant};
+            let var: ErrorVariant<R> = ErrorVariant::CustomError { message: e.to_string() };
+            Error::new_from_span(var, self.as_span())
+        })
+    }
 }
 
 
@@ -36,6 +50,7 @@ fn convert_ssubel(pair: Pair<Rule>) -> Result<c::StructuralSubElement, Error> {
         Rule::target           => Ok(convert_target(pair)?.into()),
         Rule::substitution_def => Ok(convert_substitution_def(pair)?.into()),
         Rule::admonition_gen   => Ok(convert_admonition_gen(pair)?.into()),
+        Rule::image            => Ok(convert_image::<e::Image>(pair)?.into()),
         rule => Err(ConversionError::UnknownRuleError { rule }.into()),
     }
 }
@@ -66,7 +81,7 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
         match p.as_rule() {
             // TODO: or is it refnames?
             Rule::target_name_uq | Rule::target_name_qu => attrs.refid = Some(ID(p.as_str().to_owned())),
-            Rule::link_target => attrs.refuri = Some(Url::parse(p.as_str())?),
+            Rule::link_target => attrs.refuri = Some(p.parse()?),
             rule => panic!("Unexpected rule in target: {:?}", rule),
         }
     }
@@ -89,18 +104,18 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
     let mut pairs = pair.into_inner();
     let mut image = I::with_extra(a::Image::new(
-        pairs.next().unwrap().as_str().parse()?,  // line
+        pairs.next().unwrap().parse()?,  // line
     ));
     if let Some(opt_block) = pairs.next() {  // image_opt_block
         let options = opt_block.into_inner();
         for opt in options {
             let mut opt_iter = opt.into_inner();
             let opt_name = opt_iter.next().unwrap();
-            let opt_val = opt_iter.next().unwrap().as_str();
+            let opt_val = opt_iter.next().unwrap();
             match opt_name.as_str() {
-                "class"  => image.classes_mut().push(opt_val.to_owned()),
-                "name"   => image.names_mut().push(opt_val.to_owned()),
-                "alt"    => image.extra_mut().alt    = Some(opt_val.to_owned()),
+                "class"  => image.classes_mut().push(opt_val.as_str().to_owned()),
+                "name"   => image.names_mut().push(opt_val.as_str().to_owned()),
+                "alt"    => image.extra_mut().alt    = Some(opt_val.as_str().to_owned()),
                 "height" => image.extra_mut().height = Some(opt_val.parse()?),
                 "width"  => image.extra_mut().width  = Some(opt_val.parse()?),
                 "scale"  => image.extra_mut().scale  = Some(opt_val.parse()?),  // TODO: can end with %
