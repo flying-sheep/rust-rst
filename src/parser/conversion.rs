@@ -78,7 +78,7 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
     let name = pairs.next().unwrap().as_str();  // Rule::substitution_name
     let inner_pair = pairs.next().unwrap();
     let inner: c::TextOrInlineElement = match inner_pair.as_rule() {
-        Rule::image => convert_image_inline(inner_pair)?.into(),
+        Rule::image => convert_image::<e::ImageInline>(inner_pair)?.into(),
         rule => panic!("Unknown substitution rule {:?}", rule),
     };
     let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner.into()]);
@@ -86,9 +86,9 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
     Ok(subst_def)
 }
 
-fn convert_image_inline(pair: Pair<Rule>) -> Result<e::ImageInline, Error> {
+fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
     let mut pairs = pair.into_inner();
-    let mut image = e::ImageInline::with_extra(a::ImageInline::new(
+    let mut image = I::with_extra(a::Image::new(
         pairs.next().unwrap().as_str().parse()?,  // line
     ));
     if let Some(opt_block) = pairs.next() {  // image_opt_block

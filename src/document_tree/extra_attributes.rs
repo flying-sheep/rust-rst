@@ -85,19 +85,10 @@ impl_extra!(TargetInline {
 	anonymous: bool,
 });
 impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
-impl_extra!(#[derive(Debug,Serialize)] ImageInline {
-	#[serde(serialize_with = "serialize_url")]
-	uri: Url,
-	align: Option<AlignHV>,
-	alt: Option<String>,
-	height: Option<Measure>,
-	width: Option<Measure>,
-	scale: Option<u8>,
-	#[serde(serialize_with = "serialize_opt_url")]
-	target: Option<Url>,  // Not part of the DTD but a valid argument
-});
-impl ImageInline {
-	pub fn new(uri: Url) -> ImageInline { ImageInline {
+pub type ImageInline = Image;
+
+impl Image {
+	pub fn new(uri: Url) -> Image { Image {
 		uri: uri,
 		align: None,
 		alt: None,
