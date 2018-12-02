@@ -7,6 +7,7 @@ use serde_derive::Serialize;
 
 
 #[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum Target {
     #[serde(serialize_with = "serialize_url")]
     Url(Url),
@@ -31,7 +32,7 @@ impl FromStr for Target {
 	fn from_str(input: &str) -> Result<Self, Self::Err> {
         Ok(match Url::parse(input) {
             Ok(url) => url.into(),
-            Err(_) => PathBuf::from(input).into(),
+            Err(_) => PathBuf::from(input.trim()).into(),
         })
     }
 }
