@@ -1,6 +1,7 @@
 pub mod token;
 pub mod conversion;
 mod pest_rst;
+mod pair_ext_parse;
 #[cfg(test)]
 pub mod tests;
 
