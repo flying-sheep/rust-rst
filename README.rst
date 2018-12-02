@@ -7,7 +7,8 @@ RuSTructuredText |travis|
 
 .. image:: rust-rst.svg
 
-Designed around the `Docutils Document Tree`_ and the `reStructuredText specification`_, this is supposed to become a library able to convert reStructuredText and Docutils XML to both each other and HTML5.
+Designed around the `Docutils Document Tree`_ and the `reStructuredText specification`_,
+this is supposed to become a library able to convert reStructuredText and Docutils XML to both each other and HTML5.
 
 This project is dual-licensed under Apache 2.0 and MIT.
 
@@ -15,11 +16,13 @@ This project is dual-licensed under Apache 2.0 and MIT.
 .. _reStructuredText specification: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 
 .. note::
-   If you are looking for the requirements tracking tool rst (Requirements, Specifications and Tests), have a look at the rst_app package instead.
+   If you are looking for the requirements tracking tool rst (Requirements, Specifications and Tests),
+   have a look at the rst_app package instead.
 
 Inspiration
 -----------
-The design was inspired by the comrak_ Markdown parser library. The rST grammar was inspired by peg-rst_
+The design was inspired by the comrak_ Markdown parser library.
+The rST grammar was inspired by peg-rst_
 
 .. _comrak: https://github.com/kivikakk/comrak
 .. _peg-rst: https://github.com/hhatto/peg-rst
