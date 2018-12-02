@@ -1,7 +1,6 @@
 use serde_derive::Serialize;
-use url::Url;
 
-use super::serde_util::serialize_opt_url;
+use crate::target;
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
 
@@ -15,8 +14,8 @@ pub trait Element {
 	fn     ids_mut(&mut self) -> &mut Vec<String>;
 	fn   names    (&    self) -> &    Vec<String>;
 	fn   names_mut(&mut self) -> &mut Vec<String>;
-	fn  source    (&    self) -> &    Option<Url>;
-	fn  source_mut(&mut self) -> &mut Option<Url>;
+	fn  source    (&    self) -> &    Option<target::Target>;
+	fn  source_mut(&mut self) -> &mut Option<target::Target>;
 	fn classes    (&    self) -> &    Vec<String>;
 	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
@@ -25,8 +24,7 @@ pub trait Element {
 pub struct CommonAttributes {
 	ids:     Vec<String>,
 	names:   Vec<String>,
-	#[serde(serialize_with = "serialize_opt_url")]
-	source:  Option<Url>,
+	source:  Option<target::Target>,
 	classes: Vec<String>,
 	//left out dupnames
 }
@@ -41,8 +39,8 @@ macro_rules! impl_element { ($name:ident) => (
 		fn     ids_mut(&mut self) -> &mut Vec<String> { &mut self.common.ids     }
 		fn   names    (&    self) -> &    Vec<String> { &    self.common.names   }
 		fn   names_mut(&mut self) -> &mut Vec<String> { &mut self.common.names   }
-		fn  source    (&    self) -> &    Option<Url> { &    self.common.source  }
-		fn  source_mut(&mut self) -> &mut Option<Url> { &mut self.common.source  }
+		fn  source    (&    self) -> &    Option<target::Target> { &    self.common.source  }
+		fn  source_mut(&mut self) -> &mut Option<target::Target> { &mut self.common.source  }
 		fn classes    (&    self) -> &    Vec<String> { &    self.common.classes }
 		fn classes_mut(&mut self) -> &mut Vec<String> { &mut self.common.classes }
 	}
@@ -251,7 +249,7 @@ impl_elems!(
 );
 
 impl<'a> From<&'a str> for TextOrInlineElement {
-	fn from(s: &'a str) -> TextOrInlineElement {
+	fn from(s: &'a str) -> Self {
 		s.to_owned().into()
 	}
 }

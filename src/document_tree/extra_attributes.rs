@@ -1,8 +1,6 @@
-use url::Url;
-
 use serde_derive::Serialize;
 
-use super::serde_util::{serialize_url,serialize_opt_url};
+use crate::target;
 use super::attribute_types::{FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
@@ -32,23 +30,20 @@ impl_extra!(DoctestBlock { space: FixedSpace });
 impl_extra!(SubstitutionDefinition { ltrim: Option<bool>, rtrim: Option<bool> });
 impl_extra!(Comment { space: FixedSpace });
 impl_extra!(Target {
-	#[serde(serialize_with = "serialize_opt_url")]
-	refuri: Option<Url>,
+	refuri: Option<target::Target>,
 	refid: Option<ID>,
 	refname: Vec<NameToken>,
 	anonymous: bool,
 });
 impl_extra!(Raw { space: FixedSpace, format: Vec<NameToken> });
 impl_extra!(#[derive(Debug,Serialize)] Image {
-	#[serde(serialize_with = "serialize_url")]
-	uri: Url,
+	uri: target::Target,
 	align: Option<AlignHV>,
 	alt: Option<String>,
 	height: Option<Measure>,
 	width: Option<Measure>,
 	scale: Option<u8>,
-	#[serde(serialize_with = "serialize_opt_url")]
-	target: Option<Url>,  // Not part of the DTD but a valid argument
+	target: Option<target::Target>,  // Not part of the DTD but a valid argument
 });
 
 //bools usually are XML yesorno. “auto” however either exists and is set to something random like “1” or doesn’t exist
@@ -66,8 +61,7 @@ impl_extra!(OptionArgument { delimiter: Option<String> });
 
 impl_extra!(Reference {
 	name: Option<String>,
-	#[serde(serialize_with = "serialize_opt_url")]
-	refuri: Option<Url>,
+	refuri: Option<target::Target>,
 	refid: Option<ID>,
 	refname: Vec<NameToken>,
 });
@@ -78,8 +72,7 @@ impl_extra!(Problematic { refid: Option<ID> });
 
 //also have non-inline versions. Inline image is no figure child, inline target has content
 impl_extra!(TargetInline {
-	#[serde(serialize_with = "serialize_opt_url")]
-	refuri: Option<Url>,
+	refuri: Option<target::Target>,
 	refid: Option<ID>,
 	refname: Vec<NameToken>,
 	anonymous: bool,
@@ -88,7 +81,7 @@ impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 pub type ImageInline = Image;
 
 impl Image {
-	pub fn new(uri: Url) -> Image { Image {
+	pub fn new(uri: target::Target) -> Image { Image {
 		uri: uri,
 		align: None,
 		alt: None,

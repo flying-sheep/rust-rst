@@ -37,22 +37,25 @@ impl<'l, R> PairExt<R> for Pair<'l, R> where R: pest::RuleType {
 
 
 pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
-    let structural_elems = pairs.map(convert_ssubel).collect::<Result<_,_>>()?;
+    let structural_elems = pairs.map(convert_ssubel)
+        .filter_map(|elem| match elem { Ok(Some(e)) => Some(Ok(e)), Err(e) => Some(Err(e)), Ok(None) => None })
+        .collect::<Result<_,_>>()?;
     Ok(e::Document::with_children(structural_elems))
 }
 
 
-fn convert_ssubel(pair: Pair<Rule>) -> Result<c::StructuralSubElement, Error> {
+fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<c::StructuralSubElement>, Error> {
     // TODO: This is just a proof of concep. Keep closely to DTD in final version!
-    match pair.as_rule() {
-        Rule::title            => Ok(convert_title(pair).into()),
-        Rule::paragraph        => Ok(e::Paragraph::with_children(vec![pair.as_str().into()]).into()),
-        Rule::target           => Ok(convert_target(pair)?.into()),
-        Rule::substitution_def => Ok(convert_substitution_def(pair)?.into()),
-        Rule::admonition_gen   => Ok(convert_admonition_gen(pair)?.into()),
-        Rule::image            => Ok(convert_image::<e::Image>(pair)?.into()),
-        rule => Err(ConversionError::UnknownRuleError { rule }.into()),
-    }
+    Ok(Some(match pair.as_rule() {
+        Rule::title            => convert_title(pair).into(),
+        Rule::paragraph        => e::Paragraph::with_children(vec![pair.as_str().into()]).into(),
+        Rule::target           => convert_target(pair)?.into(),
+        Rule::substitution_def => convert_substitution_def(pair)?.into(),
+        Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
+        Rule::image            => convert_image::<e::Image>(pair)?.into(),
+        Rule::EOI              => return Ok(None),
+        rule => return Err(ConversionError::UnknownRuleError { rule }.into()),
+    }))
 }
 
 
