@@ -1,0 +1,41 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable on README",
+            "cargo": {
+                "args": [ "build", "--bin=rst", "--package=rst" ],
+                "filter": { "kind": "bin" }
+            },
+            "args": [ "README.rst" ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in lib",
+            "cargo": {
+                "args": [ "test", "--no-run", "--lib", "--package=rst" ],
+                "filter": { "kind": "lib" }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in bin",
+            "cargo": {
+                "args": [ "test", "--no-run", "--bin=rst", "--package=rst" ],
+                "filter": { "kind": "bin" }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

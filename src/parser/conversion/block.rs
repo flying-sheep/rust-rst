@@ -13,20 +13,20 @@ use crate::parser::{
     pest_rst::Rule,
     pair_ext_parse::PairExt,
 };
-use super::ConversionError;
+use super::inline::convert_inline;
 
 
 pub fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<c::StructuralSubElement>, Error> {
     // TODO: This is just a proof of concep. Keep closely to DTD in final version!
     Ok(Some(match pair.as_rule() {
         Rule::title            => convert_title(pair).into(),
-        Rule::paragraph        => e::Paragraph::with_children(vec![pair.as_str().into()]).into(),
+        Rule::paragraph        => convert_paragraph(pair)?.into(),
         Rule::target           => convert_target(pair)?.into(),
         Rule::substitution_def => convert_substitution_def(pair)?.into(),
         Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
         Rule::image            => convert_image::<e::Image>(pair)?.into(),
         Rule::EOI              => return Ok(None),
-        rule => return Err(ConversionError::UnknownRuleError { rule }.into()),
+        rule => panic!("unknown rule {:?}", rule),
     }))
 }
 
@@ -46,6 +46,13 @@ fn convert_title(pair: Pair<Rule>) -> e::Title {
         title.expect("No text in title").into()
     ])
 }
+
+
+fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph, Error> {
+    let children = pair.into_inner().map(convert_inline).collect::<Result<_,_>>()?;
+    Ok(e::Paragraph::with_children(children))
+}
+
 
 fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     let mut attrs = a::Target {

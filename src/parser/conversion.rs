@@ -1,7 +1,7 @@
 mod block;
+mod inline;
 
 use failure::Error;
-use failure_derive::Fail;
 use pest::iterators::Pairs;
 
 use crate::document_tree::{
@@ -10,15 +10,6 @@ use crate::document_tree::{
 };
 
 use super::pest_rst::Rule;
-
-
-#[derive(Debug, Fail)]
-enum ConversionError {
-    #[fail(display = "unknown rule: {:?}", rule)]
-    UnknownRuleError {
-        rule: Rule,
-    },
-}
 
 
 pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {

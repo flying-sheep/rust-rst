@@ -63,7 +63,7 @@ bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blank_line* ~ blist_body? ~
 blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 // paragraph. A block type.
-paragraph =  { line ~ (PEEK[..] ~ line)* }
+paragraph =  { inlines }
 
 
 /* Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
@@ -89,9 +89,61 @@ admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_lin
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
 admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
-// TODO: use inlines here
-line       =  { !marker ~ !blank_line ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
-blank_line = _{ !marker ~ " "* ~ NEWLINE }
+
+
+/*
+ * inlines
+ */
+
+
+line       =  { !marker ~ inline+ ~ NEWLINE }
+blank_line = _{ !marker ~ !inline ~ " "* ~ NEWLINE }
+
+inlines = _{ !marker ~ inline+ ~ (NEWLINE ~ PEEK[..] ~ !marker ~ inline+ ~ NEWLINE)* }
+inline  = _{
+    reference
+    | str
+//     link ✓
+//     | str ✓
+//     | endline
+//     | ul_or_star_line
+//     | space
+//     | strong
+//     | emph
+//     | strike
+//     | note_reference
+//     | footnote
+//     //| citation
+//     | code
+//     | application_depent
+//     | entity
+//     | escaped_char
+//     | smart
+//     | symbol
+}
+
+str = { (!(NEWLINE | reference) ~ ANY)+ }
+
+// inline links
+reference = { reference_target | reference_explicit | reference_auto }
+
+reference_target = { reference_target_uq ~ "_" | reference_target_qu }
+reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)* }
+reference_target_qu = _{ ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ target_name_qu ~ ( "`" ~ !"``" ) ~ "_" }
+
+reference_explicit = { reference_label ~ "(" ~ " "* ~ reference_source ~ " "* ~ (NEWLINE ~ PEEK[..])? ~ reference_title ~ " "* ~ ")" }
+reference_label = { "[" ~ !"^" ~ (!"]" ~ inline)* ~ "]" }
+reference_source          =  { reference_source_contents }
+reference_source_contents = _{ ( (!("("|")"|">") ~ nonspacechar)+ | "(" ~ reference_source_contents ~ ")" )* }
+reference_title        = { ( reference_title_single | reference_title_double | "" ) }
+reference_title_single = { "'"  ~ ( !("'"  ~ " "+ ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
+reference_title_double = { "\"" ~ ( !("\"" ~ " "+ ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
+
+reference_auto = { reference_embedded | reference_auto_url | reference_auto_email }
+reference_embedded = { "`" ~ reference_embedded_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ ~ ">`_" ~ "_"? }
+reference_embedded_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
+reference_auto_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
+reference_auto_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
 
 
 /*
@@ -206,36 +258,12 @@ marker = _{ (bullet_marker | "..") ~ " " }
 //     optionally_indented_line
 // }
 
-// inlines = { ( !endline ~ inline | endline ~ &inline )+ ~ endline? }
 
-// inline = {
-//     link
-//     | str
-//     | endline
-//     | ul_or_star_line
-//     | space
-//     | strong
-//     | emph
-//     | strike
-//     | note_reference
-//     | footnote
-//     //| citation
-//     | code
-//     | application_depent
-//     | entity
-//     | escaped_char
-//     | smart
-//     | symbol
-// }
 
 // space = _{ spacechar+ }
 
 // str = { normal_char+ ~ str_chunk* }
-// str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ | apos_chunk }
-// apos_chunk = {
-//     // &{ extension(EXT_SMART) } ~
-//     "'" ~ &alphanumeric
-// }
+// str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ }
 
 // escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "}" | "[" | "]" | "(" | ")" | "#" | "+" | "." | "!" | ">" | "<") }
 
@@ -265,36 +293,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 //     "~~" ~ !whitespace ~ (!"~~" ~ inline)+ ~ "~~"
 // }
 
-// link = { reference_link | explicit_link | auto_link }
 
-// reference_link = { unquoted_ref_link_underbar | quoted_ref_link_underbar }
-// unquoted_ref_link_underbar = { unquoted_link_source ~ "_" }
-// quoted_ref_link_underbar = { ( !("`_" | "``_") ~ "`" ~ !"``" ) ~ target_name_qu ~ ( "`" ~ !"``" ) ~ "_" }
-
-// explicit_link = { label ~ "(" ~ sp ~ source ~ spnl ~ title ~ sp ~ ")" }
-
-// source = { source_contents }
-// source_contents = { ( (!("(" | ")" | ">") ~ nonspacechar)+ | "(" ~ source_contents ~ ")" )* }
-
-// title = { ( title_single | title_double | "" ) }
-// title_single = { "'" ~ ( !("'" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
-// title_double = { "\"" ~ ( !("\"" ~ sp ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
-
-// auto_link = { embedded_link | auto_link_url | auto_link_email }
-// embedded_link = { "`" ~ embedded_ref_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">`_" ~ "_"? }
-// auto_link_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
-// auto_link_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
-
-// unquoted_link_source = { (!("_"|":"|"`") ~ nonspacechar)* }
-
-// embedded_ref_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
-
-// label = {
-//     "[" ~ (
-//         !"^" //~ &{ extension(EXT_NOTES) }
-//         | &ANY //~ &{ extension(EXT_NOTES) }
-//     ) ~ (!"]" ~ inline)* ~ "]"
-// }
 
 
 // empty_title = { "" }
