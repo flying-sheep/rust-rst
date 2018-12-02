@@ -40,8 +40,11 @@ impl_extra!(DoctestBlock { space: FixedSpace });
 impl_extra!(SubstitutionDefinition { ltrim: bool, rtrim: bool });
 impl_extra!(Comment { space: FixedSpace });
 impl_extra!(Target {
+	/// External reference to a URI/URL
 	refuri: Option<target::Target>,
+	/// References to ids attributes in other elements
 	refid: Option<ID>,
+	/// Internal reference to the names attribute of another element. May resolve to either an internal or external reference.
 	refname: Vec<NameToken>,
 	anonymous: bool,
 });
@@ -71,9 +74,12 @@ impl_extra!(Table {}); //TODO
 impl_extra!(OptionArgument { delimiter: Option<String> });
 
 impl_extra!(Reference {
-	name: Option<String>,
+	name: Option<NameToken>,  //TODO: is CDATA in the DTD, so maybe no nametoken?
+	/// External reference to a URI/URL
 	refuri: Option<target::Target>,
+	/// References to ids attributes in other elements
 	refid: Option<ID>,
+	/// Internal reference to the names attribute of another element
 	refname: Vec<NameToken>,
 });
 impl_extra!(FootnoteReference { refid: Option<ID>, refname: Vec<NameToken>, auto: bool });
@@ -83,8 +89,11 @@ impl_extra!(Problematic { refid: Option<ID> });
 
 //also have non-inline versions. Inline image is no figure child, inline target has content
 impl_extra!(TargetInline {
+	/// External reference to a URI/URL
 	refuri: Option<target::Target>,
+	/// References to ids attributes in other elements
 	refid: Option<ID>,
+	/// Internal reference to the names attribute of another element. May resolve to either an internal or external reference.
 	refname: Vec<NameToken>,
 	anonymous: bool,
 });

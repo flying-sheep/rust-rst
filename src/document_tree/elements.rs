@@ -1,6 +1,7 @@
 use serde_derive::Serialize;
 
 use crate::target;
+use super::attribute_types::{ID,NameToken};
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
 
@@ -10,10 +11,15 @@ use super::element_categories::*;
 //-----------------\\
 
 pub trait Element {
-	fn     ids    (&    self) -> &    Vec<String>;
-	fn     ids_mut(&mut self) -> &mut Vec<String>;
-	fn   names    (&    self) -> &    Vec<String>;
-	fn   names_mut(&mut self) -> &mut Vec<String>;
+	/// A list containing one or more unique identifier keys
+	fn     ids    (&    self) -> &    Vec<ID>;
+	fn     ids_mut(&mut self) -> &mut Vec<ID>;
+	/// a list containing the names of an element, typically originating from the element's title or content.
+	/// Each name in names must be unique; if there are name conflicts (two or more elements want to the same name),
+	/// the contents will be transferred to the dupnames attribute on the duplicate elements.
+	/// An element may have at most one of the names or dupnames attributes, but not both.
+	fn   names    (&    self) -> &    Vec<NameToken>;
+	fn   names_mut(&mut self) -> &mut Vec<NameToken>;
 	fn  source    (&    self) -> &    Option<target::Target>;
 	fn  source_mut(&mut self) -> &mut Option<target::Target>;
 	fn classes    (&    self) -> &    Vec<String>;
@@ -22,11 +28,11 @@ pub trait Element {
 
 #[derive(Debug,Default,Serialize)]
 pub struct CommonAttributes {
-	ids:     Vec<String>,
-	names:   Vec<String>,
+	ids:     Vec<ID>,
+	names:   Vec<NameToken>,
 	source:  Option<target::Target>,
 	classes: Vec<String>,
-	//left out dupnames
+	//TODO: dupnames
 }
 
 //----\\
@@ -35,10 +41,10 @@ pub struct CommonAttributes {
 
 macro_rules! impl_element { ($name:ident) => (
 	impl Element for $name {
-		fn     ids    (&    self) -> &    Vec<String> { &    self.common.ids     }
-		fn     ids_mut(&mut self) -> &mut Vec<String> { &mut self.common.ids     }
-		fn   names    (&    self) -> &    Vec<String> { &    self.common.names   }
-		fn   names_mut(&mut self) -> &mut Vec<String> { &mut self.common.names   }
+		fn     ids    (&    self) -> &    Vec<ID>        { &    self.common.ids     }
+		fn     ids_mut(&mut self) -> &mut Vec<ID>        { &mut self.common.ids     }
+		fn   names    (&    self) -> &    Vec<NameToken> { &    self.common.names   }
+		fn   names_mut(&mut self) -> &mut Vec<NameToken> { &mut self.common.names   }
 		fn  source    (&    self) -> &    Option<target::Target> { &    self.common.source  }
 		fn  source_mut(&mut self) -> &mut Option<target::Target> { &mut self.common.source  }
 		fn classes    (&    self) -> &    Vec<String> { &    self.common.classes }

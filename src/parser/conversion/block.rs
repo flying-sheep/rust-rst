@@ -5,7 +5,7 @@ use crate::document_tree::{
     Element,HasChildren,ExtraAttributes,
     elements as e,
     element_categories as c,
-    attribute_types::ID,
+    attribute_types::{ID,NameToken},
     extra_attributes as a,
 };
 
@@ -61,8 +61,11 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     };
     for p in pair.into_inner() {
         match p.as_rule() {
-            // TODO: or is it refnames?
-            Rule::target_name_uq | Rule::target_name_qu => attrs.refid = Some(ID(p.as_str().to_owned())),
+            Rule::target_name_uq | Rule::target_name_qu => {
+                //TODO: abstract
+                attrs.refid = Some(       ID(p.as_str().to_owned().replace(' ', "-")));
+                attrs.refname.push(NameToken(p.as_str().to_owned()));
+            },
             Rule::link_target => attrs.refuri = Some(p.parse()?),
             rule => panic!("Unexpected rule in target: {:?}", rule),
         }
@@ -79,7 +82,7 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
         rule => panic!("Unknown substitution rule {:?}", rule),
     };
     let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner.into()]);
-    subst_def.names_mut().push(name.to_owned());
+    subst_def.names_mut().push(NameToken(name.to_owned()));
     Ok(subst_def)
 }
 
@@ -96,7 +99,7 @@ fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + Ext
             let opt_val = opt_iter.next().unwrap();
             match opt_name.as_str() {
                 "class"  => image.classes_mut().push(opt_val.as_str().to_owned()),
-                "name"   => image.names_mut().push(opt_val.as_str().to_owned()),
+                "name"   => image.names_mut().push(NameToken(opt_val.as_str().to_owned())),
                 "alt"    => image.extra_mut().alt    = Some(opt_val.as_str().to_owned()),
                 "height" => image.extra_mut().height = Some(opt_val.parse()?),
                 "width"  => image.extra_mut().width  = Some(opt_val.parse()?),

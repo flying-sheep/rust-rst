@@ -5,7 +5,7 @@ use crate::document_tree::{
     ExtraAttributes,
     elements as e,
     element_categories as c,
-//    attribute_types::ID,
+    attribute_types::{ID,NameToken},
     extra_attributes as a,
 };
 
@@ -32,7 +32,9 @@ fn convert_reference(pair: Pair<Rule>) -> Result<e::Reference, Error> {
     match concrete.as_rule() {
         Rule::reference_target => {
             let rt_inner = concrete.into_inner().next().unwrap(); // reference_target_uq or target_name_qu
-            name = Some(rt_inner.as_str().to_owned()); // TODO: is this right?
+            //TODO: abstract
+            id   = Some(       ID(rt_inner.as_str().to_owned().replace(' ', "-")));
+            name = Some(NameToken(rt_inner.as_str().to_owned()));
         },
         Rule::reference_explicit => unimplemented!("explicit reference"),
         Rule::reference_auto => unimplemented!("auto reference"),
