@@ -38,7 +38,7 @@ fn convert_title(pair: Pair<Rule>) -> e::Title {
         match p.as_rule() {
             Rule::line => title = Some(p.as_str()),
             Rule::adornments => _adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
-            rule => panic!("Unexpected rule in title: {:?}", rule),
+            rule => unimplemented!("Unexpected rule in title: {:?}", rule),
         };
     }
     // TODO adornment char
