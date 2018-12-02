@@ -38,29 +38,10 @@ hanging_block = _{
 // | plain
 }
 
+// Substitution definition. A block type
 substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ inline_dirblock ~ DROP }
 substitution_name =  { !" " ~ (!(" "|"|") ~ ANY)+ ~ (" "+ ~ (!(" "|"|") ~ ANY)+)* }
 inline_dirblock   = _{ image }  // TODO: | replace
-
-// Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
-// .. name:: arguments ~ :options: ~ blank_line+ ~ content
-// Everything except for the first argument has to be indented
-// Directives with options can have these or specific ones:
-common_option = { "class" | "name" }
-
-// Image. A block type
-
-image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
-image           =  { ^"image::" ~ line ~ image_opt_block? }
-image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ ":" ~ image_option ~ ":" ~ line } //TODO: merge with other directives?
-image_option    =  { common_option | "alt" | "height" | "width" | "scale" | "align" | "target" }
-
-// Admonition. A block type. The generic one has a title
-
-admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"         ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
-admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
-admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
-admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
 // Target. A block type
 target         =  { target_qu | target_uq }
@@ -71,7 +52,6 @@ target_name_qu =  { ( !(    ":"|"`") ~ !NEWLINE ~ ANY )* }
 link_target    =  { nonspacechar+ }
 
 // Title. A block type
-// TODO: a bug prevents them from being merged to a single “title” rule
 title = {
     PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP
     | line ~ PEEK[..] ~ adornments ~ NEWLINE
@@ -82,14 +62,43 @@ bullet_list =  { bullet_item ~ (PEEK[..] ~ bullet_item)* }
 bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blank_line* ~ blist_body? ~ DROP }
 blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
-
 // paragraph. A block type.
 paragraph =  { line ~ (PEEK[..] ~ line)* }
+
+
+/* Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
+ * .. name:: arguments ~ :options: ~ blank_line+ ~ content
+ * Everything except for the first argument has to be indented
+ */
+
+
+// Directives with options can have these or specific ones:
+common_option = { "class" | "name" }
+
+// Image. A directive
+
+image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
+image           =  { ^"image::" ~ line ~ image_opt_block? }
+image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ ":" ~ image_option ~ ":" ~ line } //TODO: merge with other directives?
+image_option    =  { common_option | "alt" | "height" | "width" | "scale" | "align" | "target" }
+
+// Admonition. A directive. The generic one has a title
+
+admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"         ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
+admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
+admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
+admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
+
 // TODO: use inlines here
 line       =  { !marker ~ !blank_line ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
 blank_line = _{ !marker ~ " "* ~ NEWLINE }
 
-// character classes
+
+/*
+ * character classes
+ */
+
+
 bullet_marker = _{ "+" | "*" | "-" }
 adornments = {
     // recommended
@@ -105,22 +114,19 @@ adornments = {
 }
 nonspacechar = _{ !(" " | NEWLINE) ~ ANY }
 
-// lookaheads. do not use in another position
+
+/*
+ * lookaheads. do not use in another position
+ */
+
+
 marker = _{ (bullet_marker | "..") ~ " " }
 
 
 
+//#################################################################################
 
 
-
-// image = {
-//     ".. image:: " ~ source ~ blank_line ~
-//     (
-//         (sp ~ ":alt:" ~ sp ~ target_name_uq ~ blank_line) |
-//         (sp ~ ":target:" ~ sp ~ source ~ blank_line) |
-//         (sp ~ ":align:" ~ sp ~ source ~ blank_line)
-//     )*
-// }
 
 // code_block = {
 //     ".. code" ~ "-block"? ~ ":: " ~ source ~ blank_line ~
