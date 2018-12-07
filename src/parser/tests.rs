@@ -108,8 +108,8 @@ fn admonitions() {
     };
 }
 
-// TODO: substitutions
-// TODO: images
+// TODO: test substitutions
+// TODO: test images
 
 #[allow(clippy::cyclomatic_complexity)]
 #[test]

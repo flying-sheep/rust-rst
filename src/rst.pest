@@ -41,7 +41,7 @@ hanging_block = _{
 // Substitution definition. A block type
 substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ inline_dirblock ~ DROP }
 substitution_name =  { !" " ~ (!(" "|"|") ~ ANY)+ ~ (" "+ ~ (!(" "|"|") ~ ANY)+)* }
-inline_dirblock   = _{ image }  // TODO: | replace
+inline_dirblock   = _{ image }  // TODO: implement “replace” and so on
 
 // Target. A block type
 target         =  { target_qu | target_uq }

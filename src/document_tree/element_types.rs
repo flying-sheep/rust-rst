@@ -49,7 +49,7 @@
 // 	Citation { backrefs: Vec<ID> },
 // 	SystemMessage { backrefs: Vec<ID>, level: usize, line: usize, type_: NameToken },
 // 	Figure { align: AlignH, width: usize },
-// 	Table, //TODO
+// 	Table, //TODO: Table
 //
 // 	//body sub elements
 // 	ListItem,

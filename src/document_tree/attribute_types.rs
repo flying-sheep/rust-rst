@@ -83,6 +83,4 @@ mod test {
 		let _c: Measure = ".5in".parse().unwrap();
 		let _d: Measure = "1.pc".parse().unwrap();
 	}
-	
-	// TODO: Test parsing measures
 }

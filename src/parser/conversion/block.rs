@@ -17,7 +17,7 @@ use super::inline::convert_inline;
 
 
 pub fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<c::StructuralSubElement>, Error> {
-    // TODO: This is just a proof of concep. Keep closely to DTD in final version!
+    // TODO: This is just a proof of concept. Keep closely to DTD in final version!
     Ok(Some(match pair.as_rule() {
         Rule::title            => convert_title(pair).into(),
         Rule::paragraph        => convert_paragraph(pair)?.into(),
@@ -62,7 +62,7 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     for p in pair.into_inner() {
         match p.as_rule() {
             Rule::target_name_uq | Rule::target_name_qu => {
-                //TODO: abstract
+                //TODO: abstract away
                 attrs.refid = Some(       ID(p.as_str().to_owned().replace(' ', "-")));
                 attrs.refname.push(NameToken(p.as_str().to_owned()));
             },
@@ -103,7 +103,7 @@ fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + Ext
                 "alt"    => image.extra_mut().alt    = Some(opt_val.as_str().to_owned()),
                 "height" => image.extra_mut().height = Some(opt_val.parse()?),
                 "width"  => image.extra_mut().width  = Some(opt_val.parse()?),
-                "scale"  => image.extra_mut().scale  = Some(opt_val.parse()?),  // TODO: can end with %
+                "scale"  => image.extra_mut().scale  = Some(parse_scale(&opt_val)?),
                 "align"  => image.extra_mut().align  = Some(opt_val.parse()?),
                 "target" => image.extra_mut().target = Some(opt_val.parse()?),
                 name => bail!("Unknown Image option {}", name),
@@ -111,6 +111,15 @@ fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + Ext
         }
     }
     Ok(image)
+}
+
+fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
+    let input = if pair.as_str().chars().rev().next() == Some('%') { &pair.as_str()[..pair.as_str().len()-1] } else { pair.as_str() };
+    use pest::error::{Error,ErrorVariant};
+    Ok(input.parse().map_err(|e: std::num::ParseIntError| {
+        let var: ErrorVariant<Rule> = ErrorVariant::CustomError { message: e.to_string() };
+        Error::new_from_span(var, pair.as_span())
+    })?)
 }
 
 fn convert_admonition_gen(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {

@@ -69,7 +69,7 @@ impl_extra!(Footnote { backrefs: Vec<ID>, auto: bool });
 impl_extra!(Citation { backrefs: Vec<ID> });
 impl_extra!(SystemMessage { backrefs: Vec<ID>, level: Option<usize>, line: Option<usize>, type_: Option<NameToken> });
 impl_extra!(Figure { align: Option<AlignH>, width: Option<usize> });
-impl_extra!(Table {}); //TODO
+impl_extra!(Table {}); //TODO: Table
 
 impl_extra!(OptionArgument { delimiter: Option<String> });
 

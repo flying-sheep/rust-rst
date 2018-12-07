@@ -32,7 +32,7 @@ fn convert_reference(pair: Pair<Rule>) -> Result<e::Reference, Error> {
     match concrete.as_rule() {
         Rule::reference_target => {
             let rt_inner = concrete.into_inner().next().unwrap(); // reference_target_uq or target_name_qu
-            //TODO: abstract
+            //TODO: abstract away
             id   = Some(       ID(rt_inner.as_str().to_owned().replace(' ', "-")));
             name = Some(NameToken(rt_inner.as_str().to_owned()));
         },
