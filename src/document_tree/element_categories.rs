@@ -27,7 +27,7 @@ macro_rules! impl_into {
 	($subcat:ident :: $entry:ident => $supcat:ident ) => {
 		impl Into<$supcat> for $entry {
 			fn into(self) -> $supcat {
-				$supcat::$subcat(self.into())
+				$supcat::$subcat(Box::new(self.into()))
 			}
 		}
 	};
@@ -44,9 +44,9 @@ macro_rules! synonymous_enum {
 	};
 	( $name:ident { $( $entry:ident ),+ $(,)* } ) => {
 		#[derive(Serialize)]
-		pub enum $name {
-			$( $entry($entry), )*
-		}
+		pub enum $name { $(
+			$entry(Box<$entry>),
+		)* }
 		
 		impl Debug for $name {
 			fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
@@ -58,7 +58,7 @@ macro_rules! synonymous_enum {
 		
 		$( impl Into<$name> for $entry {
 			fn into(self) -> $name {
-				$name::$entry(self)
+				$name::$entry(Box::new(self))
 			}
 		} )*
 	};

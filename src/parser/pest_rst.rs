@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_closure)]
+
 use pest_derive::Parser;
 
 #[derive(Parser)]
