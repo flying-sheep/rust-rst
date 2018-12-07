@@ -7,7 +7,10 @@ pub mod target;
 
 use structopt::StructOpt;
 use clap::{_clap_count_exprs, arg_enum};
-use quicli::{main, fs::read_file, prelude::Verbosity};
+use quicli::{
+    fs::read_file,
+    prelude::{CliResult,Verbosity},
+};
 
 use self::parser::{
     serialize_json,
@@ -32,11 +35,15 @@ struct Cli {
     verbosity: Verbosity,
 }
 
-main!(|args: Cli, log_level: verbosity| {
+fn main() -> CliResult {
+    let args = Cli::from_args();
+    args.verbosity.setup_env_logger("rst")?;
+    
     let content = read_file(args.file)?;
     let stdout = std::io::stdout();
     match args.format {
         Format::json => serialize_json(&content, stdout)?,
         Format::xml  => serialize_xml (&content, stdout)?,
     }
-});
+    Ok(())
+}

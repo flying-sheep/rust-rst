@@ -34,6 +34,6 @@ serde_derive = '1.0.80'
 serde_json = '1.0.33'
 serde-xml-rs = '0.2.1'
 
-quicli = '0.3.1'
+quicli = '0.4.0'
 structopt = '0.2.13'
 clap = '2.32.0'
