@@ -81,7 +81,7 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
         Rule::image => convert_image::<e::ImageInline>(inner_pair)?.into(),
         rule => panic!("Unknown substitution rule {:?}", rule),
     };
-    let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner.into()]);
+    let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner]);
     subst_def.names_mut().push(NameToken(name.to_owned()));
     Ok(subst_def)
 }

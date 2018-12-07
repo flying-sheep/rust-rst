@@ -76,6 +76,7 @@ impl FromStr for Measure {
 mod test {
 	use super::*;
 	
+	#[test]
 	fn test_parse_measure() {
 		let _a: Measure = "1.5em".parse().unwrap();
 		let _b: Measure = "20 mm".parse().unwrap();
