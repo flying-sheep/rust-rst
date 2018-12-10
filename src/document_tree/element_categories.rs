@@ -43,7 +43,7 @@ macro_rules! synonymous_enum {
 		cartesian!(impl_into, [ $( ($subcat::$entry) ),+ ], [ $($supcat),+ ]);
 	};
 	( $name:ident { $( $entry:ident ),+ $(,)* } ) => {
-		#[derive(Serialize)]
+		#[derive(PartialEq,Serialize)]
 		pub enum $name { $(
 			$entry(Box<$entry>),
 		)* }
@@ -87,7 +87,6 @@ synonymous_enum!(TextOrInlineElement {
 //Content Models\\
 //--------------\\
 
-synonymous_enum!(SubSection { Title, Subtitle, Docinfo, Decoration, SubStructure });
 synonymous_enum!(AuthorInfo { Author, Organization, Address, Contact });
 synonymous_enum!(DecorationElement { Header, Footer });
 synonymous_enum!(SubTopic { Title, BodyElement });

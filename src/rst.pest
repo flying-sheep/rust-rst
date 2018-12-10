@@ -52,10 +52,9 @@ target_name_qu =  { ( !(    ":"|"`") ~ !NEWLINE ~ ANY )* }
 link_target    =  { nonspacechar+ }
 
 // Title. A block type
-title = {
-    PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP
-    | line ~ PEEK[..] ~ adornments ~ NEWLINE
-}
+title = { title_double | title_single }
+title_double = { PUSH(adornments) ~ NEWLINE ~ PEEK[..-1] ~ " "* ~ line ~ PEEK[..-1] ~ POP }
+title_single = { line ~ PEEK[..] ~ adornments ~ NEWLINE }
 
 // Bullet list. A block type.
 bullet_list =  { bullet_item ~ (PEEK[..] ~ bullet_item)* }

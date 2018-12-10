@@ -26,7 +26,7 @@ pub trait Element {
 	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
 
-#[derive(Debug,Default,Serialize)]
+#[derive(Debug,Default,PartialEq,Serialize)]
 pub struct CommonAttributes {
 	ids:     Vec<ID>,
 	names:   Vec<NameToken>,
@@ -78,7 +78,7 @@ macro_rules! impl_new {(
 	),* $(,)* }
 ) => (
 	$(#[$attr])*
-	#[derive(Debug,Serialize)]
+	#[derive(Debug,PartialEq,Serialize)]
 	pub struct $name { $( 
 		$(#[$fattr])* $field: $typ,
 	)* }
@@ -136,7 +136,7 @@ impl_children!(Document, StructuralSubElement);
 
 impl_elems!(
 	//structual elements
-	(Section, SubSection)
+	(Section, StructuralSubElement)
 	(Topic,   SubTopic)
 	(Sidebar, SubSidebar)
 	

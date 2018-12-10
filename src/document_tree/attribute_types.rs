@@ -4,7 +4,7 @@ use failure::{Error,bail,format_err};
 use serde_derive::Serialize;
 use regex::Regex;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,PartialEq,Serialize)]
 pub enum EnumeratedListType {
 	Arabic,
 	LowerAlpha,
@@ -13,17 +13,17 @@ pub enum EnumeratedListType {
 	UpperRoman,
 }
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,PartialEq,Serialize)]
 pub enum FixedSpace { Default, Preserve }  // yes, default really is not “Default”
 impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve } }
 
-#[derive(Debug,Serialize)] pub enum AlignH { Left, Center, Right}
-#[derive(Debug,Serialize)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
+#[derive(Debug,PartialEq,Serialize)] pub enum AlignH { Left, Center, Right}
+#[derive(Debug,PartialEq,Serialize)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
 
-#[derive(Debug,Serialize)] pub struct ID(pub String);
-#[derive(Debug,Serialize)] pub struct NameToken(pub String);
+#[derive(Debug,PartialEq,Serialize)] pub struct ID(pub String);
+#[derive(Debug,PartialEq,Serialize)] pub struct NameToken(pub String);
 
-#[derive(Debug,Serialize)]
+#[derive(Debug,PartialEq,Serialize)]
 pub enum Measure {  // http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
 	Em(f64),
 	Ex(f64),

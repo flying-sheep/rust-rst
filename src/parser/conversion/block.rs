@@ -15,35 +15,54 @@ use crate::parser::{
 use super::inline::convert_inline;
 
 
-pub fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<c::StructuralSubElement>, Error> {
-    // TODO: This is just a proof of concept. Keep closely to DTD in final version!
+#[derive(PartialEq)]
+pub(super) enum TitleKind { Double(char), Single(char) }
+
+pub(super) enum TitleOrSsubel {
+    Title(e::Title, TitleKind),
+    Ssubel(c::StructuralSubElement),
+}
+
+
+pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, Error> {
+    use self::TitleOrSsubel::*;
     Ok(Some(match pair.as_rule() {
-        Rule::title            => convert_title(pair).into(),
-        Rule::paragraph        => convert_paragraph(pair)?.into(),
-        Rule::target           => convert_target(pair)?.into(),
-        Rule::substitution_def => convert_substitution_def(pair)?.into(),
-        Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
-        Rule::image            => convert_image::<e::Image>(pair)?.into(),
+        Rule::title            => { let (t, k) = convert_title(pair); Title(t, k) },
+        Rule::paragraph        => Ssubel(convert_paragraph(pair)?.into()),
+        Rule::target           => Ssubel(convert_target(pair)?.into()),
+        Rule::substitution_def => Ssubel(convert_substitution_def(pair)?.into()),
+        Rule::admonition_gen   => Ssubel(convert_admonition_gen(pair)?.into()),
+        Rule::image            => Ssubel(convert_image::<e::Image>(pair)?.into()),
         Rule::EOI              => return Ok(None),
         rule => panic!("unknown rule {:?}", rule),
     }))
 }
 
 
-fn convert_title(pair: Pair<Rule>) -> e::Title {
+fn convert_title(pair: Pair<Rule>) -> (e::Title, TitleKind) {
     let mut title: Option<&str> = None;
-    let mut _adornment_char: Option<char> = None;
-    for p in pair.into_inner() {
+    let mut adornment_char: Option<char> = None;
+    // title_double or title_single. Extract kind before consuming
+    let inner_pair = pair.into_inner().next().unwrap();
+    let kind = inner_pair.as_rule();
+    for p in inner_pair.into_inner() {
         match p.as_rule() {
-            Rule::line => title = Some(p.as_str()),
-            Rule::adornments => _adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
+            Rule::line => title = Some(p.as_str()),  // TODO: can contain other stuff?
+            Rule::adornments => adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
             rule => unimplemented!("Unexpected rule in title: {:?}", rule),
         };
     }
-    // TODO adornment char
-    e::Title::with_children(vec![
+    // now we encountered one line of text and one of adornments
+    // TODO: emit error if the adornment line is too short (has to match title length)
+    let elem = e::Title::with_children(vec![
         title.expect("No text in title").into()
-    ])
+    ]);
+    let title_kind = match kind {
+        Rule::title_double => TitleKind::Double(adornment_char.unwrap()),
+        Rule::title_single => TitleKind::Single(adornment_char.unwrap()),
+        _ => unreachable!(),
+    };
+    (elem, title_kind)
 }
 
 

@@ -26,10 +26,10 @@ Title
 ",
         rule: Rule::title,
         tokens: [
-            title(0, 12, [
+            title(0, 12, [ title_single(0, 12, [
                 line(0, 6, [ str(0, 5) ]),
                 adornments(6, 11),
-            ])
+            ]) ])
         ]
     };
 }
@@ -45,10 +45,10 @@ Title
 ",
         rule: Rule::title,
         tokens: [
-            title(0, 17, [
+            title(0, 17, [ title_double(0, 17, [
                 adornments(0, 5),
                 line(6, 12, [ str(6, 11) ]),
-            ])
+            ]) ])
         ]
     };
 }

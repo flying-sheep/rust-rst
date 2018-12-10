@@ -6,7 +6,7 @@ use url::{self,Url};
 use serde_derive::Serialize;
 
 
-#[derive(Debug, Serialize)]
+#[derive(Debug,PartialEq,Serialize)]
 #[serde(untagged)]
 pub enum Target {
     #[serde(serialize_with = "serialize_url")]
