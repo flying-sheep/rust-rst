@@ -54,6 +54,7 @@ macro_rules! impl_element { ($name:ident) => (
 
 macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 	impl HasChildren<$childtype> for $name {
+		#[allow(clippy::needless_update)]
 		fn with_children(children: Vec<$childtype>) -> $name { $name { children: children, ..Default::default() } }
 		fn children    (&    self) -> &    Vec<$childtype> { &    self.children }
 		fn children_mut(&mut self) -> &mut Vec<$childtype> { &mut self.children }
@@ -62,6 +63,7 @@ macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 
 macro_rules! impl_extra { ($name:ident $($more:tt)*) => (
 	impl ExtraAttributes<extra_attributes::$name> for $name {
+		#[allow(clippy::needless_update)]
 		fn with_extra(extra: extra_attributes::$name) -> $name { $name { common: Default::default(), extra: extra $($more)* } }
 		fn extra    (&    self) -> &    extra_attributes::$name { &    self.extra }
 		fn extra_mut(&mut self) -> &mut extra_attributes::$name { &mut self.extra }

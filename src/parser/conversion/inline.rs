@@ -23,10 +23,10 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
 }
 
 fn convert_reference(pair: Pair<Rule>) -> Result<e::Reference, Error> {
-    let mut name = None;
-    let /*mut*/ refuri = None;
-    let mut refid = None;
-    let /*mut*/ refname = vec![];
+    let name;
+    let refuri = None;
+    let refid;
+    let refname = vec![];
     let concrete = pair.into_inner().next().unwrap();
     match concrete.as_rule() {
         Rule::reference_target => {
