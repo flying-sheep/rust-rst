@@ -5,7 +5,6 @@ use crate::document_tree::{
     ExtraAttributes,
     elements as e,
     element_categories as c,
-    attribute_types::{ID,NameToken},
     extra_attributes as a,
 };
 
@@ -25,26 +24,21 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
 
 fn convert_reference(pair: Pair<Rule>) -> Result<e::Reference, Error> {
     let mut name = None;
-    let mut uri = None;
-    let mut id = None;
-    let mut name_tokens = vec![];
+    let /*mut*/ refuri = None;
+    let mut refid = None;
+    let /*mut*/ refname = vec![];
     let concrete = pair.into_inner().next().unwrap();
     match concrete.as_rule() {
         Rule::reference_target => {
             let rt_inner = concrete.into_inner().next().unwrap(); // reference_target_uq or target_name_qu
-            //TODO: abstract away
-            id   = Some(       ID(rt_inner.as_str().to_owned().replace(' ', "-")));
-            name = Some(NameToken(rt_inner.as_str().to_owned()));
+            refid = Some(rt_inner.as_str().into());
+            name  = Some(rt_inner.as_str().into());
         },
         Rule::reference_explicit => unimplemented!("explicit reference"),
         Rule::reference_auto => unimplemented!("auto reference"),
         _ => unreachable!(),
     };
-    let extra = a::Reference {
-        name: name,
-        refuri: uri,
-        refid: id,
-        refname: name_tokens,
-    };
-    Ok(e::Reference::with_extra(extra))
+    Ok(e::Reference::with_extra(
+        a::Reference { name, refuri, refid, refname }
+    ))
 }

@@ -51,6 +51,18 @@ impl FromStr for AlignHV {
 	}
 }
 
+impl From<&str> for ID {
+	fn from(s: &str) -> Self {
+		ID(s.to_owned().replace(' ', "-"))
+	}
+}
+
+impl From<&str> for NameToken {
+	fn from(s: &str) -> Self {
+		NameToken(s.to_owned())
+	}
+}
+
 impl FromStr for Measure {
 	type Err = Error;
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
