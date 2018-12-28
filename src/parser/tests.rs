@@ -9,8 +9,8 @@ fn plain() {
         input: "line\n",
         rule: Rule::paragraph,
         tokens: [
-            paragraph(0, 5, [
-                line(0, 5)
+            paragraph(0, 4, [
+                str(0, 4)
             ])
         ]
     };
@@ -27,7 +27,7 @@ Title
         rule: Rule::title,
         tokens: [
             title(0, 12, [
-                line(0, 6),
+                line(0, 6, [ str(0, 5) ]),
                 adornments(6, 11),
             ])
         ]
@@ -47,7 +47,7 @@ Title
         tokens: [
             title(0, 17, [
                 adornments(0, 5),
-                line(6, 12),
+                line(6, 12, [ str(6, 11) ]),
             ])
         ]
     };
@@ -92,17 +92,17 @@ fn admonitions() {
 ",
         rule: Rule::document,
         tokens: [
-            admonition_gen(0, 28, [
+            admonition_gen(0, 27, [
                 admonition_type(3, 7),
-                paragraph(13, 28, [ line(13, 28) ]),
+                paragraph(13, 27, [ str(13, 27) ]),
             ]),
-            admonition(28, 72, [
-                line(43, 58),
-                paragraph(62, 72, [ line(62, 72) ]),
+            admonition(28, 71, [
+                line(43, 58, [ str(43, 57) ]),
+                paragraph(62, 71, [ str(62, 71) ]),
             ]),
             admonition_gen(73, 100, [
                 admonition_type(76, 82),
-                line(84, 100),
+                line(84, 100, [ str(84, 99) ]),
             ]),
         ]
     };
@@ -130,20 +130,22 @@ paragraph
 ",
         rule: Rule::document,
         tokens: [
-            paragraph(0, 10, [ line(0, 10) ]),
+            paragraph(0, 9, [ str(0, 9) ]),
             bullet_list(11, 131, [
-                bullet_item(11, 21, [ line(14, 21) ]),
+                bullet_item(11, 21, [
+                    line(14, 21, [ str(14, 20) ]),
+                ]),
                 bullet_item(21, 131, [
-                    line(24, 31),
+                    line(24, 31, [ str(24, 30) ]),
                     paragraph(34, 74, [
-                        line(34, 44),
-                        line(47, 59),
-                        line(62, 74),
+                        str(34, 43),
+                        str(47, 58),
+                        str(62, 73),
                     ]),
                     bullet_list(77, 131, [
-                        bullet_item(77, 93, [ line(79, 93) ]),
-                        bullet_item(96, 112, [ line(98, 112) ]),
-                        bullet_item(115, 131, [ line(117, 131) ]),
+                        bullet_item( 77,  93, [ line( 79,  93, [str( 79,  92)]) ]),
+                        bullet_item( 96, 112, [ line( 98, 112, [str( 98, 111)]) ]),
+                        bullet_item(115, 131, [ line(117, 131, [str(117, 130)]) ]),
                     ]),
                 ]),
             ]),
