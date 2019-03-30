@@ -19,6 +19,7 @@ use self::parser::{
 
 arg_enum! {
     #[derive(Debug)]
+    #[allow(non_camel_case_types)]
     enum Format { json, xml }
 }
 
