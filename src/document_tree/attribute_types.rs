@@ -4,6 +4,8 @@ use failure::{Error,bail,format_err};
 use serde_derive::Serialize;
 use regex::Regex;
 
+use crate::target;
+
 #[derive(Debug,PartialEq,Serialize)]
 pub enum EnumeratedListType {
 	Arabic,
@@ -96,3 +98,42 @@ mod test {
 		let _d: Measure = "1.pc".parse().unwrap();
 	}
 }
+
+pub(crate) trait CanBeEmpty {
+	fn is_empty(&self) -> bool;
+}
+
+/* Specialization necessary
+impl<T> CanBeEmpty for T {
+	fn is_empty(&self) -> bool { false }
+}
+*/
+macro_rules! impl_cannot_be_empty {
+	($t:ty) => {
+		impl CanBeEmpty for $t {
+			fn is_empty(&self) -> bool { false }
+		}
+	};
+	($t:ty, $($ts:ty),*) => {
+		impl_cannot_be_empty!($t);
+		impl_cannot_be_empty!($($ts),*);
+	};
+}
+impl_cannot_be_empty!(target::Target);
+
+impl<T> CanBeEmpty for Option<T> {
+	fn is_empty(&self) -> bool { self.is_none() }
+}
+
+impl<T> CanBeEmpty for Vec<T> {
+	fn is_empty(&self) -> bool { self.is_empty() }
+}
+
+impl CanBeEmpty for bool {
+	fn is_empty(&self) -> bool { !self }
+}
+
+impl CanBeEmpty for FixedSpace {
+	fn is_empty(&self) -> bool { self == &FixedSpace::default() }
+}
+

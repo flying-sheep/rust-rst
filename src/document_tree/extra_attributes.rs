@@ -1,21 +1,13 @@
 use serde_derive::Serialize;
 
 use crate::target;
-use super::attribute_types::{FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
+use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
 	fn with_extra(extra: A) -> Self;
 	fn extra    (&    self) -> &    A;
 	fn extra_mut(&mut self) -> &mut A;
 }
-
-/*
-macro_rules! skip {
-	(Option<$type:ty>) => { #[serde(skip_serializing_if = "Option::is_none")] };
-	(Vec   <$type:ty>) => { #[serde(skip_serializing_if = "Vec::is_empty"  )] };
-	(bool            ) => { #[serde(skip_serializing_if = "Not::not"       )] };
-}
-*/
 
 macro_rules! impl_extra {
 	( $name:ident { $( $(#[$pattr:meta])* $param:ident : $type:ty ),* $(,)* } ) => (
@@ -28,7 +20,7 @@ macro_rules! impl_extra {
 		$(#[$attr])+
 		pub struct $name { $(
 			$(#[$pattr])*
-			// skip!($type)
+			#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
 			pub $param : $type,
 		)* }
 	);

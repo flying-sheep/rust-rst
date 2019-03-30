@@ -1,7 +1,7 @@
 use serde_derive::Serialize;
 
 use crate::target;
-use super::attribute_types::{ID,NameToken};
+use super::attribute_types::{CanBeEmpty,ID,NameToken};
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
 
@@ -28,9 +28,13 @@ pub trait Element {
 
 #[derive(Debug,Default,PartialEq,Serialize)]
 pub struct CommonAttributes {
-	ids:     Vec<ID>,
-	names:   Vec<NameToken>,
-	source:  Option<target::Target>,
+	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+	ids: Vec<ID>,
+	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+	names: Vec<NameToken>,
+	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+	source: Option<target::Target>,
+	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
 	classes: Vec<String>,
 	//TODO: dupnames
 }
