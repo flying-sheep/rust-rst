@@ -31,6 +31,6 @@ pub fn serialize_json<W>(source: &str, stream: W) -> Result<(), Error> where W: 
 
 pub fn serialize_xml<W>(source: &str, stream: W) -> Result<(), Error> where W: Write {
     let parsed = parse(source)?;
-    serde_xml_rs::serialize(&parsed, stream)?;
+    serde_xml_rs::to_writer(stream, &parsed).map_err(failure::SyncFailure::new)?;
     Ok(())
 }
