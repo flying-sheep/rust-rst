@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::fmt;
 use std::str::FromStr;
 use std::string::ParseError;
 
@@ -9,32 +10,43 @@ use serde_derive::Serialize;
 #[derive(Debug,PartialEq,Serialize)]
 #[serde(untagged)]
 pub enum Target {
-    #[serde(serialize_with = "serialize_url")]
-    Url(Url),
-    Path(PathBuf),
+	#[serde(serialize_with = "serialize_url")]
+	Url(Url),
+	Path(PathBuf),
 }
 
 impl From<Url> for Target {
-    fn from(url: Url) -> Self {
-        Target::Url(url)
-    }
+	fn from(url: Url) -> Self {
+		Target::Url(url)
+	}
 }
 
 impl From<PathBuf> for Target {
-    fn from(path: PathBuf) -> Self {
-        Target::Path(path)
-    }
+	fn from(path: PathBuf) -> Self {
+		Target::Path(path)
+	}
+}
+
+
+impl fmt::Display for Target {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		use Target::*;
+		match *self {
+			Url (ref url)  => write!(f, "{}", url),
+			Path(ref path) => write!(f, "{}", path.display()),
+		}
+	}
 }
 
 
 impl FromStr for Target {
-    type Err = ParseError;
+	type Err = ParseError;
 	fn from_str(input: &str) -> Result<Self, Self::Err> {
-        Ok(match Url::parse(input) {
-            Ok(url) => url.into(),
-            Err(_) => PathBuf::from(input.trim()).into(),
-        })
-    }
+		Ok(match Url::parse(input) {
+			Ok(url) => url.into(),
+			Err(_) => PathBuf::from(input.trim()).into(),
+		})
+	}
 }
 
 

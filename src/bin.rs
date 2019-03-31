@@ -2,6 +2,7 @@
 
 pub mod document_tree;
 pub mod parser;
+pub mod renderer;
 pub mod target;
 
 
@@ -12,22 +13,24 @@ use quicli::{
     prelude::{CliResult,Verbosity},
 };
 
-use self::parser::{
-    serialize_json,
-    serialize_xml,
+use self::parser::parse;
+use self::renderer::{
+    render_json,
+    render_xml,
+    render_html,
 };
 
 arg_enum! {
     #[derive(Debug)]
     #[allow(non_camel_case_types)]
-    enum Format { json, xml }
+    enum Format { json, xml, html }
 }
 
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
 struct Cli {
     #[structopt(
-        long = "format", short = "f", default_value = "json",  // xml is pretty defunct…
+        long = "format", short = "f", default_value = "html",  // xml is pretty defunct…
         raw(possible_values = "&Format::variants()", case_insensitive = "true"),
     )]
     format: Format,
@@ -41,10 +44,12 @@ fn main() -> CliResult {
     args.verbosity.setup_env_logger("rst")?;
     
     let content = read_file(args.file)?;
+    let document = parse(&content)?;
     let stdout = std::io::stdout();
     match args.format {
-        Format::json => serialize_json(&content, stdout)?,
-        Format::xml  => serialize_xml (&content, stdout)?,
+        Format::json => render_json(&document, stdout)?,
+        Format::xml  => render_xml (&document, stdout)?,
+        Format::html => render_html(&document, stdout)?,
     }
     Ok(())
 }
