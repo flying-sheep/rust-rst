@@ -1,5 +1,5 @@
 pub mod token;
-pub mod conversion;
+mod conversion;
 mod simplify;
 mod pest_rst;
 mod pair_ext_parse;
