@@ -94,7 +94,7 @@ pub type ImageInline = Image;
 
 impl Image {
 	pub fn new(uri: target::Target) -> Image { Image {
-		uri: uri,
+		uri,
 		align: None,
 		alt: None,
 		height: None,
