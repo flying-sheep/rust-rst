@@ -99,6 +99,8 @@ synonymous_enum!(SubLineBlock { LineBlock, Line });
 synonymous_enum!(SubBlockQuote { Attribution, BodyElement });
 synonymous_enum!(SubFootnote { Label, BodyElement });
 synonymous_enum!(SubFigure { Caption, Legend, BodyElement });
+synonymous_enum!(SubTable { Title, TableGroup });
+synonymous_enum!(SubTableGroup { TableColspec, TableHead, TableBody });
 
 #[cfg(test)]
 mod test {
