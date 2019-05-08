@@ -1,7 +1,7 @@
 use serde_derive::Serialize;
 
 use crate::target;
-use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,AlignV,TableAlignH,TableBorder,Measure,EnumeratedListType};
+use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,AlignV,TableAlignH,TableBorder,TableGroupCols,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
 	fn with_extra(extra: A) -> Self;
@@ -63,7 +63,7 @@ impl_extra!(SystemMessage { backrefs: Vec<ID>, level: Option<usize>, line: Optio
 impl_extra!(Figure { align: Option<AlignH>, width: Option<usize> });
 impl_extra!(Table { frame: Option<TableBorder>, colsep: Option<bool>, rowsep: Option<bool>, pgwide: Option<bool> });
 
-impl_extra!(TableGroup { cols: usize, colsep: Option<bool>, rowsep: Option<bool>, align: Option<TableAlignH> });
+impl_extra!(TableGroup { cols: TableGroupCols, colsep: Option<bool>, rowsep: Option<bool>, align: Option<TableAlignH> });
 impl_extra!(TableHead { valign: Option<AlignV> });
 impl_extra!(TableBody { valign: Option<AlignV> });
 impl_extra!(TableRow { rowsep: Option<bool>, valign: Option<AlignV> });

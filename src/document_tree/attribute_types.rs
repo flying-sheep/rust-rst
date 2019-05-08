@@ -29,6 +29,16 @@ impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve 
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct ID(pub String);
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct NameToken(pub String);
 
+// The table DTD has the cols attribute of tgroup as required, but having
+// TableGroupCols not implement Default would leave no possible implementation
+// for TableGroup::with_children.
+#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct TableGroupCols(pub usize);
+impl Default for TableGroupCols {
+	fn default() -> Self {
+		TableGroupCols(0)
+	}
+}
+
 // no eq for f64
 #[derive(Debug,PartialEq,Serialize)]
 pub enum Measure {  // http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
@@ -125,6 +135,7 @@ macro_rules! impl_cannot_be_empty {
 	};
 }
 impl_cannot_be_empty!(target::Target);
+impl_cannot_be_empty!(TableGroupCols);
 
 impl<T> CanBeEmpty for Option<T> {
 	fn is_empty(&self) -> bool { self.is_none() }
