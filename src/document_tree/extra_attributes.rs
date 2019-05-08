@@ -1,7 +1,7 @@
 use serde_derive::Serialize;
 
 use crate::target;
-use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,Measure,EnumeratedListType};
+use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,AlignV,TableAlignH,TableBorder,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
 	fn with_extra(extra: A) -> Self;
@@ -61,7 +61,14 @@ impl_extra!(Footnote { backrefs: Vec<ID>, auto: bool });
 impl_extra!(Citation { backrefs: Vec<ID> });
 impl_extra!(SystemMessage { backrefs: Vec<ID>, level: Option<usize>, line: Option<usize>, type_: Option<NameToken> });
 impl_extra!(Figure { align: Option<AlignH>, width: Option<usize> });
-impl_extra!(Table {}); //TODO: Table
+impl_extra!(Table { frame: Option<TableBorder>, colsep: Option<bool>, rowsep: Option<bool>, pgwide: Option<bool> });
+
+impl_extra!(TableGroup { cols: usize, colsep: Option<bool>, rowsep: Option<bool>, align: Option<TableAlignH> });
+impl_extra!(TableHead { valign: Option<AlignV> });
+impl_extra!(TableBody { valign: Option<AlignV> });
+impl_extra!(TableRow { rowsep: Option<bool>, valign: Option<AlignV> });
+impl_extra!(TableEntry { colname: Option<NameToken>, namest: Option<NameToken>, nameend: Option<NameToken>, morerows: Option<usize>, colsep: Option<bool>, rowsep: Option<bool>, align: Option<TableAlignH>, r#char: Option<char>, charoff: Option<usize>, valign: Option<AlignV>, morecols: Option<usize> });
+impl_extra!(TableColspec { colnum: Option<usize>, colname: Option<NameToken>, colwidth: Option<String>, colsep: Option<bool>, rowsep: Option<bool>, align: Option<TableAlignH>, r#char: Option<char>, charoff: Option<usize>, stub: Option<bool> });
 
 impl_extra!(OptionArgument { delimiter: Option<String> });
 

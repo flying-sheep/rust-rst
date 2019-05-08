@@ -210,12 +210,12 @@ impl_elems!(
 	(Table,         SubTable;    +)
 
 	//table elements
-	(TableGroup, SubTableGroup)
-	(TableHead,  TableRow)
-	(TableBody,  TableRow)
-	(TableRow,   TableEntry)
-	(TableEntry, BodyElement)
-	(TableColspec)
+	(TableGroup, SubTableGroup; +)
+	(TableHead,  TableRow;      +)
+	(TableBody,  TableRow;      +)
+	(TableRow,   TableEntry;    +)
+	(TableEntry, BodyElement;   +)
+	(TableColspec; +)
 	
 	//body sub elements
 	(ListItem, BodyElement)

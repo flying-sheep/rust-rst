@@ -21,6 +21,10 @@ impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve 
 
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignH { Left, Center, Right}
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignV { Top, Middle, Bottom }
+
+#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum TableAlignH { Left, Right, Center, Justify, Char }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum TableBorder { Top, Bottom, TopBottom, All, Sides, None }
 
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct ID(pub String);
 #[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct NameToken(pub String);
