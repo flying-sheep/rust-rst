@@ -207,7 +207,15 @@ impl_elems!(
 	(Citation,      SubFootnote; +)
 	(SystemMessage, BodyElement; +)
 	(Figure,        SubFigure;   +)
-	(Table; +) //TODO: Table
+	(Table,         SubTable;    +)
+
+	//table elements
+	(TableGroup, SubTableGroup; +)
+	(TableHead,  TableRow;      +)
+	(TableBody,  TableRow;      +)
+	(TableRow,   TableEntry;    +)
+	(TableEntry, BodyElement;   +)
+	(TableColspec; +)
 	
 	//body sub elements
 	(ListItem, BodyElement)
