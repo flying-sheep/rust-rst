@@ -6,7 +6,7 @@ use regex::Regex;
 
 use crate::target;
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)]
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)]
 pub enum EnumeratedListType {
 	Arabic,
 	LowerAlpha,
@@ -15,24 +15,24 @@ pub enum EnumeratedListType {
 	UpperRoman,
 }
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)]
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)]
 pub enum FixedSpace { Default, Preserve }  // yes, default really is not “Default”
 impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve } }
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignH { Left, Center, Right}
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum AlignV { Top, Middle, Bottom }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum AlignH { Left, Center, Right}
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum AlignV { Top, Middle, Bottom }
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum TableAlignH { Left, Right, Center, Justify, Char }
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub enum TableBorder { Top, Bottom, TopBottom, All, Sides, None }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum TableAlignH { Left, Right, Center, Justify, Char }
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum TableBorder { Top, Bottom, TopBottom, All, Sides, None }
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct ID(pub String);
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct NameToken(pub String);
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub struct ID(pub String);
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub struct NameToken(pub String);
 
 // The table DTD has the cols attribute of tgroup as required, but having
 // TableGroupCols not implement Default would leave no possible implementation
 // for TableGroup::with_children.
-#[derive(Debug,PartialEq,Eq,Hash,Serialize)] pub struct TableGroupCols(pub usize);
+#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub struct TableGroupCols(pub usize);
 impl Default for TableGroupCols {
 	fn default() -> Self {
 		TableGroupCols(0)
@@ -40,7 +40,7 @@ impl Default for TableGroupCols {
 }
 
 // no eq for f64
-#[derive(Debug,PartialEq,Serialize)]
+#[derive(Debug,PartialEq,Serialize,Clone)]
 pub enum Measure {  // http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
 	Em(f64),
 	Ex(f64),
