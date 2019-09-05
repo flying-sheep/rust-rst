@@ -12,7 +12,7 @@ pub trait ExtraAttributes<A> {
 macro_rules! impl_extra {
 	( $name:ident { $( $(#[$pattr:meta])* $param:ident : $type:ty ),* $(,)* } ) => (
 		impl_extra!(
-			#[derive(Default,Debug,PartialEq,Serialize)]
+			#[derive(Default,Debug,PartialEq,Serialize,Clone)]
 			$name { $( $(#[$pattr])* $param : $type, )* }
 		);
 	);
@@ -41,7 +41,7 @@ impl_extra!(Target {
 	anonymous: bool,
 });
 impl_extra!(Raw { space: FixedSpace, format: Vec<NameToken> });
-impl_extra!(#[derive(Debug,PartialEq,Serialize)] Image {
+impl_extra!(#[derive(Debug,PartialEq,Serialize,Clone)] Image {
 	uri: target::Target,
 	align: Option<AlignHV>,
 	alt: Option<String>,

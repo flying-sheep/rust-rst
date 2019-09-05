@@ -26,7 +26,7 @@ pub trait Element {
 	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
 
-#[derive(Debug,Default,PartialEq,Serialize)]
+#[derive(Debug,Default,PartialEq,Serialize,Clone)]
 pub struct CommonAttributes {
 	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
 	ids: Vec<ID>,
@@ -82,7 +82,7 @@ macro_rules! impl_new {(
 	),* $(,)* }
 ) => (
 	$(#[$attr])*
-	#[derive(Debug,PartialEq,Serialize)]
+	#[derive(Debug,PartialEq,Serialize,Clone)]
 	pub struct $name { $( 
 		$(#[$fattr])* $field: $typ,
 	)* }
