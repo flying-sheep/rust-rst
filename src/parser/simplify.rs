@@ -25,24 +25,55 @@ use crate::target::Target;
 use crate::document_tree::{
 	Document,
 	HasChildren,
-	attribute_types::ID,
+	attribute_types::{ID, NameToken},
 	elements as e,
 	element_categories as c,
 };
 
 
-enum MaybeDirectTarget {
-	IndirectTarget(ID),
-	DirectTarget(Target),
+#[derive(Debug)]
+enum NamedTargetType {
+	NumberedFootnote(usize),
+	LabeledFootnote(usize),
+	Citation,
+	InternalLink,
+	ExternalLink(Target),
+	IndirectLink(NameToken),
+	SectionTitle
+}
+impl NamedTargetType {
+	fn is_implicit_target(&self) -> bool {
+		match self {
+			NamedTargetType::SectionTitle => true,
+			_ => false
+		}
+	}
+}
+
+#[derive(Clone, Debug)]
+struct Substitution {
+	content: e::ImageInline,
+	// If `ltrim` is true and the sibling before the reference is a text node,
+	// the text node gets right-trimmed. Same for `rtrim` with the sibling after
+	// getting left-trimmed.
+	ltrim: bool,
+	rtrim: bool
+}
+
+#[derive(Default, Debug)]
+struct TargetsCollected {
+	named_targets: HashMap<NameToken, NamedTargetType>,
+	substitutions: HashMap<String, Substitution>,
+	normalized_substitutions: HashMap<String, Substitution>
 }
 
 trait ResolvableRefs {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>);
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self;
+	fn populate_targets(&self, refs: &mut TargetsCollected);
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self;
 }
 
 pub fn resolve_references(mut doc: Document) -> Document {
-	let mut references = HashMap::new();
+	let mut references: TargetsCollected = Default::default();
 	for c in doc.children() {
 		c.populate_targets(&mut references);
 	}
@@ -50,32 +81,32 @@ pub fn resolve_references(mut doc: Document) -> Document {
 	Document::with_children(new)
 }
 
-fn sub_pop<P, C>(parent: &P, refs: &mut HashMap<&ID, Target>) where P: HasChildren<C>, C: ResolvableRefs {
+fn sub_pop<P, C>(parent: &P, refs: &mut TargetsCollected) where P: HasChildren<C>, C: ResolvableRefs {
 	for c in parent.children() {
 		c.populate_targets(refs);
 	}
 }
 
-fn sub_res<P, C>(mut parent: P, refs: &HashMap<&ID, Target>) -> P where P: e::Element + HasChildren<C>, C: ResolvableRefs {
-	let new: Vec<_> = parent.children_mut().drain(..).map(|c| c.resolve_refs(&refs)).collect();
+fn sub_res<P, C>(mut parent: P, refs: &TargetsCollected) -> P where P: e::Element + HasChildren<C>, C: ResolvableRefs {
+	let new: Vec<_> = parent.children_mut().drain(..).map(|c| c.resolve_refs(refs)).collect();
 	parent.children_mut().extend(new);
 	parent
 }
 
-fn sub_sub_pop<P, C1, C2>(parent: &P, refs: &mut HashMap<&ID, Target>) where P: HasChildren<C1>, C1: HasChildren<C2>, C2: ResolvableRefs {
+fn sub_sub_pop<P, C1, C2>(parent: &P, refs: &mut TargetsCollected) where P: HasChildren<C1>, C1: HasChildren<C2>, C2: ResolvableRefs {
 	for c in parent.children() {
 		sub_pop(c, refs);
 	}
 }
 
-fn sub_sub_res<P, C1, C2>(mut parent: P, refs: &HashMap<&ID, Target>) -> P where P: e::Element + HasChildren<C1>, C1: e::Element + HasChildren<C2>, C2: ResolvableRefs {
+fn sub_sub_res<P, C1, C2>(mut parent: P, refs: &TargetsCollected) -> P where P: e::Element + HasChildren<C1>, C1: e::Element + HasChildren<C2>, C2: ResolvableRefs {
 	let new: Vec<_> = parent.children_mut().drain(..).map(|c| sub_res(c, refs)).collect();
 	parent.children_mut().extend(new);
 	parent
 }
 
 impl ResolvableRefs for c::StructuralSubElement {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::StructuralSubElement::*;
 		match self {
 			Title(e)        => sub_pop(&**e, refs),
@@ -85,7 +116,7 @@ impl ResolvableRefs for c::StructuralSubElement {
 			SubStructure(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::StructuralSubElement::*;
 		match self {
 			Title(e)        => sub_res(*e, refs).into(),
@@ -98,7 +129,7 @@ impl ResolvableRefs for c::StructuralSubElement {
 }
 
 impl ResolvableRefs for c::SubStructure {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubStructure::*;
 		match self {
 			Topic(e) => sub_pop(&**e, refs),
@@ -110,7 +141,7 @@ impl ResolvableRefs for c::SubStructure {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubStructure::*;
 		match self {
 			Topic(e) => sub_res(*e, refs).into(),
@@ -123,7 +154,7 @@ impl ResolvableRefs for c::SubStructure {
 }
 
 impl ResolvableRefs for c::BodyElement {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::BodyElement::*;
 		match self {
 			Paragraph(e) => sub_pop(&**e, refs),
@@ -173,7 +204,7 @@ impl ResolvableRefs for c::BodyElement {
 			Table(e) => sub_pop(&**e, refs)
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::BodyElement::*;
 		match self {
 			Paragraph(e) => sub_res(*e, refs).into(),
@@ -216,7 +247,7 @@ impl ResolvableRefs for c::BodyElement {
 }
 
 impl ResolvableRefs for c::BibliographicElement {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::BibliographicElement::*;
 		match self {
 			Author(e) => sub_pop(&**e, refs),
@@ -232,7 +263,7 @@ impl ResolvableRefs for c::BibliographicElement {
 			Field(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::BibliographicElement::*;
 		match self {
 			Author(e) => sub_res(*e, refs).into(),
@@ -251,7 +282,7 @@ impl ResolvableRefs for c::BibliographicElement {
 }
 
 impl ResolvableRefs for c::TextOrInlineElement {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::TextOrInlineElement::*;
 		match self {
 			c::TextOrInlineElement::String(e) => {
@@ -286,7 +317,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			}
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::TextOrInlineElement::*;
 		match self {
 			c::TextOrInlineElement::String(e) => c::TextOrInlineElement::String(e),
@@ -314,7 +345,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 }
 
 impl ResolvableRefs for c::AuthorInfo {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::AuthorInfo::*;
 		match self {
 			Author(e) => sub_pop(&**e, refs),
@@ -323,7 +354,7 @@ impl ResolvableRefs for c::AuthorInfo {
 			Contact(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::AuthorInfo::*;
 		match self {
 			Author(e) => sub_res(*e, refs).into(),
@@ -335,14 +366,14 @@ impl ResolvableRefs for c::AuthorInfo {
 }
 
 impl ResolvableRefs for c::DecorationElement {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::DecorationElement::*;
 		match self {
 			Header(e) => sub_pop(&**e, refs),
 			Footer(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::DecorationElement::*;
 		match self {
 			Header(e) => sub_res(*e, refs).into(),
@@ -352,14 +383,14 @@ impl ResolvableRefs for c::DecorationElement {
 }
 
 impl ResolvableRefs for c::SubTopic {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubTopic::*;
 		match self {
 			Title(e) => sub_pop(&**e, refs),
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubTopic::*;
 		match self {
 			Title(e) => sub_res(*e, refs).into(),
@@ -369,7 +400,7 @@ impl ResolvableRefs for c::SubTopic {
 }
 
 impl ResolvableRefs for c::SubSidebar {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubSidebar::*;
 		match self {
 			Topic(e) => sub_pop(&**e, refs),
@@ -378,7 +409,7 @@ impl ResolvableRefs for c::SubSidebar {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubSidebar::*;
 		match self {
 			Topic(e) => sub_res(*e, refs).into(),
@@ -390,7 +421,7 @@ impl ResolvableRefs for c::SubSidebar {
 }
 
 impl ResolvableRefs for c::SubDLItem {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubDLItem::*;
 		match self {
 			Term(e) => sub_pop(&**e, refs),
@@ -398,7 +429,7 @@ impl ResolvableRefs for c::SubDLItem {
 			Definition(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubDLItem::*;
 		match self {
 			Term(e) => sub_res(*e, refs).into(),
@@ -409,14 +440,14 @@ impl ResolvableRefs for c::SubDLItem {
 }
 
 impl ResolvableRefs for c::SubField {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubField::*;
 		match self {
 			FieldName(e) => sub_pop(&**e, refs),
 			FieldBody(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubField::*;
 		match self {
 			FieldName(e) => sub_res(*e, refs).into(),
@@ -426,14 +457,14 @@ impl ResolvableRefs for c::SubField {
 }
 
 impl ResolvableRefs for c::SubOptionListItem {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubOptionListItem::*;
 		match self {
 			OptionGroup(e) => sub_sub_pop(&**e, refs),
 			Description(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubOptionListItem::*;
 		match self {
 			OptionGroup(e) => sub_sub_res(*e, refs).into(),
@@ -443,7 +474,7 @@ impl ResolvableRefs for c::SubOptionListItem {
 }
 
 impl ResolvableRefs for c::SubOption {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubOption::*;
 		match self {
 			OptionString(e) => {
@@ -454,7 +485,7 @@ impl ResolvableRefs for c::SubOption {
 			},
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubOption::*;
 		match self {
 			OptionString(e) => OptionString(e),
@@ -464,14 +495,14 @@ impl ResolvableRefs for c::SubOption {
 }
 
 impl ResolvableRefs for c::SubLineBlock {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubLineBlock::*;
 		match self {
 			LineBlock(e) => sub_pop(&**e, refs),
 			Line(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubLineBlock::*;
 		match self {
 			LineBlock(e) => sub_res(*e, refs).into(),
@@ -481,14 +512,14 @@ impl ResolvableRefs for c::SubLineBlock {
 }
 
 impl ResolvableRefs for c::SubBlockQuote {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubBlockQuote::*;
 		match self {
 			Attribution(e) => sub_pop(&**e, refs),
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubBlockQuote::*;
 		match self {
 			Attribution(e) => sub_res(*e, refs).into(),
@@ -498,14 +529,14 @@ impl ResolvableRefs for c::SubBlockQuote {
 }
 
 impl ResolvableRefs for c::SubFootnote {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubFootnote::*;
 		match self {
 			Label(e) => sub_pop(&**e, refs),
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubFootnote::*;
 		match self {
 			Label(e) => sub_res(*e, refs).into(),
@@ -515,7 +546,7 @@ impl ResolvableRefs for c::SubFootnote {
 }
 
 impl ResolvableRefs for c::SubFigure {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubFigure::*;
 		match self {
 			Caption(e) => sub_pop(&**e, refs),
@@ -523,7 +554,7 @@ impl ResolvableRefs for c::SubFigure {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubFigure::*;
 		match self {
 			Caption(e) => sub_res(*e, refs).into(),
@@ -534,14 +565,14 @@ impl ResolvableRefs for c::SubFigure {
 }
 
 impl ResolvableRefs for c::SubTable {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubTable::*;
 		match self {
 			Title(e) => sub_pop(&**e, refs),
 			TableGroup(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubTable::*;
 		match self {
 			Title(e) => sub_res(*e, refs).into(),
@@ -551,7 +582,7 @@ impl ResolvableRefs for c::SubTable {
 }
 
 impl ResolvableRefs for c::SubTableGroup {
-	fn populate_targets(&self, refs: &mut HashMap<&ID, Target>) {
+	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubTableGroup::*;
 		match self {
 			TableColspec(e) => {
@@ -569,7 +600,7 @@ impl ResolvableRefs for c::SubTableGroup {
 			},
 		}
 	}
-	fn resolve_refs(self, refs: &HashMap<&ID, Target>) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
 		use c::SubTableGroup::*;
 		match self {
 			TableColspec(e) => TableColspec(e),
