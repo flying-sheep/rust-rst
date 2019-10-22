@@ -155,6 +155,7 @@ impl ResolvableRefs for c::SubStructure {
 
 impl ResolvableRefs for c::BodyElement {
 	fn populate_targets(&self, refs: &mut TargetsCollected) {
+		use crate::document_tree::extra_attributes::ExtraAttributes;
 		use c::BodyElement::*;
 		match self {
 			Paragraph(e) => sub_pop(&**e, refs),
@@ -164,8 +165,30 @@ impl ResolvableRefs for c::BodyElement {
 				// TODO
 			},
 			Rubric(e) => sub_pop(&**e, refs),
-			SubstitutionDefinition(e) => sub_pop(&**e, refs),
-			Comment(e) => sub_pop(&**e, refs),
+			SubstitutionDefinition(e) => {
+				use e::Element;
+				let subst_content = if let [c::TextOrInlineElement::ImageInline(content)] = &e.children()[..] {
+					content.as_ref()
+				} else {
+					panic!("Unexpected substitution contents.")
+				};
+				let subst = Substitution {
+					content: subst_content.clone(),
+					ltrim: e.extra().ltrim,
+					rtrim: e.extra().rtrim
+				};
+				for NameToken(name) in e.names() {
+					if refs.substitutions.contains_key(name) {
+						// TODO: Duplicate substitution name (level 3 system message).
+					}
+					// Intentionally overriding any previous values.
+					refs.substitutions.insert(name.clone(), subst.clone());
+					refs.normalized_substitutions.insert(name.to_lowercase(), subst.clone());
+				}
+			},
+			Comment(e) => {
+				// TODO
+			},
 			Pending(e) => {
 				// TODO
 			},
@@ -212,8 +235,8 @@ impl ResolvableRefs for c::BodyElement {
 			DoctestBlock(e) => sub_res(*e, refs).into(),
 			MathBlock(e) => MathBlock(e),
 			Rubric(e) => sub_res(*e, refs).into(),
-			SubstitutionDefinition(e) => sub_res(*e, refs).into(),
-			Comment(e) => sub_res(*e, refs).into(),
+			SubstitutionDefinition(e) => SubstitutionDefinition(e),
+			Comment(e) => Comment(e),
 			Pending(e) => Pending(e),
 			Target(e) => Target(e),
 			Raw(e) => Raw(e),
@@ -327,7 +350,38 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			Reference(e) => sub_res(*e, refs).into(),
 			FootnoteReference(e) => sub_res(*e, refs).into(),
 			CitationReference(e) => sub_res(*e, refs).into(),
-			SubstitutionReference(e) => sub_res(*e, refs).into(),
+			SubstitutionReference(e) => {
+				use crate::document_tree::extra_attributes::ExtraAttributes;
+				if e.extra().refname.len() != 1 {
+					panic!("Expected exactly one name in a substitution reference.");
+				}
+				let name = e.extra().refname[0].0.clone();
+				let substitution = refs.substitutions.get(&name).or_else(|| {
+					refs.normalized_substitutions.get(&name.to_lowercase())
+				});
+				match substitution {
+					Some(Substitution {content, ltrim, rtrim}) => {
+						// TODO: Check if the substitution would expand circularly
+						// (level 3 system message).
+						// TODO: Ltrim and rtrim.
+						ImageInline(Box::new(content.clone()))
+					},
+					None => {
+						// Undefined substitution name (level 3 system message).
+						// TODO: This replaces the reference by a Problematic node.
+						// The corresponding SystemMessage node should go in a generated
+						// section with class "system-messages" at the end of the document.
+						use crate::document_tree::{Problematic, element_categories::TextOrInlineElement};
+						let mut replacement: Box<Problematic> = Box::new(Default::default());
+						replacement.children_mut().push(
+							TextOrInlineElement::String(Box::new(format!("|{}|", name)))
+						);
+						// TODO: Create an ID for replacement for the system_message to reference.
+						// TODO: replacement.refid pointing to the system_message.
+						Problematic(replacement)
+					}
+				}
+			},
 			TitleReference(e) => sub_res(*e, refs).into(),
 			Abbreviation(e) => sub_res(*e, refs).into(),
 			Acronym(e) => sub_res(*e, refs).into(),

@@ -6,6 +6,7 @@ use crate::document_tree::{
 	elements as e,
 	element_categories as c,
 	extra_attributes as a,
+	attribute_types as at
 };
 
 use crate::parser::{
@@ -13,11 +14,14 @@ use crate::parser::{
 //    pair_ext_parse::PairExt,
 };
 
+use super::whitespace_normalize_name;
+
 
 pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
 	Ok(match pair.as_rule() {
-		Rule::str       => pair.as_str().into(),
-		Rule::reference => convert_reference(pair)?.into(),
+		Rule::str       		=> pair.as_str().into(),
+		Rule::reference 		=> convert_reference(pair)?.into(),
+		Rule::substitution_ref 	=> convert_substitution(pair)?.into(),
 		rule => unimplemented!("unknown rule {:?}", rule),
 	})
 }
@@ -41,4 +45,19 @@ fn convert_reference(pair: Pair<Rule>) -> Result<e::Reference, Error> {
 	Ok(e::Reference::with_extra(
 		a::Reference { name, refuri, refid, refname }
 	))
+}
+
+fn convert_substitution(pair: Pair<Rule>) -> Result<e::SubstitutionReference, Error> {
+	let concrete = pair.into_inner().next().unwrap();
+	match concrete.as_rule() {
+		Rule::substitution_name => {
+			let name = whitespace_normalize_name(concrete.as_str());
+			Ok(a::ExtraAttributes::with_extra(
+				a::SubstitutionReference {
+					refname: vec![at::NameToken(name)]
+				}
+			))
+		}
+		_ => unreachable!()
+	}
 }
