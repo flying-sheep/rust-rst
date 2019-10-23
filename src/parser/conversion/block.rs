@@ -6,13 +6,14 @@ use crate::document_tree::{
 	elements as e,
 	element_categories as c,
 	extra_attributes as a,
+	attribute_types as at
 };
 
 use crate::parser::{
 	pest_rst::Rule,
 	pair_ext_parse::PairExt,
 };
-use super::inline::convert_inline;
+use super::{whitespace_normalize_name, inline::convert_inline};
 
 
 #[derive(PartialEq)]
@@ -92,14 +93,14 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
 
 fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition, Error> {
 	let mut pairs = pair.into_inner();
-	let name = pairs.next().unwrap().as_str();  // Rule::substitution_name
+	let name = whitespace_normalize_name(pairs.next().unwrap().as_str());  // Rule::substitution_name
 	let inner_pair = pairs.next().unwrap();
 	let inner: c::TextOrInlineElement = match inner_pair.as_rule() {
 		Rule::image => convert_image::<e::ImageInline>(inner_pair)?.into(),
 		rule => panic!("Unknown substitution rule {:?}", rule),
 	};
 	let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner]);
-	subst_def.names_mut().push(name.into());
+	subst_def.names_mut().push(at::NameToken(name));
 	Ok(subst_def)
 }
 

@@ -101,6 +101,7 @@ blank_line = _{ !marker ~ !inline ~ " "* ~ NEWLINE }
 inlines = _{ !marker ~ inline+ ~ ( NEWLINE ~ (PEEK[..] ~ !marker ~ inline+ ~ NEWLINE)+ )? }
 inline  = _{
     reference
+    | substitution_ref
     | str
 //     link ✓
 //     | str ✓
@@ -121,7 +122,7 @@ inline  = _{
 //     | symbol
 }
 
-str = { (!(NEWLINE | reference) ~ ANY)+ }
+str = { (!(NEWLINE | reference | substitution_ref) ~ ANY)+ }
 
 // inline links
 reference = { reference_target | reference_explicit | reference_auto }
@@ -144,6 +145,7 @@ reference_embedded_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_li
 reference_auto_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
 reference_auto_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
 
+substitution_ref = { "|" ~ substitution_name ~ "|" }
 
 /*
  * character classes

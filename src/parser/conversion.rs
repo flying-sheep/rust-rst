@@ -72,6 +72,23 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
 	Ok(e::Document::with_children(toplevel))
 }
 
+/// Normalizes a name in terms of whitespace. Equivalent to docutils's
+/// `docutils.nodes.whitespace_normalize_name`.
+pub fn whitespace_normalize_name(name: &str) -> String {
+	// Python's string.split() defines whitespace differently than Rust does.
+	let split_iter = name.split(
+		|ch: char| ch.is_whitespace() || (ch >= '\x1C' && ch <= '\x1F')
+	).filter(|split| !split.is_empty());
+	let mut ret = String::new();
+	for split in split_iter {
+		if !ret.is_empty() {
+			ret.push(' ');
+		}
+		ret.push_str(split);
+	}
+	ret
+}
+
 
 #[cfg(test)]
 mod tests {
