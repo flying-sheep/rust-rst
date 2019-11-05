@@ -98,7 +98,7 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
 		Rule::reference_auto => {
 			let rt_inner = concrete.into_inner().next().unwrap();
 			match rt_inner.as_rule() {
-				Rule::url => match Url::parse(rt_inner.as_str()) {
+				Rule::url_auto => match Url::parse(rt_inner.as_str()) {
 					Ok(url) => {
 						refuri = Some(url.into());
 						name   = None;
