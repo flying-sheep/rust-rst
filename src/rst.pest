@@ -6,7 +6,7 @@
 // and pest only has one stack that we need for indentation.
 
 document = _{ SOI ~ blocks ~ EOI }
-blocks   = _{ block ~ (blank_line* ~ block)* }
+blocks   = _{ block ~ (blank_line* ~ block)* ~ blank_line? }
 block    = _{ PEEK[..] ~ hanging_block }
 
 // This is the list of all block-level elements
@@ -48,7 +48,7 @@ target         =  { target_qu | target_uq }
 target_uq      = _{ ".. _"  ~         target_name_uq ~           ":" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
 target_qu      = _{ ".. _`" ~ !"``" ~ target_name_qu ~ !"``:" ~ "`:" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
 target_name_uq =  { ( !("_"|":"|"`") ~ !NEWLINE ~ ANY )* }
-target_name_qu =  { ( !(    ":"|"`") ~ !NEWLINE ~ ANY )* }
+target_name_qu =  { ( !(":"|"`"|"_>") ~ ANY )* }
 link_target    =  { nonspacechar+ }
 
 // Title. A block type
@@ -128,8 +128,11 @@ str = { (!(NEWLINE | reference | substitution_ref) ~ ANY)+ }
 reference = { reference_target | reference_explicit | reference_auto }
 
 reference_target = { reference_target_uq ~ "_" | reference_target_qu }
-reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)* }
-reference_target_qu = _{ ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ target_name_qu ~ ( "`" ~ !"``" ) ~ "_" }
+reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)+ }
+reference_target_qu = { ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ reference_text? ~ ("<" ~ reference_bracketed ~ ">")? ~ ( "`" ~ !"``" ) ~ "_" }
+reference_text = { !"<" ~ ( !("`"|"<") ~ ANY )+ }
+reference_bracketed = { url | (target_name_qu ~ "_") | relative_reference }
+relative_reference = { (!("`"|">") ~ ANY)+ }
 
 reference_explicit = { reference_label ~ "(" ~ " "* ~ reference_source ~ " "* ~ (NEWLINE ~ PEEK[..])? ~ reference_title ~ " "* ~ ")" }
 reference_label = { "[" ~ !"^" ~ (!"]" ~ inline)* ~ "]" }
@@ -139,13 +142,80 @@ reference_title        = { ( reference_title_single | reference_title_double | "
 reference_title_single = { "'"  ~ ( !("'"  ~ " "+ ~ (")" | NEWLINE)) ~ ANY )* ~ "'" }
 reference_title_double = { "\"" ~ ( !("\"" ~ " "+ ~ (")" | NEWLINE)) ~ ANY )* ~ "\"" }
 
-reference_auto = { reference_embedded | reference_auto_url | reference_auto_email }
-reference_embedded = { "`" ~ reference_embedded_source ~ "<" ~ ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ ~ ">`_" ~ "_"? }
-reference_embedded_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
-reference_auto_url = { ASCII_ALPHA+ ~ "://" ~ (!(NEWLINE|">") ~ ANY)+ }
-reference_auto_email = { "<" ~ "mailto:"? ~ (ASCII_ALPHANUMERIC|"-"|"+"|"_"|"."|"/"|"!"|"%"|"~"|"$")+ ~ "@" ~ (!(NEWLINE | ">") ~ ANY)+ ~ ">" }
+// Emails can't end with punctuation, but URLs must use a separate rule.
+reference_auto = { url_auto | email }
+//reference_embedded = { "`" ~ reference_embedded_source ~ "<" ~ absolute_url_with_fragment ~ ">`_" ~ "_"? }
+//reference_embedded_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
 
 substitution_ref = { "|" ~ substitution_name ~ "|" }
+
+/* URLs as defined by the WHATWG URL standard. */
+url = { absolute_url_no_query ~ ("?" ~ url_unit*)? ~ ("#" ~ url_unit*)? }
+absolute_url_no_query = @{
+    ( special_url_scheme ~ ":" ~ scheme_relative_special_url ) |
+    ( ^"file:" ~ scheme_relative_file_url ) |
+    ( arbitrary_scheme ~ ":" ~ relative_url )
+}
+scheme_relative_special_url = @{ "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? }
+path_absolute_url = @{ "/" ~ path_relative_url }
+path_relative_url = @{ ( url_path_segment_unit* ~ "/" )* ~ url_path_segment_unit* }
+url_path_segment_unit = @{ !("/"|"?") ~ url_unit }
+url_port = @{ ASCII_DIGIT* }
+scheme_relative_file_url = @{ "//" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url }
+relative_url = @{ ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? ) | path_absolute_url | (!(arbitrary_scheme ~ ":") ~ path_relative_url) }
+/* this is approximately a superset of valid hosts and opaque hosts */
+host = @{ ( !(":"|"/"|"?"|"#") ~ url_unit)+ | ("["~(ASCII_HEX_DIGIT|"."|":")+~"]") }
+special_url_scheme = @{ ^"ftp" | (^"http" | ^"ws") ~ ^"s"? }  /* doesn't include "file" */
+arbitrary_scheme = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
+url_unit = @{ ASCII_ALPHANUMERIC|"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"="|"?"|"@"|"_"|"~"|(!(SURROGATE|NONCHARACTER_CODE_POINT) ~ '\u{A0}'..'\u{10FFFD}')|("%" ~ ASCII_HEX_DIGIT{2}) }
+
+/*
+ * Rules for URLs that don't end in punctuation.
+ * This is a modification of the rules above to incorporate the docutils rules
+ * for the final character in an auto URL and for the character after it.
+ * The patterns used here to emulate the behavior of docutils' regex are taken
+ * from <http://www.inf.puc-rio.br/~roberto/docs/ry10-01.pdf>.
+ */
+url_auto = {
+    ( absolute_url_no_query ~ ("?" ~ url_unit*)? ~ "#" ~ url_units_auto ) |
+    ( absolute_url_no_query ~ "?" ~ url_units_auto ) |
+    ( special_url_scheme ~ "://" ~ host ~ (":" ~ url_port)? ~ path_absolute_url_auto ) |
+    ( special_url_scheme ~ "://" ~ host ~ ":" ~ url_port ~ &follows_auto_url ) |
+    ( special_url_scheme ~ "://" ~ ( domain_host_auto | "["~(ASCII_HEX_DIGIT|"."|":")+~"]" ~ &follows_auto_url ) ) |
+    ( ^"file://" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url_auto ) |
+    ( arbitrary_scheme ~ ":" ~ relative_url_auto )
+}
+domain_host_auto = @{
+    ( !(":"|"/"|"?"|"#") ~ url_unit ~ url_units_auto ) |
+    ( !(":"|"/"|"?"|"#") ~ url_unit ~ &">" ) |
+    ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"/"|"="|"+") ~ &follows_auto_url )
+}
+path_absolute_url_auto = @{ "/" ~ path_relative_url_auto }
+path_relative_url_auto = @{ prua1 | prua2 | &follows_auto_url }
+prua1 = @{ ( url_path_segment_unit ~ prua1 ) | ( "/" ~ path_relative_url_auto ) }
+prua2 = @{ ( url_path_segment_unit ~ prua2 ) | ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"="|"+") ~ &follows_auto_url ) }
+relative_url_auto = @{
+    ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url_auto ) |
+    ( "//" ~ host ~ ":" ~ url_port ~ &follows_auto_url ) |
+    ( "//" ~ ( domain_host_auto | "["~(ASCII_HEX_DIGIT|"."|":")+~"]" ~ &follows_auto_url ) ) |
+    path_absolute_url_auto |
+    // (prua1|prua2) is path_relative_url_auto minus the &follows_auto_url case
+    (!(arbitrary_scheme ~ ":") ~ (prua1 | prua2))
+}
+url_units_auto = @{
+    ( url_unit ~ url_units_auto ) |
+    ( url_unit ~ &">" ~ &follows_auto_url ) |
+    ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"/"|"="|"+") ~ &follows_auto_url )
+}
+follows_auto_url = @{
+    EOI|"\x00"|WHITE_SPACE|">"|"\u{201A}"|"\u{201E}"|
+    (!(CONNECTOR_PUNCTUATION|OPEN_PUNCTUATION|"#"|"%"|"&"|"*"|"@") ~ PUNCTUATION)
+}
+
+/* Rules for emails as defined by the HTML standard */
+email = { ( email_atext | "." )+ ~ "@" ~ email_label ~ ( "." ~ email_label )* }
+email_atext = @{ ASCII_ALPHANUMERIC|"!"|"#"|"$"|"%"|"&"|"'"|"/"|"="|"?"|"^"|"_"|"`"|"{"|"|"|"}"|"~" }
+email_label = @{ ASCII_ALPHANUMERIC ~ ( !("-"+ ~ !ASCII_ALPHANUMERIC) ~ (ASCII_ALPHANUMERIC|"-") ){0,62} }
 
 /*
  * character classes
