@@ -130,7 +130,7 @@ reference = { reference_target | reference_explicit | reference_auto }
 reference_target = { reference_target_uq ~ "_" | reference_target_qu }
 reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)+ }
 reference_target_qu = { ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ reference_text? ~ ("<" ~ reference_bracketed ~ ">")? ~ ( "`" ~ !"``" ) ~ "_" }
-reference_text = { !("<") ~ ( !("`"|"<") ~ ANY )+ }
+reference_text = { !"<" ~ ( !("`"|"<") ~ ANY )+ }
 reference_bracketed = { url | (target_name_qu ~ "_") | relative_reference }
 relative_reference = { (!("`"|">") ~ ANY)+ }
 
@@ -355,7 +355,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // star_line = { "****" ~ "*"* | spacechar ~ "*"+ ~ &spacechar }
 // ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
 
-whitespace = { spacechar | NEWLINE }
+// whitespace = { spacechar | NEWLINE }
 
 // emph = { "*" ~ !whitespace ~ (!"*" ~ inline)+ ~ "*" }
 // strong = { "**" ~ !whitespace ~ (!"**" ~ inline)+ ~ "**" }
@@ -378,7 +378,7 @@ whitespace = { spacechar | NEWLINE }
 //     "\"" ~ (!"\"" ~ ANY)* ~ "\"" |
 //     "'"  ~ (!"'"  ~ ANY)* ~ "'"
 // }
-spacechar = _{ " " | "\t" }
+// spacechar = _{ " " | "\t" }
 // sp = _{ spacechar* }
 // spnl = _{ sp ~ (NEWLINE ~ sp)? }
 // special_char = _{ "~" | "*" | "_" | "`" | "&" | "[" | "]" | "(" | ")" | "<" | "!" | "#" | "\\" | "\"" | "'" | extended_special_char }
