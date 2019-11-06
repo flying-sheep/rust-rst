@@ -1,6 +1,6 @@
 use serde_derive::Serialize;
 
-use crate::target;
+use crate::url::Url;
 use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,AlignV,TableAlignH,TableBorder,TableGroupCols,Measure,EnumeratedListType};
 
 pub trait ExtraAttributes<A> {
@@ -33,7 +33,7 @@ impl_extra!(SubstitutionDefinition { ltrim: bool, rtrim: bool });
 impl_extra!(Comment { space: FixedSpace });
 impl_extra!(Target {
 	/// External reference to a URI/URL
-	refuri: Option<target::Target>,
+	refuri: Option<Url>,
 	/// References to ids attributes in other elements
 	refid: Option<ID>,
 	/// Internal reference to the names attribute of another element. May resolve to either an internal or external reference.
@@ -42,13 +42,13 @@ impl_extra!(Target {
 });
 impl_extra!(Raw { space: FixedSpace, format: Vec<NameToken> });
 impl_extra!(#[derive(Debug,PartialEq,Serialize,Clone)] Image {
-	uri: target::Target,
+	uri: Url,
 	align: Option<AlignHV>,
 	alt: Option<String>,
 	height: Option<Measure>,
 	width: Option<Measure>,
 	scale: Option<u8>,
-	target: Option<target::Target>,  // Not part of the DTD but a valid argument
+	target: Option<Url>,  // Not part of the DTD but a valid argument
 });
 
 //bools usually are XML yesorno. “auto” however either exists and is set to something random like “1” or doesn’t exist
@@ -75,7 +75,7 @@ impl_extra!(OptionArgument { delimiter: Option<String> });
 impl_extra!(Reference {
 	name: Option<NameToken>,  //TODO: is CDATA in the DTD, so maybe no nametoken?
 	/// External reference to a URI/URL
-	refuri: Option<target::Target>,
+	refuri: Option<Url>,
 	/// References to ids attributes in other elements
 	refid: Option<ID>,
 	/// Internal reference to the names attribute of another element
@@ -89,7 +89,7 @@ impl_extra!(Problematic { refid: Option<ID> });
 //also have non-inline versions. Inline image is no figure child, inline target has content
 impl_extra!(TargetInline {
 	/// External reference to a URI/URL
-	refuri: Option<target::Target>,
+	refuri: Option<Url>,
 	/// References to ids attributes in other elements
 	refid: Option<ID>,
 	/// Internal reference to the names attribute of another element. May resolve to either an internal or external reference.
@@ -100,7 +100,7 @@ impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 pub type ImageInline = Image;
 
 impl Image {
-	pub fn new(uri: target::Target) -> Image { Image {
+	pub fn new(uri: Url) -> Image { Image {
 		uri,
 		align: None,
 		alt: None,

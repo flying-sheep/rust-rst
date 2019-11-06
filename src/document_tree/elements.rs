@@ -1,6 +1,6 @@
+use std::path::PathBuf;
 use serde_derive::Serialize;
 
-use crate::target;
 use super::attribute_types::{CanBeEmpty,ID,NameToken};
 use super::extra_attributes::{self,ExtraAttributes};
 use super::element_categories::*;
@@ -20,8 +20,8 @@ pub trait Element {
 	/// An element may have at most one of the names or dupnames attributes, but not both.
 	fn   names    (&    self) -> &    Vec<NameToken>;
 	fn   names_mut(&mut self) -> &mut Vec<NameToken>;
-	fn  source    (&    self) -> &    Option<target::Target>;
-	fn  source_mut(&mut self) -> &mut Option<target::Target>;
+	fn  source    (&    self) -> &    Option<PathBuf>;
+	fn  source_mut(&mut self) -> &mut Option<PathBuf>;
 	fn classes    (&    self) -> &    Vec<String>;
 	fn classes_mut(&mut self) -> &mut Vec<String>;
 }
@@ -33,7 +33,7 @@ pub struct CommonAttributes {
 	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
 	names: Vec<NameToken>,
 	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
-	source: Option<target::Target>,
+	source: Option<PathBuf>,
 	#[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
 	classes: Vec<String>,
 	//TODO: dupnames
@@ -45,12 +45,12 @@ pub struct CommonAttributes {
 
 macro_rules! impl_element { ($name:ident) => (
 	impl Element for $name {
-		fn     ids    (&    self) -> &    Vec<ID>        { &    self.common.ids     }
-		fn     ids_mut(&mut self) -> &mut Vec<ID>        { &mut self.common.ids     }
-		fn   names    (&    self) -> &    Vec<NameToken> { &    self.common.names   }
-		fn   names_mut(&mut self) -> &mut Vec<NameToken> { &mut self.common.names   }
-		fn  source    (&    self) -> &    Option<target::Target> { &    self.common.source  }
-		fn  source_mut(&mut self) -> &mut Option<target::Target> { &mut self.common.source  }
+		fn     ids    (&    self) -> &    Vec<ID>         { &    self.common.ids     }
+		fn     ids_mut(&mut self) -> &mut Vec<ID>         { &mut self.common.ids     }
+		fn   names    (&    self) -> &    Vec<NameToken>  { &    self.common.names   }
+		fn   names_mut(&mut self) -> &mut Vec<NameToken>  { &mut self.common.names   }
+		fn  source    (&    self) -> &    Option<PathBuf> { &    self.common.source  }
+		fn  source_mut(&mut self) -> &mut Option<PathBuf> { &mut self.common.source  }
 		fn classes    (&    self) -> &    Vec<String> { &    self.common.classes }
 		fn classes_mut(&mut self) -> &mut Vec<String> { &mut self.common.classes }
 	}

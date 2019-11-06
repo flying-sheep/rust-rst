@@ -1,6 +1,5 @@
 use failure::Error;
 use pest::iterators::Pair;
-use url::Url;
 
 use crate::document_tree::{
 	ExtraAttributes,
@@ -15,6 +14,7 @@ use crate::parser::{
 //    pair_ext_parse::PairExt,
 };
 
+use crate::url::Url;
 use super::whitespace_normalize_name;
 
 
@@ -73,16 +73,26 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
 					refuri = if let Some(reference) = reference {
 						let inner = reference.into_inner().next().unwrap();
 						match inner.as_rule() {
-							Rule::url => if let Ok(url) = Url::parse(inner.as_str()) {
-								Some(url.into())
+							// The URL rules in our parser accept a narrow superset of
+							// valid URLs, so we need to handle false positives.
+							Rule::url => if let Ok(target) = Url::parse_absolute(inner.as_str()) {
+								Some(target)
+							} else if inner.as_str().ends_with('_') {
+								// like target_name_qu (minus the final underscore)
+								let full_str = inner.as_str();
+								refname.push(full_str[0..full_str.len() - 1].into());
+								None
 							} else {
-								unimplemented!("reference to a relative URL")
+								// like relative_reference
+								Some(Url::parse_relative(inner.as_str())?)
 							},
 							Rule::target_name_qu => {
 								refname.push(inner.as_str().into());
 								None
 							},
-							Rule::relative_reference => unimplemented!("reference to a relative URL"),
+							Rule::relative_reference => {
+								Some(Url::parse_relative(inner.as_str())?)
+							},
 							_ => unreachable!()
 						}
 					} else {
@@ -98,9 +108,9 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
 		Rule::reference_auto => {
 			let rt_inner = concrete.into_inner().next().unwrap();
 			match rt_inner.as_rule() {
-				Rule::url_auto => match Url::parse(rt_inner.as_str()) {
-					Ok(url) => {
-						refuri = Some(url.into());
+				Rule::url_auto => match Url::parse_absolute(rt_inner.as_str()) {
+					Ok(target) => {
+						refuri = Some(target);
 						name   = None;
 						refid  = None;
 						children.push(rt_inner.as_str().into());
@@ -110,9 +120,9 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
 				},
 				Rule::email => {
 					let mailto_url = String::from("mailto:") + rt_inner.as_str();
-					match Url::parse(&mailto_url) {
-						Ok(url) => {
-							refuri = Some(url.into());
+					match Url::parse_absolute(&mailto_url) {
+						Ok(target) => {
+							refuri = Some(target);
 							name   = None;
 							refid  = None;
 							children.push(rt_inner.as_str().into());

@@ -4,7 +4,7 @@ use failure::{Error,bail,format_err};
 use serde_derive::Serialize;
 use regex::Regex;
 
-use crate::target;
+use crate::url::Url;
 
 #[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)]
 pub enum EnumeratedListType {
@@ -134,7 +134,7 @@ macro_rules! impl_cannot_be_empty {
 		impl_cannot_be_empty!($($ts),*);
 	};
 }
-impl_cannot_be_empty!(target::Target);
+impl_cannot_be_empty!(Url);
 impl_cannot_be_empty!(TableGroupCols);
 
 impl<T> CanBeEmpty for Option<T> {
