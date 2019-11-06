@@ -21,7 +21,7 @@ TODO: continue documenting how it’s done via http://svn.code.sf.net/p/docutils
 
 use std::collections::HashMap;
 
-use crate::target::Target;
+use crate::url::Url;
 use crate::document_tree::{
 	Document,
 	HasChildren,
@@ -37,7 +37,7 @@ enum NamedTargetType {
 	LabeledFootnote(usize),
 	Citation,
 	InternalLink,
-	ExternalLink(Target),
+	ExternalLink(Url),
 	IndirectLink(NameToken),
 	SectionTitle
 }
