@@ -151,23 +151,28 @@ substitution_ref = { "|" ~ substitution_name ~ "|" }
 
 /* URLs as defined by the WHATWG URL standard. */
 url = { absolute_url_no_query ~ ("?" ~ url_unit*)? ~ ("#" ~ url_unit*)? }
-absolute_url_no_query = @{
+absolute_url_no_query = {
     ( special_url_scheme ~ ":" ~ scheme_relative_special_url ) |
     ( ^"file:" ~ scheme_relative_file_url ) |
     ( arbitrary_scheme ~ ":" ~ relative_url )
 }
-scheme_relative_special_url = @{ "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? }
-path_absolute_url = @{ "/" ~ path_relative_url }
-path_relative_url = @{ ( url_path_segment_unit* ~ "/" )* ~ url_path_segment_unit* }
-url_path_segment_unit = @{ !("/"|"?") ~ url_unit }
-url_port = @{ ASCII_DIGIT* }
-scheme_relative_file_url = @{ "//" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url }
-relative_url = @{ ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? ) | path_absolute_url | (!(arbitrary_scheme ~ ":") ~ path_relative_url) }
+scheme_relative_special_url = { "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? }
+path_absolute_url = { "/" ~ path_relative_url }
+path_relative_url = { ( url_path_segment_unit* ~ "/" )* ~ url_path_segment_unit* }
+url_path_segment_unit = { !("/"|"?") ~ url_unit }
+url_port = { ASCII_DIGIT* }
+scheme_relative_file_url = { "//" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url }
+relative_url = { ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? ) | path_absolute_url | (!(arbitrary_scheme ~ ":") ~ path_relative_url) }
 /* this is approximately a superset of valid hosts and opaque hosts */
-host = @{ ( !(":"|"/"|"?"|"#") ~ url_unit)+ | ("["~(ASCII_HEX_DIGIT|"."|":")+~"]") }
-special_url_scheme = @{ ^"ftp" | (^"http" | ^"ws") ~ ^"s"? }  /* doesn't include "file" */
-arbitrary_scheme = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
-url_unit = @{ ASCII_ALPHANUMERIC|"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"="|"?"|"@"|"_"|"~"|(!(SURROGATE|NONCHARACTER_CODE_POINT) ~ '\u{A0}'..'\u{10FFFD}')|("%" ~ ASCII_HEX_DIGIT{2}) }
+host = { ( !(":"|"/"|"?"|"#") ~ url_unit)+ | ("["~(ASCII_HEX_DIGIT|"."|":")+~"]") }
+special_url_scheme = { ^"ftp" | (^"http" | ^"ws") ~ ^"s"? }  /* doesn't include "file" */
+arbitrary_scheme = { ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
+url_unit = {
+	ASCII_ALPHANUMERIC |
+	"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"="|"?"|"@"|"_"|"~" |
+	(!(SURROGATE|NONCHARACTER_CODE_POINT) ~ '\u{A0}'..'\u{10FFFD}') |
+	("%" ~ ASCII_HEX_DIGIT{2})
+}
 
 /*
  * Rules for URLs that don't end in punctuation.
@@ -185,16 +190,16 @@ url_auto = {
     ( ^"file://" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url_auto ) |
     ( arbitrary_scheme ~ ":" ~ relative_url_auto )
 }
-domain_host_auto = @{
+domain_host_auto = {
     ( !(":"|"/"|"?"|"#") ~ url_unit ~ url_units_auto ) |
     ( !(":"|"/"|"?"|"#") ~ url_unit ~ &">" ) |
     ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"/"|"="|"+") ~ &follows_auto_url )
 }
-path_absolute_url_auto = @{ "/" ~ path_relative_url_auto }
-path_relative_url_auto = @{ prua1 | prua2 | &follows_auto_url }
-prua1 = @{ ( url_path_segment_unit ~ prua1 ) | ( "/" ~ path_relative_url_auto ) }
-prua2 = @{ ( url_path_segment_unit ~ prua2 ) | ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"="|"+") ~ &follows_auto_url ) }
-relative_url_auto = @{
+path_absolute_url_auto = { "/" ~ path_relative_url_auto }
+path_relative_url_auto = { prua1 | prua2 | &follows_auto_url }
+prua1 = { ( url_path_segment_unit ~ prua1 ) | ( "/" ~ path_relative_url_auto ) }
+prua2 = { ( url_path_segment_unit ~ prua2 ) | ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"="|"+") ~ &follows_auto_url ) }
+relative_url_auto = {
     ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url_auto ) |
     ( "//" ~ host ~ ":" ~ url_port ~ &follows_auto_url ) |
     ( "//" ~ ( domain_host_auto | "["~(ASCII_HEX_DIGIT|"."|":")+~"]" ~ &follows_auto_url ) ) |
@@ -202,20 +207,20 @@ relative_url_auto = @{
     // (prua1|prua2) is path_relative_url_auto minus the &follows_auto_url case
     (!(arbitrary_scheme ~ ":") ~ (prua1 | prua2))
 }
-url_units_auto = @{
+url_units_auto = {
     ( url_unit ~ url_units_auto ) |
     ( url_unit ~ &">" ~ &follows_auto_url ) |
     ( (ASCII_ALPHANUMERIC|"_"|"~"|"*"|"/"|"="|"+") ~ &follows_auto_url )
 }
-follows_auto_url = @{
+follows_auto_url = {
     EOI|"\x00"|WHITE_SPACE|">"|"\u{201A}"|"\u{201E}"|
     (!(CONNECTOR_PUNCTUATION|OPEN_PUNCTUATION|"#"|"%"|"&"|"*"|"@") ~ PUNCTUATION)
 }
 
 /* Rules for emails as defined by the HTML standard */
 email = { ( email_atext | "." )+ ~ "@" ~ email_label ~ ( "." ~ email_label )* }
-email_atext = @{ ASCII_ALPHANUMERIC|"!"|"#"|"$"|"%"|"&"|"'"|"/"|"="|"?"|"^"|"_"|"`"|"{"|"|"|"}"|"~" }
-email_label = @{ ASCII_ALPHANUMERIC ~ ( !("-"+ ~ !ASCII_ALPHANUMERIC) ~ (ASCII_ALPHANUMERIC|"-") ){0,62} }
+email_atext = { ASCII_ALPHANUMERIC|"!"|"#"|"$"|"%"|"&"|"'"|"/"|"="|"?"|"^"|"_"|"`"|"{"|"|"|"}"|"~" }
+email_label = { ASCII_ALPHANUMERIC ~ ( !("-"+ ~ !ASCII_ALPHANUMERIC) ~ (ASCII_ALPHANUMERIC|"-") ){0,62} }
 
 /*
  * character classes
