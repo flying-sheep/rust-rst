@@ -134,6 +134,32 @@ A |subst| in-line
 	};
 }
 
+
+#[allow(clippy::cognitive_complexity)]
+#[test]
+fn substitution_image() {
+	parses_to! {
+		parser: RstParser,
+		input: "\
+.. |subst| image:: thing.png
+   :target: foo.html
+",
+		rule: Rule::document,
+		tokens: [
+			substitution_def(0, 50, [
+				substitution_name(4, 9),
+				image(11, 50, [
+					line(18, 29, [ str(18, 28) ]),
+					image_option(32, 50, [
+						image_opt_name(33, 39),
+						line(40, 50, [ str(40, 49) ]),
+					]),
+				]),
+			]),
+		]
+	};
+}
+
 // TODO: test images
 
 #[allow(clippy::cognitive_complexity)]

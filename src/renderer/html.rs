@@ -9,7 +9,7 @@ use crate::document_tree::{
 	ExtraAttributes,
 	elements as e,
 	element_categories as c,
-	// extra_attributes as a,
+	extra_attributes as a,
 };
 
 
@@ -98,11 +98,33 @@ impl HTMLRender for e::Topic {
 
 impl_html_render_cat!(BodyElement { Paragraph, LiteralBlock, DoctestBlock, MathBlock, Rubric, SubstitutionDefinition, Comment, Pending, Target, Raw, Image, Compound, Container, BulletList, EnumeratedList, DefinitionList, FieldList, OptionList, LineBlock, BlockQuote, Admonition, Attention, Hint, Note, Caution, Danger, Error, Important, Tip, Warning, Footnote, Citation, SystemMessage, Figure, Table });
 impl_html_render_simple!(Paragraph => p, LiteralBlock => pre, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul, EnumeratedList => ol, DefinitionList => dl, FieldList => dl, OptionList => pre, LineBlock => div, BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
-impl_html_render_simple_nochildren!(Image => img, Table => table);  //TODO: after implementing the table, move it to elems with children
+impl_html_render_simple_nochildren!(Table => table);  //TODO: after implementing the table, move it to elems with children
+
+impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image> {
+	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+		let extra = self.extra();
+		if let Some(ref target) = extra.target {
+			write!(stream, "<a href=\"{}\">", target)?;
+		}
+		write!(stream, "<img src=\"{}\"", extra.uri)?;
+		if let Some(ref alt) = extra.alt {
+			write!(stream, " alt=\"{}\"", alt)?;
+		}
+		// TODO: align: Option<AlignHV>
+		// TODO: height: Option<Measure>
+		// TODO: width: Option<Measure>
+		// TODO: scale: Option<u8>
+		write!(stream, ">")?;
+		if extra.target.is_some() {
+			write!(stream, "</a>")?;
+		}
+		Ok(())
+	}
+}
 
 impl HTMLRender for e::DoctestBlock {
 	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
-		// 
+		// TODO
 		unimplemented!();
 	}
 }
@@ -173,7 +195,6 @@ impl HTMLRender for e::SystemMessage {
 
 impl_html_render_cat!(TextOrInlineElement { String, Emphasis, Strong, Literal, Reference, FootnoteReference, CitationReference, SubstitutionReference, TitleReference, Abbreviation, Acronym, Superscript, Subscript, Inline, Problematic, Generated, Math, TargetInline, RawInline, ImageInline });
 impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, FootnoteReference => a, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
-impl_html_render_simple_nochildren!(ImageInline => img);
 
 impl HTMLRender for String {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
@@ -293,8 +314,7 @@ impl HTMLRender for e::Legend {
 //TODO: render admonitions: Admonition, Attention, Hint, Note, Caution, Danger, Error, Important, Tip, Warning
 //TODO: properly render tables
 
-//TODO: add reference target: Reference, FootnoteReference, CitationReference, TitleReference
+//TODO: add reference target: FootnoteReference, CitationReference, TitleReference
 //TODO: add title: Abbr, Acronym
 //TODO: convert math, set display attr
 //TODO: add id: Rubric, Target, TargetInline
-//TODO: add src: Image, ImageInline

@@ -111,25 +111,22 @@ fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Erro
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
 	let mut pairs = pair.into_inner();
 	let mut image = I::with_extra(a::Image::new(
-		pairs.next().unwrap().parse()?,  // line
+		pairs.next().unwrap().as_str().trim().parse()?,  // line
 	));
-	if let Some(opt_block) = pairs.next() {  // image_opt_block
-		let options = opt_block.into_inner();
-		for opt in options {
-			let mut opt_iter = opt.into_inner();
-			let opt_name = opt_iter.next().unwrap();
-			let opt_val = opt_iter.next().unwrap();
-			match opt_name.as_str() {
-				"class"  => image.classes_mut().push(opt_val.as_str().to_owned()),
-				"name"   => image.names_mut().push(opt_val.as_str().into()),
-				"alt"    => image.extra_mut().alt    = Some(opt_val.as_str().to_owned()),
-				"height" => image.extra_mut().height = Some(opt_val.parse()?),
-				"width"  => image.extra_mut().width  = Some(opt_val.parse()?),
-				"scale"  => image.extra_mut().scale  = Some(parse_scale(&opt_val)?),
-				"align"  => image.extra_mut().align  = Some(opt_val.parse()?),
-				"target" => image.extra_mut().target = Some(opt_val.parse()?),
-				name => bail!("Unknown Image option {}", name),
-			}
+	for opt in pairs {
+		let mut opt_iter = opt.into_inner();
+		let opt_name = opt_iter.next().unwrap();
+		let opt_val = opt_iter.next().unwrap();
+		match opt_name.as_str() {
+			"class"  => image.classes_mut().push(opt_val.as_str().to_owned()),
+			"name"   => image.names_mut().push(opt_val.as_str().into()),
+			"alt"    => image.extra_mut().alt    = Some(opt_val.as_str().to_owned()),
+			"height" => image.extra_mut().height = Some(opt_val.parse()?),
+			"width"  => image.extra_mut().width  = Some(opt_val.parse()?),
+			"scale"  => image.extra_mut().scale  = Some(parse_scale(&opt_val)?),
+			"align"  => image.extra_mut().align  = Some(opt_val.parse()?),
+			"target" => image.extra_mut().target = Some(opt_val.parse()?),
+			name => bail!("Unknown Image option {}", name),
 		}
 	}
 	Ok(image)

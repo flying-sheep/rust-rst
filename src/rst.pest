@@ -72,7 +72,7 @@ paragraph =  { inlines }
 
 
 // Directives with options can have these or specific ones:
-common_option = { "class" | "name" }
+common_opt_name = { "class" | "name" }
 
 // Replace. A directive only usable in substitutions.
 
@@ -82,8 +82,9 @@ replace = { ^"replace::" ~ line }  // TODO multiline
 
 image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
 image           =  { ^"image::" ~ line ~ image_opt_block? }
-image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ ":" ~ image_option ~ ":" ~ line } //TODO: merge with other directives?
-image_option    =  { common_option | "alt" | "height" | "width" | "scale" | "align" | "target" }
+image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ image_option } //TODO: merge with other directives?
+image_option    =  { ":" ~ image_opt_name ~ ":" ~ line }
+image_opt_name  =  { common_opt_name | "alt" | "height" | "width" | "scale" | "align" | "target" }
 
 // Admonition. A directive. The generic one has a title
 

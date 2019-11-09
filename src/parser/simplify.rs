@@ -53,7 +53,7 @@ impl NamedTargetType {
 
 #[derive(Clone, Debug)]
 struct Substitution {
-	content: e::ImageInline,
+	content: Vec<c::TextOrInlineElement>,
 	/// If true and the sibling before the reference is a text node,
 	/// the text node gets right-trimmed. 
 	ltrim: bool,
@@ -94,7 +94,7 @@ impl TargetsCollected {
 
 trait ResolvableRefs {
 	fn populate_targets(&self, refs: &mut TargetsCollected);
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self;
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> where Self: Sized;
 }
 
 pub fn resolve_references(mut doc: Document) -> Document {
@@ -102,7 +102,7 @@ pub fn resolve_references(mut doc: Document) -> Document {
 	for c in doc.children() {
 		c.populate_targets(&mut references);
 	}
-	let new: Vec<_> = doc.children_mut().drain(..).map(|c| c.resolve_refs(&references)).collect();
+	let new: Vec<_> = doc.children_mut().drain(..).flat_map(|c| c.resolve_refs(&references)).collect();
 	Document::with_children(new)
 }
 
@@ -113,7 +113,7 @@ fn sub_pop<P, C>(parent: &P, refs: &mut TargetsCollected) where P: HasChildren<C
 }
 
 fn sub_res<P, C>(mut parent: P, refs: &TargetsCollected) -> P where P: e::Element + HasChildren<C>, C: ResolvableRefs {
-	let new: Vec<_> = parent.children_mut().drain(..).map(|c| c.resolve_refs(refs)).collect();
+	let new: Vec<_> = parent.children_mut().drain(..).flat_map(|c| c.resolve_refs(refs)).collect();
 	parent.children_mut().extend(new);
 	parent
 }
@@ -141,15 +141,15 @@ impl ResolvableRefs for c::StructuralSubElement {
 			SubStructure(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::StructuralSubElement::*;
-		match self {
+		vec![match self {
 			Title(e)        => sub_res(*e, refs).into(),
 			Subtitle(e)     => sub_res(*e, refs).into(),
 			Decoration(e)   => sub_res(*e, refs).into(),
 			Docinfo(e)      => sub_res(*e, refs).into(),
-			SubStructure(e) => e.resolve_refs(refs).into(),
-		}
+			SubStructure(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+		}]
 	}
 }
 
@@ -164,15 +164,15 @@ impl ResolvableRefs for c::SubStructure {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubStructure::*;
-		match self {
+		vec![match self {
 			Topic(e) => sub_res(*e, refs).into(),
 			Sidebar(e) => sub_res(*e, refs).into(),
 			Transition(e) => Transition(e),
 			Section(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
-		}
+			BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+		}]
 	}
 }
 
@@ -186,13 +186,8 @@ impl ResolvableRefs for c::BodyElement {
 			MathBlock(_) => {},
 			Rubric(e) => sub_pop(&**e, refs),
 			SubstitutionDefinition(e) => {
-				let subst_content = if let [c::TextOrInlineElement::ImageInline(content)] = &e.children()[..] {
-					content.as_ref()
-				} else {
-					panic!("Unexpected substitution contents.")
-				};
 				let subst = Substitution {
-					content: subst_content.clone(),
+					content: e.children().clone(),
 					ltrim: e.extra().ltrim,
 					rtrim: e.extra().rtrim
 				};
@@ -246,15 +241,15 @@ impl ResolvableRefs for c::BodyElement {
 			Table(e) => sub_pop(&**e, refs)
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::BodyElement::*;
-		match self {
+		vec![match self {
 			Paragraph(e) => sub_res(*e, refs).into(),
 			LiteralBlock(e) => sub_res(*e, refs).into(),
 			DoctestBlock(e) => sub_res(*e, refs).into(),
 			MathBlock(e) => MathBlock(e),
 			Rubric(e) => sub_res(*e, refs).into(),
-			SubstitutionDefinition(e) => SubstitutionDefinition(e),
+			SubstitutionDefinition(_) => return vec![],
 			Comment(e) => Comment(e),
 			Pending(e) => Pending(e),
 			Target(e) => Target(e),
@@ -284,7 +279,7 @@ impl ResolvableRefs for c::BodyElement {
 			SystemMessage(e) => sub_res(*e, refs).into(),
 			Figure(e) => sub_res(*e, refs).into(),
 			Table(e) => sub_res(*e, refs).into()
-		}
+		}]
 	}
 }
 
@@ -305,9 +300,9 @@ impl ResolvableRefs for c::BibliographicElement {
 			Field(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::BibliographicElement::*;
-		match self {
+		vec![match self {
 			Author(e) => sub_res(*e, refs).into(),
 			Authors(e) => sub_res(*e, refs).into(),
 			Organization(e) => sub_res(*e, refs).into(),
@@ -319,7 +314,7 @@ impl ResolvableRefs for c::BibliographicElement {
 			Date(e) => sub_res(*e, refs).into(),
 			Copyright(e) => sub_res(*e, refs).into(),
 			Field(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -351,10 +346,10 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			ImageInline(_) => {}
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::TextOrInlineElement::*;
-		match self {
-			c::TextOrInlineElement::String(e) => c::TextOrInlineElement::String(e),
+		vec![match self {
+			String(e) => String(e),
 			Emphasis(e) => sub_res(*e, refs).into(),
 			Strong(e) => sub_res(*e, refs).into(),
 			Literal(e) => sub_res(*e, refs).into(),
@@ -375,7 +370,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 					if *ltrim || *rtrim {
 						dbg!(content, ltrim, rtrim);
 					}
-					ImageInline(Box::new(content.clone()))
+					return content.clone()
 				},
 				None => {
 					// Undefined substitution name (level 3 system message).
@@ -404,7 +399,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			TargetInline(e) => TargetInline(e),
 			RawInline(e) => RawInline(e),
 			ImageInline(e) => ImageInline(e)
-		}
+		}]
 	}
 }
 
@@ -418,14 +413,14 @@ impl ResolvableRefs for c::AuthorInfo {
 			Contact(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::AuthorInfo::*;
-		match self {
+		vec![match self {
 			Author(e) => sub_res(*e, refs).into(),
 			Organization(e) => sub_res(*e, refs).into(),
 			Address(e) => sub_res(*e, refs).into(),
 			Contact(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -437,12 +432,12 @@ impl ResolvableRefs for c::DecorationElement {
 			Footer(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::DecorationElement::*;
-		match self {
+		vec![match self {
 			Header(e) => sub_res(*e, refs).into(),
 			Footer(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -454,11 +449,11 @@ impl ResolvableRefs for c::SubTopic {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubTopic::*;
 		match self {
-			Title(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
+			Title(e) => vec![sub_res(*e, refs).into()],
+			BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
 		}
 	}
 }
@@ -473,14 +468,14 @@ impl ResolvableRefs for c::SubSidebar {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubSidebar::*;
-		match self {
+		vec![match self {
 			Topic(e) => sub_res(*e, refs).into(),
 			Title(e) => sub_res(*e, refs).into(),
 			Subtitle(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
-		}
+			BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+		}]
 	}
 }
 
@@ -493,13 +488,13 @@ impl ResolvableRefs for c::SubDLItem {
 			Definition(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubDLItem::*;
-		match self {
+		vec![match self {
 			Term(e) => sub_res(*e, refs).into(),
 			Classifier(e) => sub_res(*e, refs).into(),
 			Definition(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -511,12 +506,12 @@ impl ResolvableRefs for c::SubField {
 			FieldBody(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubField::*;
-		match self {
+		vec![match self {
 			FieldName(e) => sub_res(*e, refs).into(),
 			FieldBody(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -528,18 +523,18 @@ impl ResolvableRefs for c::SubOptionListItem {
 			Description(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubOptionListItem::*;
-		match self {
+		vec![match self {
 			OptionGroup(e) => sub_sub_res(*e, refs).into(),
 			Description(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
 impl ResolvableRefs for c::SubOption {
 	fn populate_targets(&self, _: &mut TargetsCollected) {}
-	fn resolve_refs(self, _: &TargetsCollected) -> Self { self }
+	fn resolve_refs(self, _: &TargetsCollected) -> Vec<Self> { vec![self] }
 }
 
 impl ResolvableRefs for c::SubLineBlock {
@@ -550,12 +545,12 @@ impl ResolvableRefs for c::SubLineBlock {
 			Line(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubLineBlock::*;
-		match self {
+		vec![match self {
 			LineBlock(e) => sub_res(*e, refs).into(),
 			Line(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -567,11 +562,11 @@ impl ResolvableRefs for c::SubBlockQuote {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubBlockQuote::*;
 		match self {
-			Attribution(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
+			Attribution(e) => vec![sub_res(*e, refs).into()],
+			BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
 		}
 	}
 }
@@ -584,11 +579,11 @@ impl ResolvableRefs for c::SubFootnote {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubFootnote::*;
 		match self {
-			Label(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
+			Label(e) => vec![sub_res(*e, refs).into()],
+			BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
 		}
 	}
 }
@@ -602,13 +597,13 @@ impl ResolvableRefs for c::SubFigure {
 			BodyElement(e) => e.populate_targets(refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubFigure::*;
-		match self {
+		vec![match self {
 			Caption(e) => sub_res(*e, refs).into(),
 			Legend(e) => sub_res(*e, refs).into(),
-			BodyElement(e) => e.resolve_refs(refs).into(),
-		}
+			BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+		}]
 	}
 }
 
@@ -620,12 +615,12 @@ impl ResolvableRefs for c::SubTable {
 			TableGroup(e) => sub_pop(&**e, refs),
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubTable::*;
-		match self {
+		vec![match self {
 			Title(e) => sub_res(*e, refs).into(),
 			TableGroup(e) => sub_res(*e, refs).into(),
-		}
+		}]
 	}
 }
 
@@ -648,9 +643,9 @@ impl ResolvableRefs for c::SubTableGroup {
 			},
 		}
 	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
+	fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
 		use c::SubTableGroup::*;
-		match self {
+		vec![match self {
 			TableColspec(e) => TableColspec(e),
 			TableHead(mut e) => {
 				let new: Vec<_> = e.children_mut().drain(..).map(|c| sub_sub_res(c, refs)).collect();
@@ -662,6 +657,6 @@ impl ResolvableRefs for c::SubTableGroup {
 				e.children_mut().extend(new);
 				TableBody(e)
 			},
-		}
+		}]
 	}
 }
