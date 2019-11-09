@@ -2,16 +2,18 @@ use std::io::Write;
 
 use failure::Error;
 
+// use crate::url::Url;
 use crate::document_tree::{
 	Document,
 	HasChildren,
 	ExtraAttributes,
 	elements as e,
 	element_categories as c,
+	// extra_attributes as a,
 };
 
 
-static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
+// static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
 pub fn render_html<W>(document: &Document, mut stream: W) -> Result<(), Error> where W: Write {
 	document.render_html(stream.by_ref())
@@ -70,14 +72,14 @@ impl_html_render_cat!(StructuralSubElement { Title, Subtitle, Decoration, Docinf
 impl_html_render_simple!(Title => h1, Subtitle => h2);
 
 impl HTMLRender for e::Docinfo {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Like “YAML frontmatter” in Markdown
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Decoration {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Header or footer
 		unimplemented!();
 	}
@@ -88,7 +90,7 @@ impl_html_render_simple!(Sidebar => aside, Section => section);
 impl_html_render_simple_nochildren!(Transition => hr);
 
 impl HTMLRender for e::Topic {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// A mini section with title
 		unimplemented!();
 	}
@@ -99,14 +101,14 @@ impl_html_render_simple!(Paragraph => p, LiteralBlock => pre, MathBlock => math,
 impl_html_render_simple_nochildren!(Image => img, Table => table);  //TODO: after implementing the table, move it to elems with children
 
 impl HTMLRender for e::DoctestBlock {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// 
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::SubstitutionDefinition {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// TODO: Should those be removed after resolving them
 		Ok(())
 	}
@@ -124,16 +126,16 @@ impl HTMLRender for e::Comment {
 }
 
 impl HTMLRender for e::Pending {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Will those be resolved by the time we get here?
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Target {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Should be resolved by now
-		unimplemented!();
+		Ok(())
 	}
 }
 
@@ -147,13 +149,13 @@ impl HTMLRender for e::Raw {
 }
 
 impl HTMLRender for e::Footnote {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Citation {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		unimplemented!();
 	}
 }
@@ -185,12 +187,12 @@ impl HTMLRender for e::Reference {
 		let extra = self.extra();
 		write!(stream, "<a")?;
 		if let Some(ref target) = extra.refuri {
-			write!(stream, "href=\"{}\"", target)?;
+			write!(stream, " href=\"{}\"", target)?;
+		}
+		if let Some(ref name) = extra.name {
+			write!(stream, " title=\"{}\"", name.0)?;
 		}
 		write!(stream, ">")?;
-		if let Some(ref name) = extra.name {
-			write!(stream, "{}", name.0)?;
-		}
 		for c in self.children() {
 			(*c).render_html(stream)?;
 		}
@@ -200,21 +202,21 @@ impl HTMLRender for e::Reference {
 }
 
 impl HTMLRender for e::SubstitutionReference {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Will those be resolved by the time we get here?
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Problematic {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Broken inline markup leads to insertion of this in docutils
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Generated {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Section numbers and so on
 		unimplemented!();
 	}
@@ -239,21 +241,21 @@ impl_html_render_cat!(SubSidebar { Topic, Title, Subtitle, BodyElement });
 impl_html_render_simple!(ListItem => li);
 
 impl HTMLRender for e::DefinitionListItem {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// Term→dt, Definition→dd, Classifier→???
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::Field {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// FieldName→dt, FieldBody→dd
 		unimplemented!();
 	}
 }
 
 impl HTMLRender for e::OptionListItem {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		// OptionGroup→dt(s), Description→dd
 		unimplemented!();
 	}
@@ -278,7 +280,7 @@ impl_html_render_cat!(SubFigure { Caption, Legend, BodyElement });
 impl_html_render_simple!(Caption => caption);
 
 impl HTMLRender for e::Legend {
-	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
 		unimplemented!();
 	}
 }

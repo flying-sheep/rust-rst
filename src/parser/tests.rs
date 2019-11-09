@@ -53,7 +53,7 @@ Title
 	};
 }
 
-#[allow(clippy::cyclomatic_complexity)]
+#[allow(clippy::cognitive_complexity)]
 #[test]
 fn two_targets() {
 	parses_to! {
@@ -76,7 +76,7 @@ fn two_targets() {
 	};
 }
 
-#[allow(clippy::cyclomatic_complexity)]
+#[allow(clippy::cognitive_complexity)]
 #[test]
 fn admonitions() {
 	parses_to! {
@@ -111,7 +111,7 @@ fn admonitions() {
 // TODO: test substitutions
 // TODO: test images
 
-#[allow(clippy::cyclomatic_complexity)]
+#[allow(clippy::cognitive_complexity)]
 #[test]
 fn nested_lists() {
 	parses_to! {

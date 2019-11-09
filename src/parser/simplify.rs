@@ -16,7 +16,7 @@ or:
 
 There’s also anonymous links and targets without names.
 
-TODO: continue documenting how it’s done via http://svn.code.sf.net/p/docutils/code/trunk/docutils/docutils/transforms/references.py
+TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py
 */
 
 use std::collections::HashMap;
@@ -25,9 +25,10 @@ use crate::url::Url;
 use crate::document_tree::{
 	Document,
 	HasChildren,
-	attribute_types::{ID, NameToken},
-	elements as e,
+	attribute_types::NameToken,
+	elements::{self as e, Element},
 	element_categories as c,
+	extra_attributes::ExtraAttributes,
 };
 
 
@@ -39,13 +40,13 @@ enum NamedTargetType {
 	InternalLink,
 	ExternalLink(Url),
 	IndirectLink(NameToken),
-	SectionTitle
+	SectionTitle,
 }
 impl NamedTargetType {
 	fn is_implicit_target(&self) -> bool {
 		match self {
 			NamedTargetType::SectionTitle => true,
-			_ => false
+			_ => false,
 		}
 	}
 }
@@ -53,18 +54,42 @@ impl NamedTargetType {
 #[derive(Clone, Debug)]
 struct Substitution {
 	content: e::ImageInline,
-	// If `ltrim` is true and the sibling before the reference is a text node,
-	// the text node gets right-trimmed. Same for `rtrim` with the sibling after
-	// getting left-trimmed.
+	/// If true and the sibling before the reference is a text node,
+	/// the text node gets right-trimmed. 
 	ltrim: bool,
-	rtrim: bool
+	/// Same as `ltrim` with the sibling after the reference.
+	rtrim: bool,
 }
 
 #[derive(Default, Debug)]
 struct TargetsCollected {
 	named_targets: HashMap<NameToken, NamedTargetType>,
-	substitutions: HashMap<String, Substitution>,
-	normalized_substitutions: HashMap<String, Substitution>
+	substitutions: HashMap<NameToken, Substitution>,
+	normalized_substitutions: HashMap<String, Substitution>,
+}
+impl TargetsCollected {
+	fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
+		// TODO: Check if the target would expand circularly
+		if refname.len() != 1 {
+			panic!("Expected exactly one name in a reference.");
+		}
+		let name = refname[0].clone();
+		match self.named_targets.get(&name)? {
+			NamedTargetType::ExternalLink(url) => Some(url),
+			_ => unimplemented!(),
+		}
+	}
+	
+	fn substitution<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Substitution> {
+		// TODO: Check if the substitution would expand circularly
+		if refname.len() != 1 {
+			panic!("Expected exactly one name in a substitution reference.");
+		}
+		let name = refname[0].clone();
+		self.substitutions.get(&name).or_else(|| {
+			self.normalized_substitutions.get(&name.0.to_lowercase())
+		})
+	}
 }
 
 trait ResolvableRefs {
@@ -134,9 +159,7 @@ impl ResolvableRefs for c::SubStructure {
 		match self {
 			Topic(e) => sub_pop(&**e, refs),
 			Sidebar(e) => sub_pop(&**e, refs),
-			Transition(e) => {
-				// TODO
-			},
+			Transition(_) => {},
 			Section(e) => sub_pop(&**e, refs),
 			BodyElement(e) => e.populate_targets(refs),
 		}
@@ -155,18 +178,14 @@ impl ResolvableRefs for c::SubStructure {
 
 impl ResolvableRefs for c::BodyElement {
 	fn populate_targets(&self, refs: &mut TargetsCollected) {
-		use crate::document_tree::extra_attributes::ExtraAttributes;
 		use c::BodyElement::*;
 		match self {
 			Paragraph(e) => sub_pop(&**e, refs),
 			LiteralBlock(e) => sub_pop(&**e, refs),
 			DoctestBlock(e) => sub_pop(&**e, refs),
-			MathBlock(e) => {
-				// TODO
-			},
+			MathBlock(_) => {},
 			Rubric(e) => sub_pop(&**e, refs),
 			SubstitutionDefinition(e) => {
-				use e::Element;
 				let subst_content = if let [c::TextOrInlineElement::ImageInline(content)] = &e.children()[..] {
 					content.as_ref()
 				} else {
@@ -177,30 +196,30 @@ impl ResolvableRefs for c::BodyElement {
 					ltrim: e.extra().ltrim,
 					rtrim: e.extra().rtrim
 				};
-				for NameToken(name) in e.names() {
+				for name in e.names() {
 					if refs.substitutions.contains_key(name) {
 						// TODO: Duplicate substitution name (level 3 system message).
 					}
 					// Intentionally overriding any previous values.
 					refs.substitutions.insert(name.clone(), subst.clone());
-					refs.normalized_substitutions.insert(name.to_lowercase(), subst.clone());
+					refs.normalized_substitutions.insert(name.0.to_lowercase(), subst.clone());
 				}
 			},
-			Comment(e) => {
-				// TODO
-			},
-			Pending(e) => {
-				// TODO
+			Comment(_) => {},
+			Pending(_) => {
+				unimplemented!();
 			},
 			Target(e) => {
-				// TODO
+				if let Some(uri) = &e.extra().refuri {
+					for name in e.names() {
+						refs.named_targets.insert(name.clone(), NamedTargetType::ExternalLink(uri.clone()));
+					}
+				}
+				// TODO: as is, people can only refer to the target directly containing the URL.
+				// add refid and refnames to some HashMap and follow those later.
 			},
-			Raw(e) => {
-				// TODO
-			},
-			Image(e) => {
-				// TODO
-			},
+			Raw(_) => {},
+			Image(_) => {},
 			Compound(e) => sub_pop(&**e, refs),
 			Container(e) => sub_pop(&**e, refs),
 			BulletList(e) => sub_sub_pop(&**e, refs),
@@ -308,9 +327,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::TextOrInlineElement::*;
 		match self {
-			c::TextOrInlineElement::String(e) => {
-				// TODO
-			},
+			String(_) => {},
 			Emphasis(e) => sub_pop(&**e, refs),
 			Strong(e) => sub_pop(&**e, refs),
 			Literal(e) => sub_pop(&**e, refs),
@@ -326,18 +343,12 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			Inline(e) => sub_pop(&**e, refs),
 			Problematic(e) => sub_pop(&**e, refs),
 			Generated(e) => sub_pop(&**e, refs),
-			Math(e) => {
-				// TODO
+			Math(_) => {},
+			TargetInline(_) => {
+				unimplemented!();
 			},
-			TargetInline(e) => {
-				// TODO
-			},
-			RawInline(e) => {
-				// TODO
-			},
-			ImageInline(e) => {
-				// TODO
-			}
+			RawInline(_) => {},
+			ImageInline(_) => {}
 		}
 	}
 	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
@@ -347,39 +358,38 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			Emphasis(e) => sub_res(*e, refs).into(),
 			Strong(e) => sub_res(*e, refs).into(),
 			Literal(e) => sub_res(*e, refs).into(),
-			Reference(e) => sub_res(*e, refs).into(),
+			Reference(mut e) => {
+				if e.extra().refuri.is_none() {
+					if let Some(uri) = refs.target_url(&e.extra().refname) {
+						e.extra_mut().refuri = Some(uri.clone());
+					}
+				}
+				(*e).into()
+			},
 			FootnoteReference(e) => sub_res(*e, refs).into(),
 			CitationReference(e) => sub_res(*e, refs).into(),
-			SubstitutionReference(e) => {
-				use crate::document_tree::extra_attributes::ExtraAttributes;
-				if e.extra().refname.len() != 1 {
-					panic!("Expected exactly one name in a substitution reference.");
-				}
-				let name = e.extra().refname[0].0.clone();
-				let substitution = refs.substitutions.get(&name).or_else(|| {
-					refs.normalized_substitutions.get(&name.to_lowercase())
-				});
-				match substitution {
-					Some(Substitution {content, ltrim, rtrim}) => {
-						// TODO: Check if the substitution would expand circularly
-						// (level 3 system message).
-						// TODO: Ltrim and rtrim.
-						ImageInline(Box::new(content.clone()))
-					},
-					None => {
-						// Undefined substitution name (level 3 system message).
-						// TODO: This replaces the reference by a Problematic node.
-						// The corresponding SystemMessage node should go in a generated
-						// section with class "system-messages" at the end of the document.
-						use crate::document_tree::{Problematic, element_categories::TextOrInlineElement};
-						let mut replacement: Box<Problematic> = Box::new(Default::default());
-						replacement.children_mut().push(
-							TextOrInlineElement::String(Box::new(format!("|{}|", name)))
-						);
-						// TODO: Create an ID for replacement for the system_message to reference.
-						// TODO: replacement.refid pointing to the system_message.
-						Problematic(replacement)
+			SubstitutionReference(e) => match refs.substitution(&e.extra().refname) {
+				Some(Substitution {content, ltrim, rtrim}) => {
+					// (level 3 system message).
+					// TODO: ltrim and rtrim.
+					if *ltrim || *rtrim {
+						dbg!(content, ltrim, rtrim);
 					}
+					ImageInline(Box::new(content.clone()))
+				},
+				None => {
+					// Undefined substitution name (level 3 system message).
+					// TODO: This replaces the reference by a Problematic node.
+					// The corresponding SystemMessage node should go in a generated
+					// section with class "system-messages" at the end of the document.
+					use crate::document_tree::Problematic;
+					let mut replacement: Box<Problematic> = Box::new(Default::default());
+					replacement.children_mut().push(
+						c::TextOrInlineElement::String(Box::new(format!("|{}|", e.extra().refname[0].0)))
+					);
+					// TODO: Create an ID for replacement for the system_message to reference.
+					// TODO: replacement.refid pointing to the system_message.
+					Problematic(replacement)
 				}
 			},
 			TitleReference(e) => sub_res(*e, refs).into(),
@@ -528,24 +538,8 @@ impl ResolvableRefs for c::SubOptionListItem {
 }
 
 impl ResolvableRefs for c::SubOption {
-	fn populate_targets(&self, refs: &mut TargetsCollected) {
-		use c::SubOption::*;
-		match self {
-			OptionString(e) => {
-				// TODO
-			},
-			OptionArgument(e) => {
-				// TODO
-			},
-		}
-	}
-	fn resolve_refs(self, refs: &TargetsCollected) -> Self {
-		use c::SubOption::*;
-		match self {
-			OptionString(e) => OptionString(e),
-			OptionArgument(e) => OptionArgument(e),
-		}
-	}
+	fn populate_targets(&self, _: &mut TargetsCollected) {}
+	fn resolve_refs(self, _: &TargetsCollected) -> Self { self }
 }
 
 impl ResolvableRefs for c::SubLineBlock {
@@ -639,8 +633,8 @@ impl ResolvableRefs for c::SubTableGroup {
 	fn populate_targets(&self, refs: &mut TargetsCollected) {
 		use c::SubTableGroup::*;
 		match self {
-			TableColspec(e) => {
-				// TODO
+			TableColspec(_) => {
+				unimplemented!();
 			},
 			TableHead(e) => {
 				for c in e.children() {

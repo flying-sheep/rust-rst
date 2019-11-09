@@ -74,21 +74,20 @@ fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph, Error> {
 
 
 fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
-	let mut attrs = a::Target {
-		anonymous: false,
-		..Default::default()
-	};
+	let mut elem: e::Target = Default::default();
+	elem.extra_mut().anonymous = false;
 	for p in pair.into_inner() {
 		match p.as_rule() {
 			Rule::target_name_uq | Rule::target_name_qu => {
-				attrs.refid = Some(p.as_str().into());
-				attrs.refname.push(p.as_str().into());
+				elem.ids_mut().push(p.as_str().into());
+				elem.names_mut().push(p.as_str().into());
 			},
-			Rule::link_target => attrs.refuri = Some(p.parse()?),
+			// TODO: also handle non-urls
+			Rule::link_target => elem.extra_mut().refuri = Some(p.parse()?),
 			rule => panic!("Unexpected rule in target: {:?}", rule),
 		}
 	}
-	Ok(e::Target::new(Default::default(), attrs))
+	Ok(elem)
 }
 
 fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition, Error> {

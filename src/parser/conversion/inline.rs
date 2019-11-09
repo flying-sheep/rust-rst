@@ -2,7 +2,6 @@ use failure::Error;
 use pest::iterators::Pair;
 
 use crate::document_tree::{
-	ExtraAttributes,
 	elements as e,
 	element_categories as c,
 	extra_attributes as a,
