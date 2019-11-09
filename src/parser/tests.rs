@@ -108,7 +108,32 @@ fn admonitions() {
 	};
 }
 
-// TODO: test substitutions
+
+#[allow(clippy::cognitive_complexity)]
+#[test]
+fn substitutions() {
+	parses_to! {
+		parser: RstParser,
+		input: "\
+A |subst| in-line
+
+.. |subst| replace:: substitution
+",
+		rule: Rule::document,
+		tokens: [
+			paragraph(0, 17, [
+				str(0, 2),
+				substitution_ref(2, 9, [ substitution_name(3, 8) ]),
+				str(9, 17),
+			]),
+			substitution_def(19, 53, [
+				substitution_name(23, 28),
+				replace(30, 53, [ line(39, 53, [str(39, 52)]) ])
+			]),
+		]
+	};
+}
+
 // TODO: test images
 
 #[allow(clippy::cognitive_complexity)]

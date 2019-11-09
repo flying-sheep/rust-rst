@@ -94,14 +94,21 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
 	let mut pairs = pair.into_inner();
 	let name = whitespace_normalize_name(pairs.next().unwrap().as_str());  // Rule::substitution_name
 	let inner_pair = pairs.next().unwrap();
-	let inner: c::TextOrInlineElement = match inner_pair.as_rule() {
-		Rule::image => convert_image::<e::ImageInline>(inner_pair)?.into(),
+	let inner: Vec<c::TextOrInlineElement> = match inner_pair.as_rule() {
+		Rule::replace => convert_replace(inner_pair)?,
+		Rule::image   => vec![convert_image::<e::ImageInline>(inner_pair)?.into()],
 		rule => panic!("Unknown substitution rule {:?}", rule),
 	};
-	let mut subst_def = e::SubstitutionDefinition::with_children(vec![inner]);
+	let mut subst_def = e::SubstitutionDefinition::with_children(inner);
 	subst_def.names_mut().push(at::NameToken(name));
 	Ok(subst_def)
 }
+
+fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
+	let mut pairs = pair.into_inner();
+	let line = pairs.next().unwrap();
+	line.into_inner().map(convert_inline).collect()
+} 
 
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
 	let mut pairs = pair.into_inner();

@@ -41,7 +41,7 @@ hanging_block = _{
 // Substitution definition. A block type
 substitution_def  =  { ".." ~ PUSH(" "+) ~ "|" ~ substitution_name ~ "|" ~ " "+ ~ inline_dirblock ~ DROP }
 substitution_name =  { !" " ~ (!(" "|"|") ~ ANY)+ ~ (" "+ ~ (!(" "|"|") ~ ANY)+)* }
-inline_dirblock   = _{ image }  // TODO: implement “replace” and so on
+inline_dirblock   = _{ replace | image }  // TODO: implement others
 
 // Target. A block type
 target         =  { target_qu | target_uq }
@@ -74,7 +74,11 @@ paragraph =  { inlines }
 // Directives with options can have these or specific ones:
 common_option = { "class" | "name" }
 
-// Image. A directive
+// Replace. A directive only usable in substitutions.
+
+replace = { ^"replace::" ~ line }  // TODO multiline
+
+// Image. A directive.
 
 image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
 image           =  { ^"image::" ~ line ~ image_opt_block? }
