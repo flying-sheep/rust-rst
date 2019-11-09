@@ -104,8 +104,8 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
 
 fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
 	let mut pairs = pair.into_inner();
-	let line = pairs.next().unwrap();
-	line.into_inner().map(convert_inline).collect()
+	let paragraph = pairs.next().unwrap();
+	paragraph.into_inner().map(convert_inline).collect()
 } 
 
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {

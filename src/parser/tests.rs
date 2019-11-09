@@ -118,6 +118,8 @@ fn substitutions() {
 A |subst| in-line
 
 .. |subst| replace:: substitution
+.. |subst2| replace:: it can also
+   be hanging
 ",
 		rule: Rule::document,
 		tokens: [
@@ -126,9 +128,13 @@ A |subst| in-line
 				substitution_ref(2, 9, [ substitution_name(3, 8) ]),
 				str(9, 17),
 			]),
-			substitution_def(19, 53, [
+			substitution_def(19, 52, [
 				substitution_name(23, 28),
-				replace(30, 53, [ line(39, 53, [str(39, 52)]) ])
+				replace(30, 52, [ paragraph(39, 52, [str(39, 52)]) ]),
+			]),
+			substitution_def(53, 101, [
+				substitution_name(57, 63),
+				replace(65, 101, [ paragraph(74, 101, [str(74, 86), str(88, 100)]) ]),
 			]),
 		]
 	};
