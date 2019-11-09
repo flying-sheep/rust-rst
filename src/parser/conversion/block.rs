@@ -28,7 +28,7 @@ pub(super) enum TitleOrSsubel {
 pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, Error> {
 	use self::TitleOrSsubel::*;
 	Ok(Some(match pair.as_rule() {
-		Rule::title            => { let (t, k) = convert_title(pair); Title(t, k) },
+		Rule::title            => { let (t, k) = convert_title(pair)?; Title(t, k) },
 		Rule::paragraph        => Ssubel(convert_paragraph(pair)?.into()),
 		Rule::target           => Ssubel(convert_target(pair)?.into()),
 		Rule::substitution_def => Ssubel(convert_substitution_def(pair)?.into()),
@@ -40,30 +40,28 @@ pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, 
 }
 
 
-fn convert_title(pair: Pair<Rule>) -> (e::Title, TitleKind) {
-	let mut title: Option<&str> = None;
+fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
+	let mut title: Option<Vec<c::TextOrInlineElement>> = None;
 	let mut adornment_char: Option<char> = None;
 	// title_double or title_single. Extract kind before consuming
 	let inner_pair = pair.into_inner().next().unwrap();
 	let kind = inner_pair.as_rule();
 	for p in inner_pair.into_inner() {
 		match p.as_rule() {
-			Rule::line => title = Some(p.as_str()),  // TODO: can contain other stuff?
+			Rule::line => title = Some(p.into_inner().map(convert_inline).collect::<Result<_,_>>()?),
 			Rule::adornments => adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
 			rule => unimplemented!("Unexpected rule in title: {:?}", rule),
 		};
 	}
 	// now we encountered one line of text and one of adornments
 	// TODO: emit error if the adornment line is too short (has to match title length)
-	let elem = e::Title::with_children(vec![
-		title.expect("No text in title").into()
-	]);
+	let elem = e::Title::with_children(title.expect("No text in title"));
 	let title_kind = match kind {
 		Rule::title_double => TitleKind::Double(adornment_char.unwrap()),
 		Rule::title_single => TitleKind::Single(adornment_char.unwrap()),
 		_ => unreachable!(),
 	};
-	(elem, title_kind)
+	Ok((elem, title_kind))
 }
 
 
