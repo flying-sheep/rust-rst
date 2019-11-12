@@ -214,13 +214,15 @@ impl HTMLRender for String {
 impl HTMLRender for e::Reference {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
 		let extra = self.extra();
-		write!(stream, "<a")?;
+		write!(stream, "<a class=\"reference external\"")?;
 		if let Some(ref target) = extra.refuri {
 			write!(stream, " href=\"{}\"", target)?;
 		}
+		/*
 		if let Some(ref name) = extra.name {
 			write!(stream, " title=\"{}\"", name.0)?;
 		}
+		*/
 		write!(stream, ">")?;
 		for c in self.children() {
 			(*c).render_html(stream)?;
