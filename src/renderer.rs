@@ -1,4 +1,6 @@
 mod html;
+#[cfg(test)]
+pub mod html_tests;
 
 
 use std::io::Write;

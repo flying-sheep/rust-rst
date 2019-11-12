@@ -11,6 +11,7 @@ homepage = 'https://github.com/flying-sheep/rust-rst'
 repository = 'https://github.com/flying-sheep/rust-rst.git'
 
 edition = '2018'
+build = 'build.rs'
 
 [lib]
 name = 'rst'
@@ -37,3 +38,6 @@ serde-xml-rs = '0.3.1'
 quicli = '0.4.0'
 structopt = '0.2.15'
 clap = '2.32.0'
+
+[dev-dependencies]
+pretty_assertions = '0.6.1'

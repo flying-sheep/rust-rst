@@ -15,8 +15,16 @@ use crate::document_tree::{
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
-pub fn render_html<W>(document: &Document, mut stream: W) -> Result<(), Error> where W: Write {
-	document.render_html(stream.by_ref())
+pub fn render_html<W>(document: &Document, mut stream: W, standalone: bool) -> Result<(), Error> where W: Write {
+	if standalone {
+		document.render_html(stream.by_ref())
+	} else {
+		let stream = stream.by_ref();
+		for c in document.children() {
+			(*c).render_html(stream)?;
+		}
+		Ok(())
+	}
 }
 
 trait HTMLRender {
