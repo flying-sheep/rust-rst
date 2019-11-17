@@ -105,7 +105,7 @@ impl_html_render_simple!(Sidebar => aside, Section => section);
 
 impl HTMLRender for e::Transition {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
-		write!(stream, "<hr class=\"docutils\" />")?;
+		write!(stream, "<hr/>")?;
 		Ok(())
 	}
 }
