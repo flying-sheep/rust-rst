@@ -27,6 +27,13 @@ pub fn render_html<W>(document: &Document, mut stream: W, standalone: bool) -> R
 	}
 }
 
+fn escape_html(text: &str) -> String {
+	text.replace('&', "&amp;")
+		.replace('<', "&lt;")
+		.replace('>', "&gt;")
+		.replace('"', "&quot;")
+}
+
 trait HTMLRender {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write;
 }
@@ -95,7 +102,13 @@ impl HTMLRender for e::Decoration {
 
 impl_html_render_cat!(SubStructure { Topic, Sidebar, Transition, Section, BodyElement });
 impl_html_render_simple!(Sidebar => aside, Section => section);
-impl_html_render_simple_nochildren!(Transition => hr);
+
+impl HTMLRender for e::Transition {
+	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+		write!(stream, "<hr class=\"docutils\" />")?;
+		Ok(())
+	}
+}
 
 impl HTMLRender for e::Topic {
 	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {
@@ -112,17 +125,17 @@ impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image> {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
 		let extra = self.extra();
 		if let Some(ref target) = extra.target {
-			write!(stream, "<a href=\"{}\">", target)?;
+			write!(stream, "<a href=\"{}\">", escape_html(target.as_str()))?;
 		}
-		write!(stream, "<img src=\"{}\"", extra.uri)?;
+		write!(stream, "<img")?;
 		if let Some(ref alt) = extra.alt {
-			write!(stream, " alt=\"{}\"", alt)?;
+			write!(stream, " alt=\"{}\"", escape_html(alt))?;
 		}
 		// TODO: align: Option<AlignHV>
 		// TODO: height: Option<Measure>
 		// TODO: width: Option<Measure>
 		// TODO: scale: Option<u8>
-		write!(stream, ">")?;
+		write!(stream, " src=\"{}\" />", escape_html(extra.uri.as_str()))?;
 		if extra.target.is_some() {
 			write!(stream, "</a>")?;
 		}
@@ -206,7 +219,7 @@ impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, Foot
 
 impl HTMLRender for String {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
-		write!(stream, "{}", self)?;
+		write!(stream, "{}", escape_html(self))?;
 		Ok(())
 	}
 }
@@ -216,11 +229,11 @@ impl HTMLRender for e::Reference {
 		let extra = self.extra();
 		write!(stream, "<a class=\"reference external\"")?;
 		if let Some(ref target) = extra.refuri {
-			write!(stream, " href=\"{}\"", target)?;
+			write!(stream, " href=\"{}\"", escape_html(target.as_str()))?;
 		}
 		/*
 		if let Some(ref name) = extra.name {
-			write!(stream, " title=\"{}\"", name.0)?;
+			write!(stream, " title=\"{}\"", escape_html(&name.0))?;
 		}
 		*/
 		write!(stream, ">")?;
