@@ -227,7 +227,7 @@ impl HTMLRender for String {
 impl HTMLRender for e::Reference {
 	fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
 		let extra = self.extra();
-		write!(stream, "<a class=\"reference external\"")?;
+		write!(stream, "<a")?;
 		if let Some(ref target) = extra.refuri {
 			write!(stream, " href=\"{}\"", escape_html(target.as_str()))?;
 		}
