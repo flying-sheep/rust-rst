@@ -104,18 +104,15 @@ line       =  { !marker ~ inline+ ~ NEWLINE }
 blank_line = _{ !marker ~ !inline ~ " "* ~ NEWLINE }
 
 inlines = _{ !marker ~ inline+ ~ ( NEWLINE ~ (PEEK[..] ~ !marker ~ inline+ ~ NEWLINE)+ )? }
-inline  = _{
+inline  = _{ inline_special | str }
+inline_special = _{
     reference
     | substitution_ref
-    | str
-//     link ✓
-//     | str ✓
-//     | endline
+    | emph_outer
+    | strong_outer
+	| literal_outer
 //     | ul_or_star_line
 //     | space
-//     | strong
-//     | emph
-//     | strike
 //     | note_reference
 //     | footnote
 //     //| citation
@@ -127,7 +124,15 @@ inline  = _{
 //     | symbol
 }
 
-str = { (!(NEWLINE | reference | substitution_ref) ~ ANY)+ }
+str = { (!(NEWLINE | inline_special) ~ ANY)+ }
+
+// simple formatting. TODO: similar to substitution_name, make function or so?
+emph_outer    = _{ "*" ~ emph ~ "*" }
+emph          =  { (!("*"|" ") ~ ANY)+ ~ (" "+ ~ (!("*"|" ") ~ ANY)+)* }
+strong_outer  = _{ "**" ~ strong ~ "**" }
+strong        =  { (!("*"|" ") ~ ANY)+ ~ (" "+ ~ (!("*"|" ") ~ ANY)+)* }
+literal_outer = _{ "``" ~ literal ~ "``" }
+literal       =  { (!("`"|" ") ~ ANY)+ ~ (" "+ ~ (!("`"|" ") ~ ANY)+)* }
 
 // inline links
 reference = { reference_target | reference_explicit | reference_auto }
@@ -152,7 +157,7 @@ reference_auto = { url_auto | email }
 //reference_embedded = { "`" ~ reference_embedded_source ~ "<" ~ absolute_url_with_fragment ~ ">`_" ~ "_"? }
 //reference_embedded_source = { ( !("<"|":"|"`") ~ ( " " | nonspacechar | blank_line ) )* }
 
-substitution_ref = { "|" ~ substitution_name ~ "|" }
+substitution_ref = _{ "|" ~ substitution_name ~ "|" }
 
 /* URLs as defined by the WHATWG URL standard. */
 url = { absolute_url_no_query ~ ("?" ~ url_unit*)? ~ ("#" ~ url_unit*)? }
@@ -364,17 +369,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // ul_or_star_line = { ul_line | star_line }
 // star_line = { "****" ~ "*"* | spacechar ~ "*"+ ~ &spacechar }
 // ul_line = { "____" ~ "_"* | spacechar ~ "_"+ ~ &spacechar }
-
-// whitespace = { spacechar | NEWLINE }
-
-// emph = { "*" ~ !whitespace ~ (!"*" ~ inline)+ ~ "*" }
-// strong = { "**" ~ !whitespace ~ (!"**" ~ inline)+ ~ "**" }
-// strike = {
-//     //&{ extension(EXT_STRIKE) } ~
-//     "~~" ~ !whitespace ~ (!"~~" ~ inline)+ ~ "~~"
-// }
-
-
 
 
 // empty_title = { "" }

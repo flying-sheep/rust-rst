@@ -17,6 +17,21 @@ fn plain() {
 }
 
 #[test]
+fn emph() {
+	parses_to! {
+		parser: RstParser,
+		input: "line *with markup*\n",
+		rule: Rule::paragraph,
+		tokens: [
+			paragraph(0, 18, [
+				str(0, 5),
+				emph(6, 17),
+			])
+		]
+	};
+}
+
+#[test]
 fn title() {
 	parses_to! {
 		parser: RstParser,
@@ -125,7 +140,7 @@ A |subst| in-line
 		tokens: [
 			paragraph(0, 17, [
 				str(0, 2),
-				substitution_ref(2, 9, [ substitution_name(3, 8) ]),
+				substitution_name(3, 8),
 				str(9, 17),
 			]),
 			substitution_def(19, 52, [

@@ -19,9 +19,9 @@ use super::whitespace_normalize_name;
 
 pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
 	Ok(match pair.as_rule() {
-		Rule::str       		=> pair.as_str().into(),
-		Rule::reference 		=> convert_reference(pair)?,
-		Rule::substitution_ref 	=> convert_substitution(pair)?.into(),
+		Rule::str              => pair.as_str().into(),
+		Rule::reference        => convert_reference(pair)?,
+		Rule::substitution_ref => convert_substitution_ref(pair)?.into(),
 		rule => unimplemented!("unknown rule {:?}", rule),
 	})
 }
@@ -142,17 +142,11 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
 	).into())
 }
 
-fn convert_substitution(pair: Pair<Rule>) -> Result<e::SubstitutionReference, Error> {
-	let concrete = pair.into_inner().next().unwrap();
-	match concrete.as_rule() {
-		Rule::substitution_name => {
-			let name = whitespace_normalize_name(concrete.as_str());
-			Ok(a::ExtraAttributes::with_extra(
-				a::SubstitutionReference {
-					refname: vec![at::NameToken(name)]
-				}
-			))
+fn convert_substitution_ref(pair: Pair<Rule>) -> Result<e::SubstitutionReference, Error> {
+	let name = whitespace_normalize_name(pair.as_str());
+	Ok(a::ExtraAttributes::with_extra(
+		a::SubstitutionReference {
+			refname: vec![at::NameToken(name)]
 		}
-		_ => unreachable!()
-	}
+	))
 }
