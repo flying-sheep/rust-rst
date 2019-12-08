@@ -103,8 +103,9 @@ admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* }
 line       =  { !marker ~ inline+ ~ NEWLINE }
 blank_line = _{ !marker ~ !inline ~ " "* ~ NEWLINE }
 
-inlines = _{ !marker ~ inline+ ~ ( NEWLINE ~ (PEEK[..] ~ !marker ~ inline+ ~ NEWLINE)+ )? }
-inline  = _{ inline_special | str }
+inlines    = _{ !marker ~ inline+ ~ ( ( ws_newline ~ PEEK[..] ~ !marker ~ inline+ )+ ~ NEWLINE )? }
+ws_newline =  { NEWLINE }
+inline     = _{ inline_special | str }
 inline_special = _{
     reference
     | substitution_ref

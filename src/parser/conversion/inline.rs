@@ -21,6 +21,7 @@ use super::whitespace_normalize_name;
 pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
 	Ok(match pair.as_rule() {
 		Rule::str | Rule::str_nested => pair.as_str().into(),
+		Rule::ws_newline       => " ".to_owned().into(),
 		Rule::reference        => convert_reference(pair)?,
 		Rule::substitution_ref => convert_substitution_ref(pair)?.into(),
 		Rule::emph             => e::Emphasis::with_children(convert_inlines(pair)?).into(),

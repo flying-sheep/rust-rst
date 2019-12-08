@@ -65,7 +65,7 @@ reference and the target.
 
 .. _`named reference`: http://www.test.com/test_url
 ", "\
-<p>A simple <a href=\"http://www.test.com/test_url\">named reference</a> with stuff in between the
+<p>A simple <a href=\"http://www.test.com/test_url\">named reference</a> with stuff in between the \
 reference and the target.</p>\
 ");
 }

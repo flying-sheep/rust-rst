@@ -161,7 +161,10 @@ A |subst| in-line
 			]),
 			substitution_def(53, 101, [
 				substitution_name(57, 63),
-				replace(65, 101, [ paragraph(74, 101, [str(74, 86), str(88, 100)]) ]),
+				replace(65, 101, [ paragraph(74, 101, [
+					str(74, 86), ws_newline(86, 87),
+					str(88, 100),
+				]) ]),
 			]),
 		]
 	};
@@ -222,8 +225,8 @@ paragraph
 				bullet_item(21, 131, [
 					line(24, 31, [ str(24, 30) ]),
 					paragraph(34, 74, [
-						str(34, 43),
-						str(47, 58),
+						str(34, 43), ws_newline(43, 44),
+						str(47, 58), ws_newline(58, 59),
 						str(62, 73),
 					]),
 					bullet_list(77, 131, [
