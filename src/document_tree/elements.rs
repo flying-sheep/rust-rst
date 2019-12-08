@@ -74,6 +74,19 @@ macro_rules! impl_extra { ($name:ident $($more:tt)*) => (
 	}
 )}
 
+trait HasExtraAndChildren<C, A> {
+	fn with_extra_and_children(extra: A, children: Vec<C>) -> Self;
+}
+
+impl<T, C, A> HasExtraAndChildren<C, A> for T where T: HasChildren<C> + ExtraAttributes<A> {
+	#[allow(clippy::needless_update)]
+	fn with_extra_and_children(extra: A, mut children: Vec<C>) -> Self {
+		let mut r = Self::with_extra(extra);
+		r.children_mut().extend(children.drain(..));
+		r
+	}
+}
+
 macro_rules! impl_new {(
 	$(#[$attr:meta])*
 	pub struct $name:ident { $(

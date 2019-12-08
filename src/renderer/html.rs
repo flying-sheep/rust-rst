@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use failure::{Error, Fail};
+use failure::Error;
 
 // use crate::url::Url;
 use crate::document_tree::{
