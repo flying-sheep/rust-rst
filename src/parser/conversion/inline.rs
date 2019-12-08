@@ -5,7 +5,8 @@ use crate::document_tree::{
 	elements as e,
 	element_categories as c,
 	extra_attributes as a,
-	attribute_types as at
+	attribute_types as at,
+	element_categories::HasChildren,
 };
 
 use crate::parser::{
@@ -19,9 +20,12 @@ use super::whitespace_normalize_name;
 
 pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
 	Ok(match pair.as_rule() {
-		Rule::str              => pair.as_str().into(),
+		Rule::str | Rule::str_nested => pair.as_str().into(),
 		Rule::reference        => convert_reference(pair)?,
 		Rule::substitution_ref => convert_substitution_ref(pair)?.into(),
+		Rule::emph             => e::Emphasis::with_children(convert_inlines(pair)?).into(),
+		Rule::strong           => e::Strong::with_children(convert_inlines(pair)?).into(),
+		Rule::literal          => e::Literal::with_children(convert_inlines(pair)?).into(),
 		rule => unimplemented!("unknown rule {:?}", rule),
 	})
 }

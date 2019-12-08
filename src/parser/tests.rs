@@ -17,6 +17,18 @@ fn plain() {
 }
 
 #[test]
+fn emph_only() {
+	parses_to! {
+		parser: RstParser,
+		input: "*emphasis*",
+		rule: Rule::emph_outer,
+		tokens: [
+			emph(1, 9, [str_nested(1, 9)])
+		]
+	};
+}
+
+#[test]
 fn emph() {
 	parses_to! {
 		parser: RstParser,
@@ -25,7 +37,7 @@ fn emph() {
 		tokens: [
 			paragraph(0, 18, [
 				str(0, 5),
-				emph(6, 17),
+				emph(6, 17, [str_nested(6, 17)]),
 			])
 		]
 	};

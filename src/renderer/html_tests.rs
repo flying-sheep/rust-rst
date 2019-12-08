@@ -23,8 +23,8 @@ fn test_simple_string() {
 #[test]
 fn test_simple_string_with_markup() {
 	check_renders_to(
-		"Simple String with *markup*",
-		"<p>Simple String with <em>markup</em></p>",
+		"Simple String with *emph* and **strong**",
+		"<p>Simple String with <em>emph</em> and <strong>strong</strong></p>",
 	);
 }
 

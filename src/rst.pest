@@ -110,7 +110,7 @@ inline_special = _{
     | substitution_ref
     | emph_outer
     | strong_outer
-	| literal_outer
+    | literal_outer
 //     | ul_or_star_line
 //     | space
 //     | note_reference
@@ -126,13 +126,18 @@ inline_special = _{
 
 str = { (!(NEWLINE | inline_special) ~ ANY)+ }
 
-// simple formatting. TODO: similar to substitution_name, make function or so?
+// simple formatting
+inline_nested = _{ inline_special | str_nested }
+str_nested    =  { word_nested ~ ( " "+ ~ word_nested)* }
+// TODO: allow ` in emph and * in literal
+word_nested   = _{ (!(NEWLINE | " " | inline_special | "*" | "`") ~ ANY)+ }
+
 emph_outer    = _{ "*" ~ emph ~ "*" }
-emph          =  { (!("*"|" ") ~ ANY)+ ~ (" "+ ~ (!("*"|" ") ~ ANY)+)* }
+emph          =  { (!("*"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("*"|" ") ~ inline_nested)+)* }
 strong_outer  = _{ "**" ~ strong ~ "**" }
-strong        =  { (!("*"|" ") ~ ANY)+ ~ (" "+ ~ (!("*"|" ") ~ ANY)+)* }
+strong        =  { (!("*"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("*"|" ") ~ inline_nested)+)* }
 literal_outer = _{ "``" ~ literal ~ "``" }
-literal       =  { (!("`"|" ") ~ ANY)+ ~ (" "+ ~ (!("`"|" ") ~ ANY)+)* }
+literal       =  { (!("`"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("`"|" ") ~ inline_nested)+)* }
 
 // inline links
 reference = { reference_target | reference_explicit | reference_auto }
