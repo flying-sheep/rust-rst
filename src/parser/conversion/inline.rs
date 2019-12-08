@@ -2,11 +2,11 @@ use failure::Error;
 use pest::iterators::Pair;
 
 use crate::document_tree::{
+	HasChildren,
 	elements as e,
 	element_categories as c,
 	extra_attributes as a,
 	attribute_types as at,
-	element_categories::HasChildren,
 };
 
 use crate::parser::{

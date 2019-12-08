@@ -29,7 +29,7 @@ pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, 
 	use self::TitleOrSsubel::*;
 	Ok(Some(match pair.as_rule() {
 		Rule::title => { let (t, k) = convert_title(pair)?; Title(t, k) },
-		//TODO: subtitle, dectoration, docinfo
+		//TODO: subtitle, decoration, docinfo
 		Rule::EOI   => return Ok(None),
 		_           => Ssubel(convert_substructure(pair)?.into()),
 	}))
@@ -38,7 +38,8 @@ pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, 
 
 fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure, Error> {
 	Ok(match pair.as_rule() {
-		// todo: Topic, Sidebar, Transition, Section
+		// todo: Topic, Sidebar, Transition
+		// no section here, as it’s constructed from titles
 		_ => convert_body_elem(pair)?.into(),
 	})
 }
@@ -58,21 +59,30 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 
 
 fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
-	let mut title: Option<Vec<c::TextOrInlineElement>> = None;
+	let mut title: Option<String> = None;
+	let mut title_inlines: Option<Vec<c::TextOrInlineElement>> = None;
 	let mut adornment_char: Option<char> = None;
 	// title_double or title_single. Extract kind before consuming
 	let inner_pair = pair.into_inner().next().unwrap();
 	let kind = inner_pair.as_rule();
 	for p in inner_pair.into_inner() {
 		match p.as_rule() {
-			Rule::line => title = Some(convert_inlines(p)?),
+			Rule::line => {
+				title = Some(p.as_str().to_owned());
+				title_inlines = Some(convert_inlines(p)?);
+			},
 			Rule::adornments => adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
 			rule => unimplemented!("Unexpected rule in title: {:?}", rule),
 		};
 	}
 	// now we encountered one line of text and one of adornments
 	// TODO: emit error if the adornment line is too short (has to match title length)
-	let elem = e::Title::with_children(title.expect("No text in title"));
+	let mut elem = e::Title::with_children(title_inlines.expect("No text in title"));
+	if let Some(title) = title {
+		//TODO: slugify properly
+		let slug =  title.to_lowercase().replace("\n", "").replace(" ", "-");
+		elem.names_mut().push(at::NameToken(slug));
+	}
 	let title_kind = match kind {
 		Rule::title_double => TitleKind::Double(adornment_char.unwrap()),
 		Rule::title_single => TitleKind::Single(adornment_char.unwrap()),

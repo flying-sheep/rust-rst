@@ -5,9 +5,10 @@ use failure::Error;
 use pest::iterators::Pairs;
 
 use crate::document_tree::{
-	HasChildren,
+	Element,HasChildren,
 	elements as e,
 	element_categories as c,
+	attribute_types as at,
 };
 
 use super::pest_rst::Rule;
@@ -63,7 +64,10 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
 					None => kinds.push(kind),
 				}
 				let super_level = get_level(&mut toplevel, &section_idxs);
-				super_level.push(e::Section::with_children(vec![title.into()]).into());
+				let slug = title.names().iter().next().map(|at::NameToken(name)| at::ID(name.to_owned()));
+				let mut section = e::Section::with_children(vec![title.into()]);
+				section.ids_mut().extend(slug.into_iter());
+				super_level.push(section.into());
 				section_idxs.push(Some(super_level.len() - 1));
 			},
 			Ssubel(elem) => get_level(&mut toplevel, &section_idxs).push(elem),
