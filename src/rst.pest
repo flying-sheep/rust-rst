@@ -76,7 +76,7 @@ common_opt_name = { "class" | "name" }
 
 // Replace. A directive only usable in substitutions.
 
-replace = { ^"replace::" ~ paragraph }
+replace = { ^"replace::" ~ " "* ~ paragraph }
 
 // Image. A directive.
 

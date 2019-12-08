@@ -157,12 +157,12 @@ A |subst| in-line
 			]),
 			substitution_def(19, 52, [
 				substitution_name(23, 28),
-				replace(30, 52, [ paragraph(39, 52, [str(39, 52)]) ]),
+				replace(30, 52, [ paragraph(40, 52, [str(40, 52)]) ]),
 			]),
 			substitution_def(53, 101, [
 				substitution_name(57, 63),
-				replace(65, 101, [ paragraph(74, 101, [
-					str(74, 86), ws_newline(86, 87),
+				replace(65, 101, [ paragraph(75, 101, [
+					str(75, 86), ws_newline(86, 87),
 					str(88, 100),
 				]) ]),
 			]),

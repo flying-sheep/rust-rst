@@ -70,6 +70,15 @@ reference and the target.</p>\
 ");
 }
 
+#[test]
+fn test_substitution() {
+	check_renders_to("\
+A |subst|.
+
+.. |subst| replace:: text substitution
+", "<p>A text substitution.</p>");
+}
+
 /*
 #[test]
 fn test_section_hierarchy() {
