@@ -26,6 +26,10 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
 	})
 }
 
+pub fn convert_inlines(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
+	pair.into_inner().map(convert_inline).collect()
+}
+
 fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
 	let name;
 	let refuri;

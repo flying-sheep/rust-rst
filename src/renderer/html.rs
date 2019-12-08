@@ -48,18 +48,33 @@ macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
 	}
 }}
 
-macro_rules! impl_html_render_simple {( $($type:ident => $tag:ident),+ ) => { $(
-	impl HTMLRender for e::$type {
-		fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
-			write!(stream, "<{}>", stringify!($tag))?;
-			for c in self.children() {
-				(*c).render_html(stream)?;
+macro_rules! impl_html_render_simple {
+	(
+		$type1:ident => $tag1:ident $( [$($post1:tt)+] )?,
+		$( $type:ident => $tag:ident $( [$($post:tt)+] )? ),+
+	) => {
+		impl_html_render_simple!($type1 => $tag1 $([$($post1)+])?);
+		$( impl_html_render_simple!($type => $tag $([$($post)+])?); )+
+	};
+	( $type:ident => $tag:ident ) => {
+		impl_html_render_simple!($type => $tag[""]);
+	};
+	( $type:ident => $tag:ident [$post:expr] ) => {
+		impl_html_render_simple!($type => $tag["", $post]);
+	};
+	( $type:ident => $tag:ident [ $post1:expr, $post2:expr ] ) => {
+		impl HTMLRender for e::$type {
+			fn render_html<W>(&self, stream: &mut W) -> Result<(), Error> where W: Write {
+				write!(stream, concat!("<{}>", $post1), stringify!($tag))?;
+				for c in self.children() {
+					(*c).render_html(stream)?;
+				}
+				write!(stream, concat!("</{}>", $post2), stringify!($tag))?;
+				Ok(())
 			}
-			write!(stream, "</{}>", stringify!($tag))?;
-			Ok(())
 		}
-	}
-)+ }}
+	};
+}
 
 macro_rules! impl_html_render_simple_nochildren {( $($type:ident => $tag:ident),+ ) => { $(
 	impl HTMLRender for e::$type {
@@ -118,7 +133,7 @@ impl HTMLRender for e::Topic {
 }
 
 impl_html_render_cat!(BodyElement { Paragraph, LiteralBlock, DoctestBlock, MathBlock, Rubric, SubstitutionDefinition, Comment, Pending, Target, Raw, Image, Compound, Container, BulletList, EnumeratedList, DefinitionList, FieldList, OptionList, LineBlock, BlockQuote, Admonition, Attention, Hint, Note, Caution, Danger, Error, Important, Tip, Warning, Footnote, Citation, SystemMessage, Figure, Table });
-impl_html_render_simple!(Paragraph => p, LiteralBlock => pre, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul, EnumeratedList => ol, DefinitionList => dl, FieldList => dl, OptionList => pre, LineBlock => div, BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
+impl_html_render_simple!(Paragraph => p, LiteralBlock => pre, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul["\n", "\n"], EnumeratedList => ol["\n", "\n"], DefinitionList => dl["\n", "\n"], FieldList => dl["\n", "\n"], OptionList => pre, LineBlock => div["\n", "\n"], BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
 impl_html_render_simple_nochildren!(Table => table);  //TODO: after implementing the table, move it to elems with children
 
 impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image> {
@@ -282,7 +297,7 @@ impl HTMLRender for e::RawInline {
 
 impl_html_render_cat!(SubTopic { Title, BodyElement });
 impl_html_render_cat!(SubSidebar { Topic, Title, Subtitle, BodyElement });
-impl_html_render_simple!(ListItem => li);
+impl_html_render_simple!(ListItem => li["\n"]);
 
 impl HTMLRender for e::DefinitionListItem {
 	fn render_html<W>(&self, _stream: &mut W) -> Result<(), Error> where W: Write {

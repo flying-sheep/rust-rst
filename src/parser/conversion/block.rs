@@ -13,7 +13,7 @@ use crate::parser::{
 	pest_rst::Rule,
 	pair_ext_parse::PairExt,
 };
-use super::{whitespace_normalize_name, inline::convert_inline};
+use super::{whitespace_normalize_name, inline::convert_inlines};
 
 
 #[derive(PartialEq)]
@@ -28,15 +28,32 @@ pub(super) enum TitleOrSsubel {
 pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, Error> {
 	use self::TitleOrSsubel::*;
 	Ok(Some(match pair.as_rule() {
-		Rule::title            => { let (t, k) = convert_title(pair)?; Title(t, k) },
-		Rule::paragraph        => Ssubel(convert_paragraph(pair)?.into()),
-		Rule::target           => Ssubel(convert_target(pair)?.into()),
-		Rule::substitution_def => Ssubel(convert_substitution_def(pair)?.into()),
-		Rule::admonition_gen   => Ssubel(convert_admonition_gen(pair)?.into()),
-		Rule::image            => Ssubel(convert_image::<e::Image>(pair)?.into()),
-		Rule::EOI              => return Ok(None),
-		rule => panic!("unknown rule {:?}", rule),
+		Rule::title => { let (t, k) = convert_title(pair)?; Title(t, k) },
+		//TODO: subtitle, dectoration, docinfo
+		Rule::EOI   => return Ok(None),
+		_           => Ssubel(convert_substructure(pair)?.into()),
 	}))
+}
+
+
+fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure, Error> {
+	Ok(match pair.as_rule() {
+		// todo: Topic, Sidebar, Transition, Section
+		_ => convert_body_elem(pair)?.into(),
+	})
+}
+
+
+fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
+	Ok(match pair.as_rule() {
+		Rule::paragraph        => convert_paragraph(pair)?.into(),
+		Rule::target           => convert_target(pair)?.into(),
+		Rule::substitution_def => convert_substitution_def(pair)?.into(),
+		Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
+		Rule::image            => convert_image::<e::Image>(pair)?.into(),
+		Rule::bullet_list      => convert_bullet_list(pair)?.into(),
+		rule => unimplemented!("unhandled rule {:?}", rule),
+	})
 }
 
 
@@ -48,7 +65,7 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
 	let kind = inner_pair.as_rule();
 	for p in inner_pair.into_inner() {
 		match p.as_rule() {
-			Rule::line => title = Some(p.into_inner().map(convert_inline).collect::<Result<_,_>>()?),
+			Rule::line => title = Some(convert_inlines(p)?),
 			Rule::adornments => adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?")),
 			rule => unimplemented!("Unexpected rule in title: {:?}", rule),
 		};
@@ -66,8 +83,7 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
 
 
 fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph, Error> {
-	let children = pair.into_inner().map(convert_inline).collect::<Result<_,_>>()?;
-	Ok(e::Paragraph::with_children(children))
+	Ok(e::Paragraph::with_children(convert_inlines(pair)?))
 }
 
 
@@ -105,7 +121,7 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
 fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
 	let mut pairs = pair.into_inner();
 	let paragraph = pairs.next().unwrap();
-	paragraph.into_inner().map(convert_inline).collect()
+	convert_inlines(paragraph)
 } 
 
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
@@ -158,4 +174,19 @@ fn convert_admonition_gen(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 		"warning"   =>   e::Warning::with_children(children).into(),
 		typ         => panic!("Unknown admontion type {}!", typ),
 	})
+}
+
+fn convert_bullet_list(pair: Pair<Rule>) -> Result<e::BulletList, Error> {
+	Ok(e::BulletList::with_children(pair.into_inner().map(convert_bullet_item).collect::<Result<_, _>>()?))
+}
+
+fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
+	let mut iter = pair.into_inner();
+	let mut children: Vec<c::BodyElement> = vec![
+		convert_paragraph(iter.next().unwrap())?.into()
+	];
+	for p in iter {
+		children.push(convert_body_elem(p)?);
+	}
+	Ok(e::ListItem::with_children(children))
 }
