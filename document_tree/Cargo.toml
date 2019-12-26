@@ -1,6 +1,6 @@
 [package]
 name = 'document_tree'
-version = '0.2.0'
+version = '0.3.0'
 authors = ['Philipp A. <flying-sheep@web.de>']
 description = 'reStructuredText’s DocumenTree representation'
 license = 'MIT OR Apache-2.0'

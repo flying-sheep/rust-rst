@@ -1,6 +1,6 @@
 [package]
 name = 'rst_parser'
-version = '0.2.0'
+version = '0.3.0'
 authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2018'
 description = 'a reStructuredText parser'
@@ -11,7 +11,7 @@ homepage = 'https://github.com/flying-sheep/rust-rst'
 repository = 'https://github.com/flying-sheep/rust-rst.git'
 
 [dependencies]
-document_tree = { path = '../document_tree' }
+document_tree = { path = '../document_tree', version = '0.3.0' }
 
 pest = '2.1.2'
 pest_derive = '2.1.0'
