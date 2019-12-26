@@ -1,7 +1,7 @@
 use failure::{Error,bail};
 use pest::iterators::Pair;
 
-use crate::document_tree::{
+use document_tree::{
 	Element,HasChildren,ExtraAttributes,
 	elements as e,
 	element_categories as c,
@@ -9,7 +9,7 @@ use crate::document_tree::{
 	attribute_types as at
 };
 
-use crate::parser::{
+use crate::{
 	pest_rst::Rule,
 	pair_ext_parse::PairExt,
 };

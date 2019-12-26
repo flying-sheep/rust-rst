@@ -18,7 +18,7 @@ macro_rules! cartesian {
 
 
 #[cfg(test)]
-mod test {
+mod tests {
 	macro_rules! print_cartesian {
 		( [ $(($a1:tt, $a2:tt)),* , ] ) => {
 			fn test_f(x:i64, y:i64) -> Result<(i64, i64), ()> {
@@ -33,7 +33,7 @@ mod test {
 	}
 
 	#[test]
-	fn test_print_cartesian() {
+	fn print_cartesian() {
 		cartesian!(print_cartesian, [1, 2, 3], [4, 5, 6]);
 		assert_eq!(test_f(1, 4), Ok((1, 4)));
 		assert_eq!(test_f(1, 3), Err(()));

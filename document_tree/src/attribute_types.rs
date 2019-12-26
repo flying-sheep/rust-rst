@@ -102,11 +102,11 @@ impl FromStr for Measure {
 }
 
 #[cfg(test)]
-mod test {
+mod parse_tests {
 	use super::*;
 	
 	#[test]
-	fn test_parse_measure() {
+	fn measure() {
 		let _a: Measure = "1.5em".parse().unwrap();
 		let _b: Measure = "20 mm".parse().unwrap();
 		let _c: Measure = ".5in".parse().unwrap();

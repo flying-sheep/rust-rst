@@ -1,13 +1,15 @@
+#[cfg(test)]
+pub mod tests;
+
 use std::io::Write;
 
 use failure::Error;
 
 // use crate::url::Url;
-use crate::document_tree::{
+use document_tree::{
 	Document,Element,HasChildren,ExtraAttributes,
 	elements as e,
 	element_categories as c,
-	extra_attributes as a,
 };
 
 
@@ -166,7 +168,8 @@ impl_html_render_cat!(BodyElement { Paragraph, LiteralBlock, DoctestBlock, MathB
 impl_html_render_simple!(Paragraph => p, LiteralBlock => pre, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul["\n"], EnumeratedList => ol["\n"], DefinitionList => dl["\n"], FieldList => dl["\n"], OptionList => pre, LineBlock => div["\n"], BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
 impl_html_render_simple_nochildren!(Table => table);  //TODO: after implementing the table, move it to elems with children
 
-impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image> {
+//impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image>
+macro_rules! impl_render_html_image { ($t:ty) => { impl HTMLRender for $t {
 	fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
 		let extra = self.extra();
 		if let Some(ref target) = extra.target {
@@ -186,7 +189,9 @@ impl<I> HTMLRender for I where I: e::Element + a::ExtraAttributes<a::Image> {
 		}
 		Ok(())
 	}
-}
+}}}
+impl_render_html_image!(e::Image);
+impl_render_html_image!(e::ImageInline);
 
 impl HTMLRender for e::DoctestBlock {
 	fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {

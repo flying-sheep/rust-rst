@@ -2,7 +2,7 @@ use std::fmt::{self,Debug,Formatter};
 
 use serde_derive::Serialize;
 
-use super::elements::*;
+use crate::elements::*;
 
 pub trait HasChildren<C> {
 	fn with_children(children: Vec<C>) -> Self;
@@ -103,27 +103,27 @@ synonymous_enum!(SubTable { Title, TableGroup });
 synonymous_enum!(SubTableGroup { TableColspec, TableHead, TableBody });
 
 #[cfg(test)]
-mod test {
+mod conversion_tests {
 	use std::default::Default;
 	use super::*;
 	
 	#[test]
-	fn test_convert_basic() {
+	fn basic() {
 		let _: BodyElement = Paragraph::default().into();
 	}
 	
 	#[test]
-	fn test_convert_more() {
+	fn more() {
 		let _: SubStructure = Paragraph::default().into();
 	}
 	
 	#[test]
-	fn test_convert_even_more() {
+	fn even_more() {
 		let _: StructuralSubElement = Paragraph::default().into();
 	}
 	
 	#[test]
-	fn test_convert_super() {
+	fn super_() {
 		let be: BodyElement = Paragraph::default().into();
 		let _: StructuralSubElement = be.into();
 	}

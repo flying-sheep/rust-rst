@@ -9,7 +9,7 @@ pub mod tests;
 use failure::Error;
 use pest::Parser;
 
-use crate::document_tree::Document;
+use document_tree::Document;
 
 use self::pest_rst::{RstParser,Rule};
 use self::conversion::convert_document;

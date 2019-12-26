@@ -1,20 +1,19 @@
 use failure::Error;
 use pest::iterators::Pair;
 
-use crate::document_tree::{
+use document_tree::{
 	HasChildren,
 	elements as e,
+	url::Url,
 	element_categories as c,
 	extra_attributes as a,
 	attribute_types as at,
 };
 
-use crate::parser::{
+use crate::{
 	pest_rst::Rule,
 //    pair_ext_parse::PairExt,
 };
-
-use crate::url::Url;
 use super::whitespace_normalize_name;
 
 

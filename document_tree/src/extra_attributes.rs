@@ -1,7 +1,15 @@
 use serde_derive::Serialize;
 
 use crate::url::Url;
-use super::attribute_types::{CanBeEmpty,FixedSpace,ID,NameToken,AlignHV,AlignH,AlignV,TableAlignH,TableBorder,TableGroupCols,Measure,EnumeratedListType};
+use crate::attribute_types::{
+	CanBeEmpty,
+	FixedSpace,
+	ID,NameToken,
+	AlignHV,AlignH,AlignV,
+	TableAlignH,TableBorder,TableGroupCols,
+	Measure,
+	EnumeratedListType,
+};
 
 pub trait ExtraAttributes<A> {
 	fn with_extra(extra: A) -> Self;

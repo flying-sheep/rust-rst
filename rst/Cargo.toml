@@ -1,0 +1,19 @@
+[package]
+name = 'rst'
+version = '0.2.0'
+authors = ['Philipp A. <flying-sheep@web.de>']
+edition = '2018'
+description = 'a reStructuredText parser and renderer for the command line'
+license = 'MIT OR Apache-2.0'
+
+documentation = 'https://flying-sheep.github.io/rust-rst'
+homepage = 'https://github.com/flying-sheep/rust-rst'
+repository = 'https://github.com/flying-sheep/rust-rst.git'
+
+[dependencies]
+rst_renderer = { path = '../renderer' }
+rst_parser = { path = '../parser' }
+
+quicli = '0.4.0'
+structopt = '0.2.15'
+clap = '2.32.0'

@@ -1,20 +1,12 @@
-#![recursion_limit="256"]
-
-pub mod document_tree;
-pub mod parser;
-pub mod renderer;
-pub mod url;
-
-
 use structopt::StructOpt;
-use clap::{_clap_count_exprs, arg_enum};
+use clap::arg_enum;
 use quicli::{
 	fs::read_file,
 	prelude::{CliResult,Verbosity},
 };
 
-use self::parser::parse;
-use self::renderer::{
+use rst_parser::parse;
+use rst_renderer::{
 	render_json,
 	render_xml,
 	render_html,

@@ -1,6 +1,7 @@
 use pest::consumes_to;
 use pest::parses_to;
-use super::pest_rst::{RstParser, Rule};
+
+use crate::pest_rst::{RstParser, Rule};
 
 #[test]
 fn plain() {

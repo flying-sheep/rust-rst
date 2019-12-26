@@ -1,13 +1,11 @@
 mod html;
-#[cfg(test)]
-pub mod html_tests;
 
 
 use std::io::Write;
 
 use failure::Error;
 
-use crate::document_tree::Document;
+use document_tree::Document;
 
 
 pub fn render_json<W>(document: &Document, stream: W) -> Result<(), Error> where W: Write {
@@ -21,4 +19,3 @@ pub fn render_xml<W>(document: &Document, stream: W) -> Result<(), Error> where 
 }
 
 pub use html::render_html;
-

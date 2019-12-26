@@ -1,0 +1,18 @@
+[package]
+name = 'rst_parser'
+version = '0.2.0'
+authors = ['Philipp A. <flying-sheep@web.de>']
+edition = '2018'
+description = 'a reStructuredText parser'
+license = 'MIT OR Apache-2.0'
+
+documentation = 'https://flying-sheep.github.io/rust-rst'
+homepage = 'https://github.com/flying-sheep/rust-rst'
+repository = 'https://github.com/flying-sheep/rust-rst.git'
+
+[dependencies]
+document_tree = { path = '../document_tree' }
+
+pest = '2.1.2'
+pest_derive = '2.1.0'
+failure = '0.1.6'

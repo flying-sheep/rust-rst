@@ -1,7 +1,8 @@
 use pretty_assertions::assert_eq;
 
-use crate::parser::parse;
-use super::html::render_html;
+use rst_parser::parse;
+
+use crate::html::render_html;
 
 fn check_renders_to(rst: &str, expected: &str) {
 	println!("Rendering:\n{}\n---", rst);
@@ -13,7 +14,7 @@ fn check_renders_to(rst: &str, expected: &str) {
 }
 
 #[test]
-fn test_simple_string() {
+fn simple_string() {
 	check_renders_to(
 		"Simple String",
 		"<p>Simple String</p>",
@@ -21,7 +22,7 @@ fn test_simple_string() {
 }
 
 #[test]
-fn test_simple_string_with_markup() {
+fn simple_string_with_markup() {
 	check_renders_to(
 		"Simple String with *emph* and **strong**",
 		"<p>Simple String with <em>emph</em> and <strong>strong</strong></p>",
@@ -29,7 +30,7 @@ fn test_simple_string_with_markup() {
 }
 
 #[test]
-fn test_check_inline_literal() {
+fn inline_literal() {
 	check_renders_to(
 		"Simple String with an even simpler ``inline literal``",
 		"<p>Simple String with an even simpler <code>inline literal</code></p>",
@@ -50,7 +51,7 @@ __ http://www.test.com/test_url
 */
 
 #[test]
-fn test_two_paragraphs() {
+fn two_paragraphs() {
 	check_renders_to(
 		"One paragraph.\n\nTwo paragraphs.",
 		"<p>One paragraph.</p>\n<p>Two paragraphs.</p>",
@@ -58,7 +59,7 @@ fn test_two_paragraphs() {
 }
 
 #[test]
-fn test_named_reference() {
+fn named_reference() {
 	check_renders_to("\
 A simple `named reference`_ with stuff in between the
 reference and the target.
@@ -71,7 +72,7 @@ reference and the target.</p>\
 }
 
 #[test]
-fn test_substitution() {
+fn substitution() {
 	check_renders_to("\
 A |subst|.
 
@@ -138,7 +139,7 @@ Some stuff
 */
 
 #[test]
-fn test_section_hierarchy() {
+fn section_hierarchy() {
 	check_renders_to("\
 +++++
 Title
@@ -178,7 +179,7 @@ And even more stuff
 }
 
 #[test]
-fn test_bullet_list() {
+fn bullet_list() {
 	check_renders_to("\
 * bullet
 * list

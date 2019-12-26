@@ -21,8 +21,8 @@ TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/b
 
 use std::collections::HashMap;
 
-use crate::url::Url;
-use crate::document_tree::{
+use document_tree::{
+	url::Url,
 	Document,
 	HasChildren,
 	attribute_types::NameToken,
@@ -377,7 +377,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 					// TODO: This replaces the reference by a Problematic node.
 					// The corresponding SystemMessage node should go in a generated
 					// section with class "system-messages" at the end of the document.
-					use crate::document_tree::Problematic;
+					use document_tree::Problematic;
 					let mut replacement: Box<Problematic> = Box::new(Default::default());
 					replacement.children_mut().push(
 						c::TextOrInlineElement::String(Box::new(format!("|{}|", e.extra().refname[0].0)))
