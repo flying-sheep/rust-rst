@@ -1,6 +1,6 @@
 [package]
 name = 'rst_renderer'
-version = '0.3.0'
+version = '0.3.1'
 authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2018'
 description = 'a reStructuredText renderer'

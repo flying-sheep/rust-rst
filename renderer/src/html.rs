@@ -69,7 +69,11 @@ macro_rules! impl_html_render_simple {
 		impl HTMLRender for e::$type {
 			fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
 				let multiple_children = self.children().len() > 1;
-				write!(renderer.stream, "<{}>", stringify!($tag))?;
+				write!(renderer.stream, "<{}", stringify!($tag))?;
+				if self.classes().len() > 0 {
+					write!(renderer.stream, " class=\"{}\"", self.classes().join(" "))?;
+				}
+				write!(renderer.stream, ">")?;
 				if multiple_children { write!(renderer.stream, $post)?; }
 				for c in self.children() {
 					(*c).render_html(renderer)?;

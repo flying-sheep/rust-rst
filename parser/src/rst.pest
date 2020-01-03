@@ -15,6 +15,7 @@ block    = _{ PEEK[..] ~ hanging_block }
 hanging_block = _{
     substitution_def
     | image_directive
+    | code_directive
     | admonition
     | admonition_gen
     | target
@@ -24,17 +25,10 @@ hanging_block = _{
 // TODO: implement all those things:
 // | block_quote
 // | verbatim
-// | image ✓
-// | code_block
 // | doctest_block
-// | admonition ✓
-// | target ✓
 // | horizontal_rule
-// | title ✓
 // | table
 // | ordered_list
-// | bullet_list ✓
-// | paragraph ✓
 // | plain
 }
 
@@ -86,9 +80,20 @@ image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ image_option } //TODO: merg
 image_option    =  { ":" ~ image_opt_name ~ ":" ~ line }
 image_opt_name  =  { common_opt_name | "alt" | "height" | "width" | "scale" | "align" | "target" }
 
+// Code block. A directive
+
+code_directive = {
+    ".." ~ PUSH(" "+) ~ "code" ~ "-block"? ~ "::" ~ (" "+ ~ source)? ~ NEWLINE ~
+    blank_line+ ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ code_block ~ DROP
+}
+source = { (!NEWLINE ~ ANY)+ }
+code_block = { code_line ~ (code_line_blank* ~ PEEK[..] ~ code_line)* }
+code_line_blank = { " "* ~ NEWLINE }
+code_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
+
 // Admonition. A directive. The generic one has a title
 
-admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::"         ~               line  ~ blank_line* ~ admonition_content? ~ DROP }
+admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::" ~ line  ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
 admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
@@ -272,11 +277,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 
 
 
-// code_block = {
-//     ".. code" ~ "-block"? ~ ":: " ~ source ~ blank_line ~
-//     NEWLINE ~ verbatim_chunk+
-// }
-
 // doctest_block = { (doctest_line+ ~ (!(">" | blank_line) ~ line)*)+ }
 
 // block_quote_raw = { ":" ~ blank_line ~ NEWLINE ~ nonblank_indented_line+ }
@@ -289,12 +289,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // }
 
 // block_quote = { block_quote_chunk+ }
-
-// nonblank_indented_line = { !blank_line ~ indented_line }
-
-// verbatim_chunk = { blank_line* ~ nonblank_indented_line+ }
-
-// verbatim = { verbatim_chunk+ }
 
 // horizontal_rule = {
 //     ( "=" ~ sp ~ "=" ~ sp ~ "=" ~ (sp ~ "=")*

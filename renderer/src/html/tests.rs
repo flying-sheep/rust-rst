@@ -11,6 +11,7 @@ fn check_renders_to(rst: &str, expected: &str) {
 	render_html(&doc, &mut result_data, false).expect("Render error");
 	let result = String::from_utf8(result_data).expect("Could not decode");
 	assert_eq!(result.as_str().trim(), expected);
+	println!("{}", expected);
 }
 
 #[test]
@@ -221,6 +222,24 @@ fn test_table() {
 ");
 }
 */
+
+#[test]
+fn code() {
+	check_renders_to("\
+.. code:: python
+
+   def foo():
+       print('Hi!')
+   
+       # comment
+", "\
+<pre class=\"python\">def foo():
+    print('Hi!')
+
+    # comment
+</pre>\
+");
+}
 
 /*
 #[test]

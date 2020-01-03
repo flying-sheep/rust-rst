@@ -136,6 +136,41 @@ fn admonitions() {
 	};
 }
 
+#[allow(clippy::cognitive_complexity)]
+#[test]
+fn code() {
+	parses_to! {
+		parser: RstParser,
+		input: "\
+.. code::
+
+   Single line
+
+.. code-block:: python
+
+   print('x')
+
+   # second line
+
+The end
+",
+		rule: Rule::document,
+		tokens: [
+			code_directive(0, 26, [
+				code_block(14, 26, [ code_line(14, 26) ]),
+			]),
+			code_directive(27, 83, [
+				source(43, 49),
+				code_block(54, 83, [
+					code_line(54, 65),
+					code_line_blank(65, 66),
+					code_line(69, 83),
+				]),
+			]),
+			paragraph(84, 91, [ str(84, 91) ]),
+		]
+	};
+}
 
 #[allow(clippy::cognitive_complexity)]
 #[test]
