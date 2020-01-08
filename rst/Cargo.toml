@@ -5,10 +5,11 @@ authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2018'
 description = 'a reStructuredText parser and renderer for the command line'
 license = 'MIT OR Apache-2.0'
+readme = 'README.md'
 
-documentation = 'https://flying-sheep.github.io/rust-rst'
+documentation = 'https://github.com/flying-sheep/rust-rst#readme'
 homepage = 'https://github.com/flying-sheep/rust-rst'
-repository = 'https://github.com/flying-sheep/rust-rst.git'
+repository = 'https://github.com/flying-sheep/rust-rst'
 
 [dependencies]
 rst_renderer = { path = '../renderer', version = '0.3.0' }

@@ -2,14 +2,14 @@
 name = 'document_tree'
 version = '0.3.0'
 authors = ['Philipp A. <flying-sheep@web.de>']
-description = 'reStructuredText’s DocumenTree representation'
-license = 'MIT OR Apache-2.0'
-
-documentation = 'https://flying-sheep.github.io/rust-rst'
-homepage = 'https://github.com/flying-sheep/rust-rst'
-repository = 'https://github.com/flying-sheep/rust-rst.git'
-
 edition = '2018'
+description = 'reStructuredText’s DocumentTree representation'
+license = 'MIT OR Apache-2.0'
+readme = 'README.md'
+
+documentation = 'https://docs.rs/document_tree'
+homepage = 'https://github.com/flying-sheep/rust-rst'
+repository = 'https://github.com/flying-sheep/rust-rst'
 
 [dependencies]
 failure = '0.1.6'
