@@ -148,7 +148,7 @@ literal       =  { (!("`"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("`"|" ") ~ inline_
 // inline links
 reference = { reference_target | reference_explicit | reference_auto }
 
-reference_target = { reference_target_uq ~ "_" | reference_target_qu }
+reference_target = { (reference_target_uq ~ "_" | reference_target_qu) ~ !(LETTER|NUMBER) }
 reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)+ }
 reference_target_qu = { ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ reference_text? ~ ("<" ~ reference_bracketed ~ ">")? ~ ( "`" ~ !"``" ) ~ "_" }
 reference_text = { !"<" ~ ( !("`"|"<") ~ ANY )+ }

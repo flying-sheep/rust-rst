@@ -1,6 +1,6 @@
 [package]
 name = 'rst_parser'
-version = '0.3.1'
+version = '0.3.2'
 authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2018'
 description = 'a reStructuredText parser'

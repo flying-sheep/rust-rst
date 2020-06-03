@@ -104,6 +104,18 @@ fn two_targets() {
 	};
 }
 
+#[test]
+fn inline_code_literal_with_underscore() {
+    parses_to! {
+        parser: RstParser,
+        input: "``NAME_WITH_UNDERSCORE``",
+        rule: Rule::inline,
+        tokens: [
+            literal(2, 22, [str_nested(2, 22)]),
+        ]
+    };
+}
+
 #[allow(clippy::cognitive_complexity)]
 #[test]
 fn admonitions() {
