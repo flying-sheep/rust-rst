@@ -180,6 +180,55 @@ And even more stuff
 }
 
 #[test]
+fn many_sections() {
+	check_renders_to("\
++++++++++
+heading 1
++++++++++
+
+heading 2
+=========
+
+First stuff
+
+heading 2a
+----------
+
+First detail
+
+heading 3
+=========
+
+Second stuff
+
+heading 3a
+----------
+
+Second detail
+", "\
+<section id=\"heading-1\">
+<h1>heading 1</h1>
+<section id=\"heading-2\">
+<h2>heading 2</h2>
+<p>First stuff</p>
+<section id=\"heading-2a\">
+<h3>heading 2a</h3>
+<p>First detail</p>
+</section>
+</section>
+<section id=\"heading-3\">
+<h2>heading 3</h2>
+<p>Second stuff</p>
+<section id=\"heading-3a\">
+<h3>heading 3a</h3>
+<p>Second detail</p>
+</section>
+</section>
+</section>\
+");
+}
+
+#[test]
 fn bullet_list() {
 	check_renders_to("\
 * bullet

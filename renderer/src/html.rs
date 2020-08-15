@@ -151,6 +151,7 @@ impl HTMLRender for e::Section {
 			writeln!(renderer.stream)?;
 		}
 		write!(renderer.stream, "</section>")?;
+		renderer.level -= 1;
 		Ok(())
 	}
 }
