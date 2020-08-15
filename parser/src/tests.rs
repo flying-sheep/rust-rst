@@ -186,6 +186,45 @@ The end
 
 #[allow(clippy::cognitive_complexity)]
 #[test]
+fn raw() {
+	parses_to! {
+		parser: RstParser,
+		input: "\
+.. raw:: html
+
+   hello <span>world</span>
+
+.. raw:: html
+
+   hello <pre>world
+
+   parse</pre> this
+
+The end
+",
+		rule: Rule::document,
+		tokens: [
+			raw_directive(0, 43, [
+				raw_output_format(9, 13),
+				raw_block(18, 43, [
+					raw_line(18, 43),
+				]),
+			]),
+			raw_directive(44, 100, [
+				raw_output_format(53, 57),
+				raw_block(62, 100, [
+					raw_line(62, 79),
+					raw_line_blank(79, 80),
+					raw_line(83, 100),
+				]),
+			]),
+			paragraph(101, 108, [ str(101, 108) ]),
+		]
+	};
+}
+
+#[allow(clippy::cognitive_complexity)]
+#[test]
 fn substitutions() {
 	parses_to! {
 		parser: RstParser,

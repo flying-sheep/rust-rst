@@ -241,6 +241,31 @@ fn code() {
 ");
 }
 
+#[test]
+fn raw_html() {
+	check_renders_to("\
+.. raw:: html
+
+   hello <span>world</span>
+   <p>paragraph
+
+   paragraph</p>
+
+after
+
+.. raw:: something_else
+
+   into a black hole this goes
+", "\
+hello <span>world</span>
+<p>paragraph
+
+paragraph</p>
+
+<p>after</p>\
+");
+}
+
 /*
 #[test]
 fn test_field_list() {

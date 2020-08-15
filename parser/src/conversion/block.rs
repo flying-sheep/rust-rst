@@ -54,6 +54,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 		Rule::image            => convert_image::<e::Image>(pair)?.into(),
 		Rule::bullet_list      => convert_bullet_list(pair)?.into(),
 		Rule::code_directive   => convert_code_directive(pair)?.into(),
+		Rule::raw_directive    => convert_raw_directive(pair)?.into(),
 		rule => unimplemented!("unhandled rule {:?}", rule),
 	})
 }
@@ -218,4 +219,18 @@ fn convert_code_directive(pair: Pair<Rule>) -> Result<e::LiteralBlock, Error> {
 		code_block.classes_mut().push(lang.as_str().to_owned());
 	};
 	Ok(code_block)
+}
+
+fn convert_raw_directive(pair: Pair<Rule>) -> Result<e::Raw, Error> {
+	let mut iter = pair.into_inner();
+	let format = iter.next().unwrap();
+    let block = iter.next().unwrap();
+	let children = block.into_inner().map(|l| match l.as_rule() {
+		Rule::raw_line => l.as_str(),
+		Rule::raw_line_blank => "\n",
+		_ => unreachable!(),
+	}.into()).collect();
+	let mut raw_block = e::Raw::with_children(children);
+	raw_block.extra_mut().format.push(at::NameToken(format.as_str().to_owned()));
+	Ok(raw_block)
 }
