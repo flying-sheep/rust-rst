@@ -81,6 +81,20 @@ A |subst|.
 ", "<p>A text substitution.</p>");
 }
 
+#[test]
+fn not_substitution_literal() {
+	check_renders_to("\
+hello ``foo.map(|world| world + 42)``
+
+.. |world| replace:: something different
+
+.. code::
+
+   foo.map(|world| world + 42)
+", "<p>hello <code>foo.map(|world| world + 42)</code></p>
+<pre>foo.map(|world| world + 42)\n</pre>");
+}
+
 /*
 #[test]
 fn test_section_hierarchy() {
