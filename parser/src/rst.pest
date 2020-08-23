@@ -224,9 +224,8 @@ relative_url_auto = {
     ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url_auto ) |
     ( "//" ~ host ~ ":" ~ url_port ~ &follows_auto_url ) |
     ( "//" ~ ( domain_host_auto | "["~(ASCII_HEX_DIGIT|"."|":")+~"]" ~ &follows_auto_url ) ) |
-    path_absolute_url_auto |
+    path_absolute_url_auto
     // (prua1|prua2) is path_relative_url_auto minus the &follows_auto_url case
-    (!(arbitrary_scheme ~ ":") ~ (prua1 | prua2))
 }
 url_units_auto = {
     ( url_unit ~ url_units_auto ) |
