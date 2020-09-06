@@ -16,6 +16,7 @@ hanging_block = _{
     substitution_def
     | image_directive
     | code_directive
+    | raw_directive
     | admonition
     | admonition_gen
     | target
@@ -90,6 +91,17 @@ source = { (!NEWLINE ~ ANY)+ }
 code_block = { code_line ~ (code_line_blank* ~ PEEK[..] ~ code_line)* }
 code_line_blank = { " "* ~ NEWLINE }
 code_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
+
+// Raw block. A directive
+
+raw_directive = {
+    ".." ~ PUSH(" "+) ~ "raw::" ~ " "+ ~ raw_output_format ~ NEWLINE ~
+    blank_line+ ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ raw_block ~ DROP
+}
+raw_output_format = { (!NEWLINE ~ ANY)+ }
+raw_block = { raw_line ~ (raw_line_blank* ~ PEEK[..] ~ raw_line)* }
+raw_line_blank = { " "* ~ NEWLINE }
+raw_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 // Admonition. A directive. The generic one has a title
 

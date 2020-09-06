@@ -11,6 +11,7 @@ use document_tree::{
 	elements as e,
 	extra_attributes as a,
 	element_categories as c,
+	attribute_types as at,
 };
 
 
@@ -238,8 +239,11 @@ impl HTMLRender for e::Target {
 
 impl HTMLRender for e::Raw {
 	fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
-		for c in self.children() {
-			write!(renderer.stream, "{}", c)?;
+		let extra = self.extra();
+		if extra.format.contains(&at::NameToken("html".to_owned())) {
+			for c in self.children() {
+				write!(renderer.stream, "{}", c)?;
+			}
 		}
 		Ok(())
 	}
