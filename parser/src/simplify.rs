@@ -325,7 +325,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			String(_) => {},
 			Emphasis(e) => sub_pop(&**e, refs),
 			Strong(e) => sub_pop(&**e, refs),
-			Literal(e) => sub_pop(&**e, refs),
+			Literal(_) => {},
 			Reference(e) => sub_pop(&**e, refs),
 			FootnoteReference(e) => sub_pop(&**e, refs),
 			CitationReference(e) => sub_pop(&**e, refs),
@@ -352,7 +352,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 			String(e) => String(e),
 			Emphasis(e) => sub_res(*e, refs).into(),
 			Strong(e) => sub_res(*e, refs).into(),
-			Literal(e) => sub_res(*e, refs).into(),
+			Literal(e) => Literal(e),
 			Reference(mut e) => {
 				if e.extra().refuri.is_none() {
 					if let Some(uri) = refs.target_url(&e.extra().refname) {

@@ -111,7 +111,7 @@ fn inline_code_literal_with_underscore() {
         input: "``NAME_WITH_UNDERSCORE``",
         rule: Rule::inline,
         tokens: [
-            literal(2, 22, [str_nested(2, 22)]),
+            literal(2, 22),
         ]
     };
 }
@@ -213,6 +213,23 @@ A |subst| in-line
 					str(75, 86), ws_newline(86, 87),
 					str(88, 100),
 				]) ]),
+			]),
+		]
+	};
+}
+
+#[test]
+fn substitution_in_literal() {
+	parses_to! {
+		parser: RstParser,
+		input: "Just ``|code|``, really ``*code* |only|``",
+		rule: Rule::document,
+		tokens: [
+			paragraph(0, 41, [
+				str(0, 5),
+				literal(7, 13),
+				str(15, 24),
+				literal(26, 39),
 			]),
 		]
 	};
