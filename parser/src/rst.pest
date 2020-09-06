@@ -184,11 +184,11 @@ url_path_segment_unit = { !("/"|"?") ~ url_unit }
 url_port = { ASCII_DIGIT* }
 scheme_relative_file_url = { "//" ~ ( host ~ !("/:/"|"/|/") )? ~ path_absolute_url }
 relative_url = { ( "//" ~ host ~ (":" ~ url_port)? ~ path_absolute_url? ) | path_absolute_url | (!(arbitrary_scheme ~ ":") ~ path_relative_url) }
-/* this is approximately a superset of valid hosts and opaque hosts */
+// this is approximately a superset of valid hosts and opaque hosts
 host = { ( !(":"|"/"|"?"|"#") ~ url_unit)+ | ("["~(ASCII_HEX_DIGIT|"."|":")+~"]") }
 special_url_scheme = { ^"ftp" | (^"http" | ^"ws") ~ ^"s"? }  /* doesn't include "file" */
 arbitrary_scheme = { ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
-/* taken at 2020-09-06 from https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml */
+// taken at 2020-09-06 from https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
 known_scheme = {
     "aaa"|"aaas"|"about"|"acap"|"acct"|"acd"|"acr"|"adiumxtra"|"adt"|"afp"|"afs"|"aim"|"amss"|"android"|"appdata"|"apt"|"ark"|"attachment"|"aw"|
     "barion"|"beshare"|"bitcoin"|"bitcoincash"|"blob"|"bolo"|"browserext"|"cabal"|"calculator"|"callto"|"cap"|"cast"|"casts"|"chrome"|
