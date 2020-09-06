@@ -135,7 +135,7 @@ str = { (!(NEWLINE | inline_special) ~ ANY)+ }
 // simple formatting
 inline_nested = _{ inline_special | str_nested }
 str_nested    =  { word_nested ~ ( " "+ ~ word_nested)* }
-// TODO: allow ` in emph and * in literal
+// TODO: allow ` in emph
 word_nested   = _{ (!(NEWLINE | " " | inline_special | "*" | "`") ~ ANY)+ }
 
 emph_outer    = _{ "*" ~ emph ~ "*" }
@@ -143,7 +143,7 @@ emph          =  { (!("*"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("*"|" ") ~ inline_
 strong_outer  = _{ "**" ~ strong ~ "**" }
 strong        =  { (!("*"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("*"|" ") ~ inline_nested)+)* }
 literal_outer = _{ "``" ~ literal ~ "``" }
-literal       =  { (!("`"|" ") ~ inline_nested)+ ~ (" "+ ~ (!("`"|" ") ~ inline_nested)+)* }
+literal       =  { (!"``" ~ ANY)+ }
 
 // inline links
 reference = { reference_target | reference_explicit | reference_auto }

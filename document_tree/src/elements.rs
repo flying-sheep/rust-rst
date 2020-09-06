@@ -257,7 +257,7 @@ impl_elems!(
 	
 	//inline elements
 	(Emphasis,              TextOrInlineElement)
-	(Literal,               TextOrInlineElement)
+	(Literal,               String)
 	(Reference,             TextOrInlineElement; +)
 	(Strong,                TextOrInlineElement)
 	(FootnoteReference,     TextOrInlineElement; +)

@@ -25,7 +25,7 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
 		Rule::substitution_name => convert_substitution_ref(pair)?.into(),
 		Rule::emph              => e::Emphasis::with_children(convert_inlines(pair)?).into(),
 		Rule::strong            => e::Strong::with_children(convert_inlines(pair)?).into(),
-		Rule::literal           => e::Literal::with_children(convert_inlines(pair)?).into(),
+		Rule::literal           => e::Literal::with_children(vec![pair.as_str().to_owned()]).into(),
 		rule => unimplemented!("unknown rule {:?}", rule),
 	})
 }
