@@ -1,4 +1,5 @@
 mod html;
+mod opt;
 
 use std::io::Write;
 
