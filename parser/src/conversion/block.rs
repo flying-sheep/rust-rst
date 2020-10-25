@@ -55,6 +55,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 		Rule::bullet_list      => convert_bullet_list(pair)?.into(),
 		Rule::code_directive   => convert_code_directive(pair)?.into(),
 		Rule::raw_directive    => convert_raw_directive(pair)?.into(),
+		Rule::block_comment    => convert_comment(pair)?.into(),
 		rule => unimplemented!("unhandled rule {:?}", rule),
 	})
 }
@@ -134,7 +135,7 @@ fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Erro
 	let mut pairs = pair.into_inner();
 	let paragraph = pairs.next().unwrap();
 	convert_inlines(paragraph)
-} 
+}
 
 fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + ExtraAttributes<a::Image> {
 	let mut pairs = pair.into_inner();
@@ -233,4 +234,25 @@ fn convert_raw_directive(pair: Pair<Rule>) -> Result<e::Raw, Error> {
 	let mut raw_block = e::Raw::with_children(children);
 	raw_block.extra_mut().format.push(at::NameToken(format.as_str().to_owned()));
 	Ok(raw_block)
+}
+
+fn convert_comment_block(pair: Pair<Rule>) -> String {
+	let iter = pair.into_inner();
+	let block = iter.skip(1).next().unwrap();
+	let text = block.into_inner().map(|l| match l.as_rule() {
+		Rule::comment_line_blank => "",
+		Rule::comment_line => l.as_str(),
+		_ => unreachable!(),
+	}.into()).collect::<Vec<&str>>().join("\n");
+	text
+}
+
+fn convert_comment(pair: Pair<Rule>) -> Result<e::Comment, Error> {
+	let block = pair.into_inner().skip(1).next().unwrap();
+	let children = block.into_inner().map(|l| match l.as_rule() {
+		Rule::comment_title => String::from(l.as_str()),
+		Rule::comment_block => convert_comment_block(l),
+		_ => unreachable!(),
+	}.into()).collect();
+	Ok(e::Comment::with_children(children))
 }

@@ -225,6 +225,76 @@ The end
 
 #[allow(clippy::cognitive_complexity)]
 #[test]
+fn comments() {
+	parses_to! {
+		parser: RstParser,
+		input: "\
+.. This is a comment
+
+..
+   This as well.
+
+..
+   _so: is this!
+..
+   [and] this!
+..
+   this:: too!
+..
+   |even| this:: !
+.. With a title..
+
+   and a blank line...
+   followed by a non-blank line
+
+   and another one.
+",
+		rule: Rule::document,
+		tokens: [
+			block_comment(0, 22, [
+				comment_title(3, 20),
+			]),
+			block_comment(22, 43, [
+				comment_block(25, 42, [
+					comment_line(25, 42),
+				])
+			]),
+			block_comment(43, 63, [
+				comment_block(46, 63, [
+					comment_line(46, 63),
+				])
+			]),
+			block_comment(63, 81, [
+				comment_block(66, 81, [
+					comment_line(66, 81),
+				])
+			]),
+			block_comment(81, 99, [
+				comment_block(84, 99, [
+					comment_line(84, 99),
+				])
+			]),
+			block_comment(99, 121, [
+				comment_block(102, 121, [
+					comment_line(102, 121),
+				])
+			]),
+			block_comment(121, 216, [
+				comment_title(124, 138),
+				comment_block(139, 216, [
+					comment_line_blank(139, 140),
+					comment_line(141, 163),
+					comment_line(164, 195),
+					comment_line_blank(195, 196),
+					comment_line(197, 216),
+				])
+			]),
+		]
+	};
+}
+
+#[allow(clippy::cognitive_complexity)]
+#[test]
 fn substitutions() {
 	parses_to! {
 		parser: RstParser,

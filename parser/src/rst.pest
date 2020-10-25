@@ -20,6 +20,9 @@ hanging_block = _{
     | admonition
     | admonition_gen
     | target
+    // Comments should be below the directives to try to match them first, but
+    // above the title that will interpret ".." as a title marker.
+    | block_comment
     | title
     | bullet_list
     | paragraph
@@ -110,6 +113,15 @@ admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_lin
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
 admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
 
+// Comments.
+
+block_comment   = {
+    ".." ~ PUSH(" "*) ~ comment_title? ~ NEWLINE? ~ comment_block? ~ (" "* ~ NEWLINE)* ~ DROP
+}
+comment_title = { (!NEWLINE ~ ANY)+ }
+comment_block = { (comment_line_blank* ~ PEEK[..] ~ comment_line)+ }
+comment_line_blank = { " "* ~ NEWLINE }
+comment_line       = { " "+ ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 
 /*
