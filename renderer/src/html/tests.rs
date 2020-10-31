@@ -338,6 +338,28 @@ paragraph</p>
 ");
 }
 
+#[test]
+fn comments() {
+	check_renders_to("\
+.. Run-in
+   comment
+
+..
+
+    block-like
+
+    with blank lines
+", "\
+<!--Run-in
+comment
+-->
+<!--block-like
+
+with blank lines
+-->\
+");
+}
+
 /*
 #[test]
 fn test_field_list() {
