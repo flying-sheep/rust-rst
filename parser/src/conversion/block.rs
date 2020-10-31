@@ -236,23 +236,11 @@ fn convert_raw_directive(pair: Pair<Rule>) -> Result<e::Raw, Error> {
 	Ok(raw_block)
 }
 
-fn convert_comment_block(pair: Pair<Rule>) -> String {
-	let iter = pair.into_inner();
-	let block = iter.skip(1).next().unwrap();
-	let text = block.into_inner().map(|l| match l.as_rule() {
-		Rule::comment_line_blank => "",
+fn convert_comment(pair: Pair<Rule>) -> Result<e::Comment, Error> {
+	let lines = pair.into_inner().map(|l| match l.as_rule() {
+		Rule::comment_line_blank => "\n",
 		Rule::comment_line => l.as_str(),
 		_ => unreachable!(),
-	}.into()).collect::<Vec<&str>>().join("\n");
-	text
-}
-
-fn convert_comment(pair: Pair<Rule>) -> Result<e::Comment, Error> {
-	let block = pair.into_inner().skip(1).next().unwrap();
-	let children = block.into_inner().map(|l| match l.as_rule() {
-		Rule::comment_title => String::from(l.as_str()),
-		Rule::comment_block => convert_comment_block(l),
-		_ => unreachable!(),
 	}.into()).collect();
-	Ok(e::Comment::with_children(children))
+	Ok(e::Comment::with_children(lines))
 }

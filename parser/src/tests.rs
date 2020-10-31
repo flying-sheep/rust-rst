@@ -248,46 +248,42 @@ fn comments() {
    followed by a non-blank line
 
    and another one.
+..
+.. Comments can also be
+   run-in like this
 ",
 		rule: Rule::document,
 		tokens: [
 			block_comment(0, 22, [
-				comment_title(3, 20),
+				comment_line(3, 21),
 			]),
 			block_comment(22, 43, [
-				comment_block(25, 42, [
-					comment_line(25, 42),
-				])
+				comment_line(28, 42),
 			]),
 			block_comment(43, 63, [
-				comment_block(46, 63, [
-					comment_line(46, 63),
-				])
+				comment_line(49, 63),
 			]),
 			block_comment(63, 81, [
-				comment_block(66, 81, [
-					comment_line(66, 81),
-				])
+				comment_line(69, 81),
 			]),
 			block_comment(81, 99, [
-				comment_block(84, 99, [
-					comment_line(84, 99),
-				])
+				comment_line(87, 99),
 			]),
 			block_comment(99, 121, [
-				comment_block(102, 121, [
-					comment_line(102, 121),
-				])
+				comment_line(105, 121),
 			]),
 			block_comment(121, 216, [
-				comment_title(124, 138),
-				comment_block(139, 216, [
-					comment_line_blank(139, 140),
-					comment_line(141, 163),
-					comment_line(164, 195),
-					comment_line_blank(195, 196),
-					comment_line(197, 216),
-				])
+				comment_line(124, 139),
+				comment_line_blank(139, 140),
+				comment_line(143, 163),
+				comment_line(166, 195),
+				comment_line_blank(195, 196),
+				comment_line(199, 216),
+			]),
+			block_comment(216, 219),
+			block_comment(219, 263, [
+				comment_line(222, 243),
+				comment_line(246, 263),
 			]),
 		]
 	};

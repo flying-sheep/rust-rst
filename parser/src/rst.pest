@@ -102,9 +102,9 @@ raw_directive = {
     blank_line+ ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ raw_block ~ DROP
 }
 raw_output_format = { (!NEWLINE ~ ANY)+ }
-raw_block = { raw_line ~ (raw_line_blank* ~ PEEK[..] ~ raw_line)* }
-raw_line_blank = { " "* ~ NEWLINE }
-raw_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
+raw_block         = { raw_line ~ (raw_line_blank* ~ PEEK[..] ~ raw_line)* }
+raw_line_blank    = { " "* ~ NEWLINE }
+raw_line          = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 // Admonition. A directive. The generic one has a title
 
@@ -115,13 +115,22 @@ admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* }
 
 // Comments.
 
-block_comment   = {
-    ".." ~ PUSH(" "*) ~ comment_title? ~ NEWLINE? ~ comment_block? ~ (" "* ~ NEWLINE)* ~ DROP
+block_comment = {
+    ".." ~
+    (   // Without title
+        (" "* ~ NEWLINE)+ ~ PUSH(" "+) ~ comment_hanging ~ DROP
+        // or with title
+    |   PUSH(" "+) ~ comment_line ~
+        (comment_line_blank* ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ comment_hanging)? ~
+        DROP
+        // or empty
+    |   " "* ~ NEWLINE
+    ) ~
+    (" "* ~ NEWLINE)*
 }
-comment_title = { (!NEWLINE ~ ANY)+ }
-comment_block = { (comment_line_blank* ~ PEEK[..] ~ comment_line)+ }
-comment_line_blank = { " "* ~ NEWLINE }
-comment_line       = { " "+ ~ (!NEWLINE ~ ANY)+ ~ NEWLINE }
+comment_hanging    = _{ comment_line ~ (comment_line_blank* ~ PEEK[..] ~ comment_line)* }
+comment_line_blank =  { " "* ~ NEWLINE }
+comment_line       =  { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 
 /*
