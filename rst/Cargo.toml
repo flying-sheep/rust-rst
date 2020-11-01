@@ -1,6 +1,6 @@
 [package]
 name = 'rst'
-version = '0.3.0'
+version = '0.4.0'
 authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2018'
 description = 'a reStructuredText parser and renderer for the command line'
@@ -12,8 +12,8 @@ homepage = 'https://github.com/flying-sheep/rust-rst'
 repository = 'https://github.com/flying-sheep/rust-rst'
 
 [dependencies]
-rst_renderer = { path = '../renderer', version = '0.3.0' }
-rst_parser = { path = '../parser', version = '0.3.0' }
+rst_renderer = { path = '../renderer', version = '0.4.0' }
+rst_parser = { path = '../parser', version = '0.4.0' }
 
 quicli = '0.4.0'
 structopt = '0.2.15'
