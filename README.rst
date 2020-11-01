@@ -19,6 +19,16 @@ Currently it can convert a subset of rST (e.g. this README) to HTML5:
    # or
    cargo run -- README.rst
 
+The contained packages are:
+
+::
+
+    document_tree
+	├── renderer
+	│   └──────┐
+	└── parser │
+	    └──────┴── rst
+
 This project is dual-licensed under Apache 2.0 and MIT.
 
 .. _Docutils Document Tree: http://docutils.sourceforge.net/docs/ref/doctree.html

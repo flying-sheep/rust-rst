@@ -100,8 +100,13 @@ hello ``foo.map(|world| world + 42)``
 .. code::
 
    foo.map(|world| world + 42)
+
+::
+
+    hay! |x|
 ", "<p>hello <code>foo.map(|world| world + 42)</code></p>
-<pre>foo.map(|world| world + 42)\n</pre>");
+<pre><code>foo.map(|world| world + 42)\n</code></pre>
+<pre>hay! |x|\n</pre>");
 }
 
 /*
@@ -305,11 +310,11 @@ fn code() {
    
        # comment
 ", "\
-<pre class=\"python\">def foo():
+<pre><code class=\"language-python\">def foo():
     print('Hi!')
 
     # comment
-</pre>\
+</code></pre>\
 ");
 }
 

@@ -53,9 +53,10 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 		Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
 		Rule::image            => convert_image::<e::Image>(pair)?.into(),
 		Rule::bullet_list      => convert_bullet_list(pair)?.into(),
-		Rule::code_directive   => convert_code_directive(pair)?.into(),
-		Rule::raw_directive    => convert_raw_directive(pair)?.into(),
-		Rule::block_comment    => convert_comment(pair)?.into(),
+		Rule::literal_block    => convert_literal_block(pair).into(),
+		Rule::code_directive   => convert_code_directive(pair).into(),
+		Rule::raw_directive    => convert_raw_directive(pair).into(),
+		Rule::block_comment    => convert_comment(pair).into(),
 		rule => unimplemented!("unhandled rule {:?}", rule),
 	})
 }
@@ -204,25 +205,34 @@ fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
 	Ok(e::ListItem::with_children(children))
 }
 
-fn convert_code_directive(pair: Pair<Rule>) -> Result<e::LiteralBlock, Error> {
+fn convert_literal_block(pair: Pair<Rule>) -> e::LiteralBlock {
+	convert_literal_lines(pair.into_inner().next().unwrap())
+}
+
+fn convert_literal_lines(pair: Pair<Rule>) -> e::LiteralBlock {
+	let children = pair.into_inner().map(|l| match l.as_rule() {
+		Rule::literal_line => l.as_str(),
+		Rule::literal_line_blank => "\n",
+		_ => unreachable!(),
+	}.into()).collect();
+	return e::LiteralBlock::with_children(children);
+}
+
+fn convert_code_directive(pair: Pair<Rule>) -> e::LiteralBlock {
 	let mut iter = pair.into_inner();
 	let (lang, code) = match (iter.next().unwrap(), iter.next()) {
 		(lang, Some(code)) => (Some(lang), code),
 		(code, None) => (None, code),
 	};
-	let children = code.into_inner().map(|l| match l.as_rule() {
-		Rule::code_line => l.as_str(),
-		Rule::code_line_blank => "\n",
-		_ => unreachable!(),
-	}.into()).collect();
-	let mut code_block = e::LiteralBlock::with_children(children);
+	let mut code_block = convert_literal_lines(code);
+	code_block.classes_mut().push("code".to_owned());
 	if let Some(lang) = lang {
 		code_block.classes_mut().push(lang.as_str().to_owned());
 	};
-	Ok(code_block)
+	code_block
 }
 
-fn convert_raw_directive(pair: Pair<Rule>) -> Result<e::Raw, Error> {
+fn convert_raw_directive(pair: Pair<Rule>) -> e::Raw {
 	let mut iter = pair.into_inner();
 	let format = iter.next().unwrap();
     let block = iter.next().unwrap();
@@ -233,14 +243,14 @@ fn convert_raw_directive(pair: Pair<Rule>) -> Result<e::Raw, Error> {
 	}.into()).collect();
 	let mut raw_block = e::Raw::with_children(children);
 	raw_block.extra_mut().format.push(at::NameToken(format.as_str().to_owned()));
-	Ok(raw_block)
+	raw_block
 }
 
-fn convert_comment(pair: Pair<Rule>) -> Result<e::Comment, Error> {
+fn convert_comment(pair: Pair<Rule>) -> e::Comment {
 	let lines = pair.into_inner().map(|l| match l.as_rule() {
 		Rule::comment_line_blank => "\n",
 		Rule::comment_line => l.as_str(),
 		_ => unreachable!(),
 	}.into()).collect();
-	Ok(e::Comment::with_children(lines))
+	e::Comment::with_children(lines)
 }
