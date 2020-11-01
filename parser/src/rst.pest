@@ -11,7 +11,6 @@ block    = _{ PEEK[..] ~ hanging_block }
 
 // This is the list of all block-level elements
 // They’re defined hanging, i.e. without the first PEEK[..]
-// This is d
 hanging_block = _{
     substitution_def
     | image_directive
@@ -20,6 +19,7 @@ hanging_block = _{
     | admonition
     | admonition_gen
     | target
+    | literal_block
     // Comments should be below the directives to try to match them first, but
     // above the title that will interpret ".." as a title marker.
     | block_comment
@@ -62,6 +62,14 @@ blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 // paragraph. A block type.
 paragraph =  { inlines }
 
+// literal_block
+literal_block = {
+    "::" ~ " "* ~ NEWLINE ~
+    blank_line+ ~ PUSH(" "+) ~ literal_lines ~ DROP
+}
+literal_lines      = { literal_line ~ (literal_line_blank* ~ PEEK[..] ~ literal_line)* }
+literal_line_blank = { " "* ~ NEWLINE }
+literal_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 /* Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
  * .. name:: arguments ~ :options: ~ blank_line+ ~ content
@@ -84,16 +92,13 @@ image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ image_option } //TODO: merg
 image_option    =  { ":" ~ image_opt_name ~ ":" ~ line }
 image_opt_name  =  { common_opt_name | "alt" | "height" | "width" | "scale" | "align" | "target" }
 
-// Code block. A directive
+// Code block. A directive that allows adding a language to a literal block
 
 code_directive = {
     ".." ~ PUSH(" "+) ~ "code" ~ "-block"? ~ "::" ~ (" "+ ~ source)? ~ NEWLINE ~
-    blank_line+ ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ code_block ~ DROP
+    blank_line+ ~ PEEK[..-1] ~ PUSH("  " ~ POP) ~ literal_lines ~ DROP
 }
 source = { (!NEWLINE ~ ANY)+ }
-code_block = { code_line ~ (code_line_blank* ~ PEEK[..] ~ code_line)* }
-code_line_blank = { " "* ~ NEWLINE }
-code_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
 // Raw block. A directive
 
