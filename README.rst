@@ -24,10 +24,10 @@ The contained packages are:
 ::
 
     document_tree
-	├── renderer
-	│   └──────┐
-	└── parser │
-	    └──────┴── rst
+    ├── renderer
+    │   └──────┐
+    └── parser │
+        └──────┴── rst
 
 This project is dual-licensed under Apache 2.0 and MIT.
 
