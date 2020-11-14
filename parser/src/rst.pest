@@ -5,7 +5,7 @@
 // Section headers define the hierarchy by their delimiters,
 // and pest only has one stack that we need for indentation.
 
-document = _{ SOI ~ blocks ~ EOI }
+document = _{ SOI ~ blank_line* ~ blocks ~ EOI }
 blocks   = _{ block ~ (blank_line* ~ block)* ~ blank_line? }
 block    = _{ PEEK[..] ~ hanging_block }
 
