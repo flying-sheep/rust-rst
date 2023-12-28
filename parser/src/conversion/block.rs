@@ -37,8 +37,9 @@ pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, 
 
 
 fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure, Error> {
+	#[allow(clippy::match_single_binding)]
 	Ok(match pair.as_rule() {
-		// todo: Topic, Sidebar, Transition
+		// TODO: Topic, Sidebar, Transition
 		// no section here, as it’s constructed from titles
 		_ => convert_body_elem(pair)?.into(),
 	})

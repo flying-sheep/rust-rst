@@ -33,6 +33,7 @@ use document_tree::{
 
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum NamedTargetType {
 	NumberedFootnote(usize),
 	LabeledFootnote(usize),
@@ -43,6 +44,7 @@ enum NamedTargetType {
 	SectionTitle,
 }
 impl NamedTargetType {
+	#[allow(dead_code)]
 	fn is_implicit_target(&self) -> bool {
 		matches!(self, NamedTargetType::SectionTitle)
 	}
