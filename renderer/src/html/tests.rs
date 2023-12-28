@@ -5,43 +5,40 @@ use rst_parser::parse;
 use crate::html::render_html;
 
 fn check_renders_to(rst: &str, expected: &str) {
-	println!("Rendering:\n{}\n---", rst);
-	let doc = parse(rst).expect("Cannot parse");
-	let mut result_data: Vec<u8> = vec![];
-	render_html(&doc, &mut result_data, false).expect("Render error");
-	let result = String::from_utf8(result_data).expect("Could not decode");
-	assert_eq!(result.as_str().trim(), expected);
-	println!("{}", expected);
+    println!("Rendering:\n{}\n---", rst);
+    let doc = parse(rst).expect("Cannot parse");
+    let mut result_data: Vec<u8> = vec![];
+    render_html(&doc, &mut result_data, false).expect("Render error");
+    let result = String::from_utf8(result_data).expect("Could not decode");
+    assert_eq!(result.as_str().trim(), expected);
+    println!("{}", expected);
 }
 
 #[test]
 fn simple_string() {
-	check_renders_to(
-		"Simple String",
-		"<p>Simple String</p>",
-	);
+    check_renders_to("Simple String", "<p>Simple String</p>");
 }
 
 #[test]
 fn simple_string_with_markup() {
-	check_renders_to(
-		"Simple String with *emph* and **strong**",
-		"<p>Simple String with <em>emph</em> and <strong>strong</strong></p>",
-	);
+    check_renders_to(
+        "Simple String with *emph* and **strong**",
+        "<p>Simple String with <em>emph</em> and <strong>strong</strong></p>",
+    );
 }
 
 #[test]
 fn inline_literal() {
-	check_renders_to(
-		"Simple String with an even simpler ``inline literal``",
-		"<p>Simple String with an even simpler <code>inline literal</code></p>",
-	);
+    check_renders_to(
+        "Simple String with an even simpler ``inline literal``",
+        "<p>Simple String with an even simpler <code>inline literal</code></p>",
+    );
 }
 
 /*
 #[test]
 fn test_reference_anonymous() {
-	check_renders_to("\
+    check_renders_to("\
 A simple `anonymous reference`__
 
 __ http://www.test.com/test_url
@@ -53,28 +50,31 @@ __ http://www.test.com/test_url
 
 #[test]
 fn two_paragraphs() {
-	check_renders_to(
-		"One paragraph.\n\nTwo paragraphs.",
-		"<p>One paragraph.</p>\n<p>Two paragraphs.</p>",
-	);
+    check_renders_to(
+        "One paragraph.\n\nTwo paragraphs.",
+        "<p>One paragraph.</p>\n<p>Two paragraphs.</p>",
+    );
 }
 
 #[test]
 fn named_reference() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 A simple `named reference`_ with stuff in between the
 reference and the target.
 
 .. _`named reference`: http://www.test.com/test_url
-", "\
+",
+        "\
 <p>A simple <a href=\"http://www.test.com/test_url\">named reference</a> with stuff in between the \
 reference and the target.</p>\
-");
+",
+    );
 }
 
 #[test]
 fn standalone_hyperlinks() {
-	check_renders_to("\
+    check_renders_to("\
 Some http://url and a not_url_scheme:foo that is not supposed to be an url.
 ", "\
 <p>Some <a href=\"http://url/\">http://url</a> and a not_url_scheme:foo that is not supposed to be an url.</p>\
@@ -83,16 +83,20 @@ Some http://url and a not_url_scheme:foo that is not supposed to be an url.
 
 #[test]
 fn substitution() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 A |subst|.
 
 .. |subst| replace:: text substitution
-", "<p>A text substitution.</p>");
+",
+        "<p>A text substitution.</p>",
+    );
 }
 
 #[test]
 fn not_substitution_literal() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 hello ``foo.map(|world| world + 42)``
 
 .. |world| replace:: something different
@@ -104,15 +108,17 @@ hello ``foo.map(|world| world + 42)``
 ::
 
     hay! |x|
-", "<p>hello <code>foo.map(|world| world + 42)</code></p>
+",
+        "<p>hello <code>foo.map(|world| world + 42)</code></p>
 <pre><code>foo.map(|world| world + 42)\n</code></pre>
-<pre>hay! |x|\n</pre>");
+<pre>hay! |x|\n</pre>",
+    );
 }
 
 /*
 #[test]
 fn test_section_hierarchy() {
-	check_renders_to("\
+    check_renders_to("\
 +++++
 Title
 +++++
@@ -146,7 +152,7 @@ And even more stuff
 
 #[test]
 fn test_docinfo_title() {
-	check_renders_to("\
+    check_renders_to("\
 +++++
 Title
 +++++
@@ -169,7 +175,8 @@ Some stuff
 
 #[test]
 fn section_hierarchy() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 +++++
 Title
 +++++
@@ -188,7 +195,8 @@ Another Section
 ...............
 
 And even more stuff
-", "\
+",
+        "\
 <section id=\"title\">
 <h1>Title</h1>
 <section id=\"not-a-subtitle\">
@@ -204,12 +212,14 @@ And even more stuff
 </section>
 </section>
 </section>\
-");
+",
+    );
 }
 
 #[test]
 fn many_sections() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 +++++++++
 heading 1
 +++++++++
@@ -233,7 +243,8 @@ heading 3a
 ----------
 
 Second detail
-", "\
+",
+        "\
 <section id=\"heading-1\">
 <h1>heading 1</h1>
 <section id=\"heading-2\">
@@ -253,26 +264,30 @@ Second detail
 </section>
 </section>
 </section>\
-");
+",
+    );
 }
 
 #[test]
 fn bullet_list() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 * bullet
 * list
-", "\
+",
+        "\
 <ul>
 <li><p>bullet</p></li>
 <li><p>list</p></li>
 </ul>\
-");
+",
+    );
 }
 
 /*
 #[test]
 fn test_table() {
-	check_renders_to("\
+    check_renders_to("\
 .. table::
    :align: right
 
@@ -302,25 +317,29 @@ fn test_table() {
 
 #[test]
 fn code() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 .. code:: python
 
    def foo():
        print('Hi!')
-   
+
        # comment
-", "\
+",
+        "\
 <pre><code class=\"language-python\">def foo():
     print('Hi!')
 
     # comment
 </code></pre>\
-");
+",
+    );
 }
 
 #[test]
 fn raw_html() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 .. raw:: html
 
    hello <span>world</span>
@@ -333,19 +352,22 @@ after
 .. raw:: something_else
 
    into a black hole this goes
-", "\
+",
+        "\
 hello <span>world</span>
 <p>paragraph
 
 paragraph</p>
 
 <p>after</p>\
-");
+",
+    );
 }
 
 #[test]
 fn comments() {
-	check_renders_to("\
+    check_renders_to(
+        "\
 .. Run-in
    comment
 
@@ -354,7 +376,8 @@ fn comments() {
     block-like
 
     with blank lines
-", "\
+",
+        "\
 <!--Run-in
 comment
 -->
@@ -362,13 +385,14 @@ comment
 
 with blank lines
 -->\
-");
+",
+    );
 }
 
 /*
 #[test]
 fn test_field_list() {
-	check_renders_to("\
+    check_renders_to("\
 Not a docinfo.
 
 :This: .. _target:
@@ -398,7 +422,7 @@ Not a docinfo.
 /*
 #[test]
 fn test_field_list_long() {
-	check_renders_to("\
+    check_renders_to("\
 Not a docinfo.
 
 :This is: a
