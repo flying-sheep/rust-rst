@@ -18,7 +18,7 @@ pub fn render_xml<W>(document: &Document, stream: W) -> Result<(), Error>
 where
     W: Write,
 {
-    serde_xml_rs::to_writer(stream, &document).map_err(failure::SyncFailure::new)?;
+    serde_xml_rs::to_writer( stream, &document).map_err(failure::SyncFailure::new)?;
     Ok(())
 }
 
