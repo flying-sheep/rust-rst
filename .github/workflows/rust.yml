@@ -29,3 +29,27 @@ jobs:
     - run: just check
     #- run: just fmt --check
     - run: just test
+  doc:
+    name: Build and publish docs
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/configure-pages@v3
+    - uses: dtolnay/rust-toolchain@nightly
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: just
+    - uses: Swatinem/rust-cache@v2
+    - run: just doc
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: target/doc
+    - uses: actions/deploy-pages@v4
+      if: github.ref_name == 'main'
+      id: deployment
