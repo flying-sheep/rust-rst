@@ -27,7 +27,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - run: just build
     - run: just check
-    #- run: just fmt --check
+    - run: just fmt --check
     - run: just test
   doc:
     name: Build and publish docs
