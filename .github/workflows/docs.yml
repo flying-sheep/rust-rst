@@ -3,15 +3,17 @@ name: Docs
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pages
   cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
 
 permissions:
+  contents: read
   pages: write
   id-token: write
 
@@ -27,7 +29,7 @@ jobs:
       with:
         fetch-depth: 0
         filter: blob:none
-    - uses: actions/configure-pages@v3
+    - uses: actions/configure-pages@v4
     - uses: dtolnay/rust-toolchain@nightly
     - uses: taiki-e/install-action@v2
       with:
