@@ -16,12 +16,7 @@ check:
 
 # Runs unit tests
 test:
-    just test-rs
-    just test-py
-test-rs:
     cargo hack --feature-powerset --skip=extension-module test --locked
-test-py:
-    pytest -v
 
 # Build documentation
 doc:
