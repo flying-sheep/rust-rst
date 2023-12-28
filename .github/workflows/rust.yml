@@ -33,11 +33,11 @@ jobs:
     - run: just check
     - run: just fmt --check
       id: fmt
-    - run: just test
     - run: just fmt
-      if: failure() && ${{ steps.fmt.outcome == 'failure' }}
+      if: failure()
+    - run: just test
     - uses: stefanzweifel/git-auto-commit-action@v5
-      if: failure() && ${{ steps.fmt.outcome == 'failure' }}
+      if: failure()
   doc:
     name: Build and publish docs
     permissions:
