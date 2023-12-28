@@ -1,7 +1,7 @@
 [workspace]
 members = [
-	'document_tree',
-	'parser',
-	'renderer',
-	'rst',
+    'document_tree',
+    'parser',
+    'renderer',
+    'rst',
 ]
