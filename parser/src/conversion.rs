@@ -83,7 +83,7 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
 pub fn whitespace_normalize_name(name: &str) -> String {
 	// Python's string.split() defines whitespace differently than Rust does.
 	let split_iter = name.split(
-		|ch: char| ch.is_whitespace() || (ch >= '\x1C' && ch <= '\x1F')
+		|ch: char| ch.is_whitespace() || ('\x1C'..='\x1F').contains(&ch)
 	).filter(|split| !split.is_empty());
 	let mut ret = String::new();
 	for split in split_iter {

@@ -25,9 +25,9 @@ macro_rules! impl_into {
 		$( impl_into!($subcat::$entry => $supcat); )+
 	};
 	($subcat:ident :: $entry:ident => $supcat:ident ) => {
-		impl Into<$supcat> for $entry {
-			fn into(self) -> $supcat {
-				$supcat::$subcat(Box::new(self.into()))
+		impl From<$entry> for $supcat {
+			fn from(inner: $entry) -> Self {
+				$supcat::$subcat(Box::new(inner.into()))
 			}
 		}
 	};
@@ -56,9 +56,9 @@ macro_rules! synonymous_enum {
 			}
 		}
 		
-		$( impl Into<$name> for $entry {
-			fn into(self) -> $name {
-				$name::$entry(Box::new(self))
+		$( impl From<$entry> for $name {
+			fn from(inner: $entry) -> Self {
+				$name::$entry(Box::new(inner))
 			}
 		} )*
 	};

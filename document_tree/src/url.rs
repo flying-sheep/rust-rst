@@ -57,7 +57,7 @@ impl Url {
 
 impl From<url::Url> for Url {
 	fn from(url: url::Url) -> Self {
-		Url(url.into_string())
+		Url(url.into())
 	}
 }
 

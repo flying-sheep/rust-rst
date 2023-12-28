@@ -50,7 +50,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
 		Rule::paragraph        => convert_paragraph(pair)?.into(),
 		Rule::target           => convert_target(pair)?.into(),
 		Rule::substitution_def => convert_substitution_def(pair)?.into(),
-		Rule::admonition_gen   => convert_admonition_gen(pair)?.into(),
+		Rule::admonition_gen   => convert_admonition_gen(pair)?,
 		Rule::image            => convert_image::<e::Image>(pair)?.into(),
 		Rule::bullet_list      => convert_bullet_list(pair)?.into(),
 		Rule::literal_block    => convert_literal_block(pair).into(),
@@ -84,7 +84,7 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
 	let mut elem = e::Title::with_children(title_inlines.expect("No text in title"));
 	if let Some(title) = title {
 		//TODO: slugify properly
-		let slug =  title.to_lowercase().replace("\n", "").replace(" ", "-");
+		let slug =  title.to_lowercase().replace('\n', "").replace(' ', "-");
 		elem.names_mut().push(at::NameToken(slug));
 	}
 	let title_kind = match kind {
@@ -163,7 +163,7 @@ fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error> where I: Element + Ext
 }
 
 fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
-	let input = if pair.as_str().chars().rev().next() == Some('%') { &pair.as_str()[..pair.as_str().len()-1] } else { pair.as_str() };
+	let input = if pair.as_str().ends_with('%') { &pair.as_str()[..pair.as_str().len()-1] } else { pair.as_str() };
 	use pest::error::{Error,ErrorVariant};
 	Ok(input.parse().map_err(|e: std::num::ParseIntError| {
 		let var: ErrorVariant<Rule> = ErrorVariant::CustomError { message: e.to_string() };
@@ -215,7 +215,7 @@ fn convert_literal_lines(pair: Pair<Rule>) -> e::LiteralBlock {
 		Rule::literal_line_blank => "\n",
 		_ => unreachable!(),
 	}.into()).collect();
-	return e::LiteralBlock::with_children(children);
+	e::LiteralBlock::with_children(children)
 }
 
 fn convert_code_directive(pair: Pair<Rule>) -> e::LiteralBlock {

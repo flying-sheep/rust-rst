@@ -59,7 +59,7 @@ macro_rules! impl_element { ($name:ident) => (
 macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 	impl HasChildren<$childtype> for $name {
 		#[allow(clippy::needless_update)]
-		fn with_children(children: Vec<$childtype>) -> $name { $name { children: children, ..Default::default() } }
+		fn with_children(children: Vec<$childtype>) -> $name { $name { children, ..Default::default() } }
 		fn children    (&    self) -> &    Vec<$childtype> { &    self.children }
 		fn children_mut(&mut self) -> &mut Vec<$childtype> { &mut self.children }
 	}
@@ -68,7 +68,7 @@ macro_rules! impl_children { ($name:ident, $childtype:ident) => (
 macro_rules! impl_extra { ($name:ident $($more:tt)*) => (
 	impl ExtraAttributes<extra_attributes::$name> for $name {
 		#[allow(clippy::needless_update)]
-		fn with_extra(extra: extra_attributes::$name) -> $name { $name { common: Default::default(), extra: extra $($more)* } }
+		fn with_extra(extra: extra_attributes::$name) -> $name { $name { common: Default::default(), extra $($more)* } }
 		fn extra    (&    self) -> &    extra_attributes::$name { &    self.extra }
 		fn extra_mut(&mut self) -> &mut extra_attributes::$name { &mut self.extra }
 	}
@@ -82,7 +82,7 @@ impl<T, C, A> HasExtraAndChildren<C, A> for T where T: HasChildren<C> + ExtraAtt
 	#[allow(clippy::needless_update)]
 	fn with_extra_and_children(extra: A, mut children: Vec<C>) -> Self {
 		let mut r = Self::with_extra(extra);
-		r.children_mut().extend(children.drain(..));
+		r.children_mut().append(&mut children);
 		r
 	}
 }
@@ -100,7 +100,7 @@ macro_rules! impl_new {(
 		$(#[$fattr])* $field: $typ,
 	)* }
 	impl $name {
-		pub fn new( $( $field: $typ, )* ) -> $name { $name { $( $field: $field, )* } }
+		pub fn new( $( $field: $typ, )* ) -> $name { $name { $( $field, )* } }
 	}
 )}
 

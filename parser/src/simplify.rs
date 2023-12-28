@@ -44,10 +44,7 @@ enum NamedTargetType {
 }
 impl NamedTargetType {
 	fn is_implicit_target(&self) -> bool {
-		match self {
-			NamedTargetType::SectionTitle => true,
-			_ => false,
-		}
+		matches!(self, NamedTargetType::SectionTitle)
 	}
 }
 
@@ -378,7 +375,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 					// The corresponding SystemMessage node should go in a generated
 					// section with class "system-messages" at the end of the document.
 					use document_tree::Problematic;
-					let mut replacement: Box<Problematic> = Box::new(Default::default());
+					let mut replacement: Box<Problematic> = Box::default();
 					replacement.children_mut().push(
 						c::TextOrInlineElement::String(Box::new(format!("|{}|", e.extra().refname[0].0)))
 					);
