@@ -1,0 +1,43 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  doc:
+    name: Build and publish docs
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        filter: blob:none
+    - uses: actions/configure-pages@v4
+    - uses: dtolnay/rust-toolchain@nightly
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: just
+    - uses: Swatinem/rust-cache@v2
+    - run: just doc
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: target/doc
+    - uses: actions/deploy-pages@v4
+      id: deployment
