@@ -52,7 +52,7 @@ fn main() -> CliResult {
     let stdout = std::io::stdout();
     match args.format {
         Format::json => render_json(&document, stdout)?,
-        Format::xml  => render_xml (&document, stdout)?,
+        Format::xml => render_xml(&document, stdout)?,
         Format::html => render_html(&document, stdout, true)?,
     }
     Ok(())
