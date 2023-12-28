@@ -1,7 +1,7 @@
 use clap::arg_enum;
 use quicli::{
     fs::read_file,
-    prelude::{CliResult, Verbosity},
+    prelude::{CliResult, Error, Verbosity},
 };
 use structopt::StructOpt;
 
@@ -33,21 +33,7 @@ fn main() -> CliResult {
     let args = Cli::from_args();
     args.verbosity.setup_env_logger("rst")?;
 
-    let content = if let Some(file) = args.file {
-        read_file(file)?
-    } else {
-        let mut stdin = String::new();
-        io::stdin().read_to_string(&mut stdin)?;
-
-        stdin
-    };
-
-    // TODO: somehow make it work without replacing tabs
-    let mut content = read_file(args.file)?.replace('\t', " ".repeat(8).as_ref());
-    // Allows for less complex grammar
-    if !content.ends_with('\n') {
-        content.push('\n');
-    }
+    let content = preprocess_content(args.file.as_deref())?;
     let document = parse(&content)?;
     let stdout = std::io::stdout();
     match args.format {
@@ -56,4 +42,19 @@ fn main() -> CliResult {
         Format::html => render_html(&document, stdout, true)?,
     }
     Ok(())
+}
+
+fn preprocess_content(file: Option<&str>) -> Result<String, Error> {
+    let mut content = if let Some(file) = file {
+        read_file(file)?
+    } else {
+        let mut stdin = String::new();
+        io::stdin().read_to_string(&mut stdin)?;
+        stdin
+    };
+    content = content.replace('\t', " ".repeat(8).as_ref());
+    if !content.ends_with('\n') {
+        content.push('\n');
+    }
+    Ok(content)
 }
