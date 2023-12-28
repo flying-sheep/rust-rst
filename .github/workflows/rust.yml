@@ -17,7 +17,11 @@ jobs:
     name: Build, check, and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT_GITHUB }}
+        fetch-depth: 0
+        filter: blob:none
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: clippy
@@ -28,6 +32,11 @@ jobs:
     - run: just build
     - run: just check
     - run: just fmt --check
+      id: fmt
+    - run: just fmt
+      if: failure()
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      if: failure()
     - run: just test
   doc:
     name: Build and publish docs
@@ -40,7 +49,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        filter: blob:none
     - uses: actions/configure-pages@v3
+      if: github.ref_name == 'main'
     - uses: dtolnay/rust-toolchain@nightly
     - uses: taiki-e/install-action@v2
       with:
@@ -48,6 +61,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - run: just doc
     - uses: actions/upload-pages-artifact@v3
+      if: github.ref_name == 'main'
       with:
         path: target/doc
     - uses: actions/deploy-pages@v4
