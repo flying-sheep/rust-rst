@@ -38,4 +38,3 @@ jobs:
     - uses: stefanzweifel/git-auto-commit-action@v5
       if: failure()
     - run: just test
-    - run: just doc
