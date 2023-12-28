@@ -1,7 +1,9 @@
 #![recursion_limit="256"]
 
-///http://docutils.sourceforge.net/docs/ref/doctree.html
-///serves as AST
+/// See [doctree][] reference.
+/// Serves as AST.
+///
+/// [doctree]: http://docutils.sourceforge.net/docs/ref/doctree.html
 
 #[macro_use]
 mod macro_util;

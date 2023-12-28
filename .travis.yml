@@ -1,7 +1,0 @@
-dist: bionic
-language: rust
-cache: cargo
-rust:
-  - stable
-env:
-  - RUST_BACKTRACE=short

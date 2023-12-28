@@ -33,6 +33,7 @@ use document_tree::{
 
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum NamedTargetType {
 	NumberedFootnote(usize),
 	LabeledFootnote(usize),
@@ -43,11 +44,9 @@ enum NamedTargetType {
 	SectionTitle,
 }
 impl NamedTargetType {
+	#[allow(dead_code)]
 	fn is_implicit_target(&self) -> bool {
-		match self {
-			NamedTargetType::SectionTitle => true,
-			_ => false,
-		}
+		matches!(self, NamedTargetType::SectionTitle)
 	}
 }
 
@@ -55,7 +54,7 @@ impl NamedTargetType {
 struct Substitution {
 	content: Vec<c::TextOrInlineElement>,
 	/// If true and the sibling before the reference is a text node,
-	/// the text node gets right-trimmed. 
+	/// the text node gets right-trimmed.
 	ltrim: bool,
 	/// Same as `ltrim` with the sibling after the reference.
 	rtrim: bool,
@@ -79,7 +78,7 @@ impl TargetsCollected {
 			_ => unimplemented!(),
 		}
 	}
-	
+
 	fn substitution<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Substitution> {
 		// TODO: Check if the substitution would expand circularly
 		if refname.len() != 1 {
@@ -378,7 +377,7 @@ impl ResolvableRefs for c::TextOrInlineElement {
 					// The corresponding SystemMessage node should go in a generated
 					// section with class "system-messages" at the end of the document.
 					use document_tree::Problematic;
-					let mut replacement: Box<Problematic> = Box::new(Default::default());
+					let mut replacement: Box<Problematic> = Box::default();
 					replacement.children_mut().push(
 						c::TextOrInlineElement::String(Box::new(format!("|{}|", e.extra().refname[0].0)))
 					);

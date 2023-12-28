@@ -25,9 +25,9 @@ macro_rules! impl_into {
 		$( impl_into!($subcat::$entry => $supcat); )+
 	};
 	($subcat:ident :: $entry:ident => $supcat:ident ) => {
-		impl Into<$supcat> for $entry {
-			fn into(self) -> $supcat {
-				$supcat::$subcat(Box::new(self.into()))
+		impl From<$entry> for $supcat {
+			fn from(inner: $entry) -> Self {
+				$supcat::$subcat(Box::new(inner.into()))
 			}
 		}
 	};
@@ -47,7 +47,7 @@ macro_rules! synonymous_enum {
 		pub enum $name { $(
 			$entry(Box<$entry>),
 		)* }
-		
+
 		impl Debug for $name {
 			fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
 				match *self {
@@ -55,10 +55,10 @@ macro_rules! synonymous_enum {
 				}
 			}
 		}
-		
-		$( impl Into<$name> for $entry {
-			fn into(self) -> $name {
-				$name::$entry(Box::new(self))
+
+		$( impl From<$entry> for $name {
+			fn from(inner: $entry) -> Self {
+				$name::$entry(Box::new(inner))
 			}
 		} )*
 	};
@@ -106,22 +106,22 @@ synonymous_enum!(SubTableGroup { TableColspec, TableHead, TableBody });
 mod conversion_tests {
 	use std::default::Default;
 	use super::*;
-	
+
 	#[test]
 	fn basic() {
 		let _: BodyElement = Paragraph::default().into();
 	}
-	
+
 	#[test]
 	fn more() {
 		let _: SubStructure = Paragraph::default().into();
 	}
-	
+
 	#[test]
 	fn even_more() {
 		let _: StructuralSubElement = Paragraph::default().into();
 	}
-	
+
 	#[test]
 	fn super_() {
 		let be: BodyElement = Paragraph::default().into();

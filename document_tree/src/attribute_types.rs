@@ -15,9 +15,13 @@ pub enum EnumeratedListType {
 	UpperRoman,
 }
 
-#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)]
-pub enum FixedSpace { Default, Preserve }  // yes, default really is not “Default”
-impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve } }
+#[derive(Default,Debug,PartialEq,Eq,Hash,Serialize,Clone)]
+pub enum FixedSpace {
+	Default,
+	// yes, default really is not “Default”
+	#[default]
+	Preserve,
+}
 
 #[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum AlignH { Left, Center, Right}
 #[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub enum AlignHV { Top, Middle, Bottom, Left, Center, Right }
@@ -32,12 +36,7 @@ impl Default for FixedSpace { fn default() -> FixedSpace { FixedSpace::Preserve 
 // The table DTD has the cols attribute of tgroup as required, but having
 // TableGroupCols not implement Default would leave no possible implementation
 // for TableGroup::with_children.
-#[derive(Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub struct TableGroupCols(pub usize);
-impl Default for TableGroupCols {
-	fn default() -> Self {
-		TableGroupCols(0)
-	}
-}
+#[derive(Default,Debug,PartialEq,Eq,Hash,Serialize,Clone)] pub struct TableGroupCols(pub usize);
 
 // no eq for f64
 #[derive(Debug,PartialEq,Serialize,Clone)]
@@ -104,7 +103,7 @@ impl FromStr for Measure {
 #[cfg(test)]
 mod parse_tests {
 	use super::*;
-	
+
 	#[test]
 	fn measure() {
 		let _a: Measure = "1.5em".parse().unwrap();
@@ -152,4 +151,3 @@ impl CanBeEmpty for bool {
 impl CanBeEmpty for FixedSpace {
 	fn is_empty(&self) -> bool { self == &FixedSpace::default() }
 }
-

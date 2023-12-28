@@ -22,7 +22,7 @@ pub fn parse_only(source: &str) -> Result<Document, Error> {
 	convert_document(pairs)
 }
 
-/// Parse into a document tree and resolve sections and references. 
+/// Parse into a document tree and resolve sections and references.
 pub fn parse(source: &str) -> Result<Document, Error> {
 	parse_only(source).map(resolve_references)
 }
