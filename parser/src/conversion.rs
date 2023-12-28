@@ -40,7 +40,7 @@ fn get_level<'tl>(toplevel: &'tl mut Vec<c::StructuralSubElement>, section_idxs:
 
 pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
 	use self::block::TitleOrSsubel::*;
-	
+
 	let mut toplevel: Vec<c::StructuralSubElement> = vec![];
 	// The kinds of section titles encountered.
 	// `section_idx[x]` has the kind `kinds[x]`, but `kinds` can be longer
@@ -49,7 +49,7 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
 	// `None`s indicate skipped section levels:
 	// toplevel[section_idxs.flatten()[0]].children[section_idxs.flatten()[1]]...
 	let mut section_idxs: Vec<Option<usize>> = vec![];
-	
+
 	for pair in pairs {
 		if let Some(ssubel) = block::convert_ssubel(pair)? { match ssubel {
 			Title(title, kind) => {

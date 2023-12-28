@@ -96,7 +96,7 @@ macro_rules! impl_new {(
 ) => (
 	$(#[$attr])*
 	#[derive(Debug,PartialEq,Serialize,Clone)]
-	pub struct $name { $( 
+	pub struct $name { $(
 		$(#[$fattr])* $field: $typ,
 	)* }
 	impl $name {
@@ -156,14 +156,14 @@ impl_elems!(
 	(Section, StructuralSubElement)
 	(Topic,   SubTopic)
 	(Sidebar, SubSidebar)
-	
+
 	//structural subelements
 	(Title,      TextOrInlineElement)
 	(Subtitle,   TextOrInlineElement)
 	(Decoration, DecorationElement)
 	(Docinfo,    BibliographicElement)
 	(Transition)
-	
+
 	//bibliographic elements
 	(Author,       TextOrInlineElement)
 	(Authors,      AuthorInfo)
@@ -176,11 +176,11 @@ impl_elems!(
 	(Date,         TextOrInlineElement)
 	(Copyright,    TextOrInlineElement)
 	(Field,        SubField)
-	
+
 	//decoration elements
 	(Header, BodyElement)
 	(Footer, BodyElement)
-	
+
 	//simple body elements
 	(Paragraph,              TextOrInlineElement)
 	(LiteralBlock,           TextOrInlineElement; +)
@@ -193,17 +193,17 @@ impl_elems!(
 	(Target; +)
 	(Raw, String; +)
 	(Image; *)
-	
+
 	//compound body elements
 	(Compound,  BodyElement)
 	(Container, BodyElement)
-	
+
 	(BulletList,     ListItem; +)
 	(EnumeratedList, ListItem; +)
 	(DefinitionList, DefinitionListItem)
 	(FieldList,      Field)
 	(OptionList,     OptionListItem)
-	
+
 	(LineBlock,     SubLineBlock)
 	(BlockQuote,    SubBlockQuote)
 	(Admonition,    SubTopic)
@@ -229,32 +229,32 @@ impl_elems!(
 	(TableRow,   TableEntry;    +)
 	(TableEntry, BodyElement;   +)
 	(TableColspec; +)
-	
+
 	//body sub elements
 	(ListItem, BodyElement)
-	
+
 	(DefinitionListItem, SubDLItem)
 	(Term,               TextOrInlineElement)
 	(Classifier,         TextOrInlineElement)
 	(Definition,         BodyElement)
-	
+
 	(FieldName, TextOrInlineElement)
 	(FieldBody, BodyElement)
-	
+
 	(OptionListItem, SubOptionListItem)
 	(OptionGroup,    Option_)
 	(Description,    BodyElement)
 	(Option_,        SubOption)
 	(OptionString,   String)
 	(OptionArgument, String; +)
-	
+
 	(Line,        TextOrInlineElement)
 	(Attribution, TextOrInlineElement)
 	(Label,       TextOrInlineElement)
-	
+
 	(Caption, TextOrInlineElement)
 	(Legend,  BodyElement)
-	
+
 	//inline elements
 	(Emphasis,              TextOrInlineElement)
 	(Literal,               String)
@@ -272,12 +272,12 @@ impl_elems!(
 	(Problematic,           TextOrInlineElement; +)
 	(Generated,             TextOrInlineElement)
 	(Math,                  String)
-	
+
 	//also have non-inline versions. Inline image is no figure child, inline target has content
 	(TargetInline, String; +)
 	(RawInline,    String; +)
 	(ImageInline; *)
-	
+
 	//text element = String
 );
 

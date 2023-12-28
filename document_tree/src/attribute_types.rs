@@ -103,7 +103,7 @@ impl FromStr for Measure {
 #[cfg(test)]
 mod parse_tests {
 	use super::*;
-	
+
 	#[test]
 	fn measure() {
 		let _a: Measure = "1.5em".parse().unwrap();
@@ -151,4 +151,3 @@ impl CanBeEmpty for bool {
 impl CanBeEmpty for FixedSpace {
 	fn is_empty(&self) -> bool { self == &FixedSpace::default() }
 }
-

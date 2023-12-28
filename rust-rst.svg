@@ -22,7 +22,7 @@
 	}
 
 	/* can be used to regenerate/change the logo */
-	.rust-rst-logo text { 
+	.rust-rst-logo text {
 		display: none;
 		font-size: 90.66667175px;
 		line-height: 1.25;

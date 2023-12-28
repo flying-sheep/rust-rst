@@ -41,11 +41,11 @@ fn convert_skipped_section() {
 	let doctree = parse(SECTIONS).unwrap();
 	let lvl0 = doctree.children();
 	assert_eq!(lvl0.len(), 3, "Should be a paragraph and 2 sections: {:?}", lvl0);
-	
+
 	assert_eq!(lvl0[0], e::Paragraph::with_children(vec![
 		"Intro before first section title".to_owned().into()
 	]).into(), "The intro text should fit");
-	
+
 	let lvl1a = ssubel_to_section(&lvl0[1]).children();
 	assert_eq!(lvl1a.len(), 2, "The 1st lvl1 section should have (a title and) a single lvl2 section as child: {:?}", lvl1a);
 	//TODO: test title lvl1a[0]
@@ -55,7 +55,7 @@ fn convert_skipped_section() {
 	let lvl3a = ssubel_to_section(&lvl2[1]).children();
 	assert_eq!(lvl3a.len(), 1, "The 1st lvl3 section should just a title: {:?}", lvl3a);
 	//TODO: test title lvl3a[0]
-	
+
 	let lvl1b = ssubel_to_section(&lvl0[2]).children();
 	assert_eq!(lvl1b.len(), 2, "The 2nd lvl1 section should have (a title and) a single lvl2 section as child: {:?}", lvl1b);
 	//TODO: test title lvl1b[0]

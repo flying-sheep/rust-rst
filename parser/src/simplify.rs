@@ -54,7 +54,7 @@ impl NamedTargetType {
 struct Substitution {
 	content: Vec<c::TextOrInlineElement>,
 	/// If true and the sibling before the reference is a text node,
-	/// the text node gets right-trimmed. 
+	/// the text node gets right-trimmed.
 	ltrim: bool,
 	/// Same as `ltrim` with the sibling after the reference.
 	rtrim: bool,
@@ -78,7 +78,7 @@ impl TargetsCollected {
 			_ => unimplemented!(),
 		}
 	}
-	
+
 	fn substitution<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Substitution> {
 		// TODO: Check if the substitution would expand circularly
 		if refname.len() != 1 {

@@ -307,7 +307,7 @@ fn code() {
 
    def foo():
        print('Hi!')
-   
+
        # comment
 ", "\
 <pre><code class=\"language-python\">def foo():

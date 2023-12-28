@@ -34,7 +34,7 @@ struct Cli {
 fn main() -> CliResult {
 	let args = Cli::from_args();
 	args.verbosity.setup_env_logger("rst")?;
-	
+
 	// TODO: somehow make it work without replacing tabs
 	let content = read_file(args.file)?.replace('\t', " ".repeat(8).as_ref());
 	let document = parse(&content)?;
