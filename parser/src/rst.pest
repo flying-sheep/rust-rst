@@ -257,10 +257,10 @@ known_scheme = {
     "wss"|"wtai"|"wyciwyg"|"xcon"|"xcon-userid"|"xfire"|"xmlrpc.beep"|"xmlrpc.beeps"|"xmpp"|"xri"|"ymsgr"|"z39.50"|"z39.50r"|"z39.50s"
 }
 url_unit = {
-	ASCII_ALPHANUMERIC |
-	"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"="|"?"|"@"|"_"|"~" |
-	(!(SURROGATE|NONCHARACTER_CODE_POINT) ~ '\u{A0}'..'\u{10FFFD}') |
-	("%" ~ ASCII_HEX_DIGIT{2})
+    ASCII_ALPHANUMERIC |
+    "!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"="|"?"|"@"|"_"|"~" |
+    (!(SURROGATE|NONCHARACTER_CODE_POINT) ~ '\u{A0}'..'\u{10FFFD}') |
+    ("%" ~ ASCII_HEX_DIGIT{2})
 }
 
 /*
