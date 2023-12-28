@@ -1,9 +1,6 @@
-=========================
-RuSTructuredText |travis|
-=========================
-
-.. |travis| image:: https://travis-ci.com/flying-sheep/rust-rst.svg?branch=master
-   :target: https://travis-ci.com/flying-sheep/rust-rst
+================
+RuSTructuredText
+================
 
 .. image:: rust-rst.svg
 
