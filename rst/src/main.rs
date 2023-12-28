@@ -8,6 +8,8 @@ use structopt::StructOpt;
 use rst_parser::parse;
 use rst_renderer::{render_html, render_json, render_xml};
 
+use std::io::{self, Read};
+
 arg_enum! {
     #[derive(Debug)]
     #[allow(non_camel_case_types)]
@@ -22,7 +24,7 @@ struct Cli {
         raw(possible_values = "&Format::variants()", case_insensitive = "true"),
     )]
     format: Format,
-    file: String,
+    file: Option<String>,
     #[structopt(flatten)]
     verbosity: Verbosity,
 }
@@ -30,6 +32,15 @@ struct Cli {
 fn main() -> CliResult {
     let args = Cli::from_args();
     args.verbosity.setup_env_logger("rst")?;
+
+    let content = if let Some(file) = args.file {
+        read_file(file)?
+    } else {
+        let mut stdin = String::new();
+        io::stdin().read_to_string(&mut stdin)?;
+
+        stdin
+    };
 
     // TODO: somehow make it work without replacing tabs
     let mut content = read_file(args.file)?.replace('\t', " ".repeat(8).as_ref());
