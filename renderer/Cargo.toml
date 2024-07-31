@@ -14,9 +14,9 @@ repository = 'https://github.com/flying-sheep/rust-rst'
 [dependencies]
 document_tree = { path = '../document_tree', version = '0.4.0' }
 
-failure = '0.1.6'
 serde_json = '1.0.44'
 serde-xml-rs = '0.3.1'
+anyhow = "1.0.86"
 
 [dev-dependencies]
 rst_parser = { path = '../parser' }

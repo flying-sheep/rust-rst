@@ -1,4 +1,4 @@
-use failure::Error;
+use anyhow::Error;
 use pest::iterators::Pair;
 
 use document_tree::{

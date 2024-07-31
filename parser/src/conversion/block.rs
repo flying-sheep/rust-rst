@@ -1,4 +1,4 @@
-use failure::{bail, Error};
+use anyhow::{bail, Error};
 use pest::iterators::Pair;
 
 use document_tree::{
