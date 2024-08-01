@@ -12,8 +12,8 @@ homepage = 'https://github.com/flying-sheep/rust-rst'
 repository = 'https://github.com/flying-sheep/rust-rst'
 
 [dependencies]
-anyhow = "1.0.86"
 document_tree = { path = '../document_tree', version = '0.4.0' }
 
+anyhow = '1.0.86'
 pest = '2.1.2'
 pest_derive = '2.1.0'
