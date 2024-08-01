@@ -3,7 +3,7 @@ mod inline;
 #[cfg(test)]
 mod tests;
 
-use failure::Error;
+use anyhow::Error;
 use pest::iterators::Pairs;
 
 use document_tree::{

@@ -2,7 +2,7 @@ mod html;
 
 use std::io::Write;
 
-use failure::Error;
+use anyhow::{anyhow, Error};
 
 use document_tree::Document;
 
@@ -18,7 +18,8 @@ pub fn render_xml<W>(document: &Document, stream: W) -> Result<(), Error>
 where
     W: Write,
 {
-    serde_xml_rs::to_writer(stream, &document).map_err(failure::SyncFailure::new)?;
+    serde_xml_rs::to_writer(stream, &document)
+        .map_err(|e| anyhow!("Failed to serialize XML: {}", e))?;
     Ok(())
 }
 

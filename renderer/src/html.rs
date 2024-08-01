@@ -3,7 +3,7 @@ pub mod tests;
 
 use std::io::Write;
 
-use failure::Error;
+use anyhow::Error;
 
 // use crate::url::Url;
 use document_tree::{
