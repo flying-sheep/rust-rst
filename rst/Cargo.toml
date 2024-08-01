@@ -15,6 +15,9 @@ repository = 'https://github.com/flying-sheep/rust-rst'
 rst_renderer = { path = '../renderer', version = '0.4.0' }
 rst_parser = { path = '../parser', version = '0.4.0' }
 
-quicli = '0.4.0'
+anyhow = '1.0.86'
+clap = { version = '4', features = ['derive'] }
+clap-verbosity-flag = '2.2.1'
+env_logger = '0.11.5'
+log = '0.4.22'
 structopt = '0.2.15'
-clap = '2.32.0'
