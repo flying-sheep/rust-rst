@@ -102,6 +102,7 @@ macro_rules! impl_extra { ($name:ident $($more:tt)*) => (
     }
 )}
 
+#[allow(dead_code)]
 trait HasExtraAndChildren<C, A> {
     fn with_extra_and_children(extra: A, children: Vec<C>) -> Self;
 }

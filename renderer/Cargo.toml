@@ -16,7 +16,7 @@ document_tree = { path = '../document_tree', version = '0.4.0' }
 
 anyhow = '1.0.86'
 serde_json = '1.0.44'
-serde-xml-rs = '0.3.1'
+serde-xml-rs = '0.5'
 
 [dev-dependencies]
 rst_parser = { path = '../parser' }
