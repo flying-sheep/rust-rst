@@ -393,6 +393,36 @@ fn substitution_image() {
     };
 }
 
+#[allow(clippy::cognitive_complexity)]
+#[test]
+fn substitution_image_with_alt() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. |subst| image:: thing.png
+   :alt: A thing
+   :target: foo.html
+",
+        rule: Rule::document,
+        tokens: [
+            substitution_def(0, 67, [
+                substitution_name(4, 9),
+                image(11, 67, [
+                    line(18, 29, [ str(18, 28) ]),
+                    image_option(32, 46, [
+                        image_opt_name(33, 36),
+                        line(37, 46, [ str(37, 45) ]),
+                    ]),
+                    image_option(49, 67, [
+                        image_opt_name(50, 56),
+                        line(57, 67, [ str(57, 66) ]),
+                    ]),
+                ]),
+            ]),
+        ]
+    };
+}
+
 // TODO: test images
 
 #[allow(clippy::cognitive_complexity)]
