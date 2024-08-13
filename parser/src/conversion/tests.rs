@@ -1,4 +1,6 @@
-use document_tree::{element_categories as c, elements as e, HasChildren};
+use document_tree::{
+    element_categories as c, elements as e, extra_attributes::ExtraAttributes, HasChildren,
+};
 
 use crate::parse;
 
@@ -9,6 +11,23 @@ fn ssubel_to_section(ssubel: &c::StructuralSubElement) -> &e::Section {
             ref c => panic!("Expected section, not {:?}", c),
         },
         ref c => panic!("Expected SubStructure, not {:?}", c),
+    }
+}
+
+fn ssubel_to_body_element(ssubel: &c::StructuralSubElement) -> &c::BodyElement {
+    match ssubel {
+        c::StructuralSubElement::SubStructure(ref b) => match **b {
+            c::SubStructure::BodyElement(ref b) => b,
+            ref c => panic!("Expected BodyElement, not {:?}", c),
+        },
+        ref c => panic!("Expected SubStructure, not {:?}", c),
+    }
+}
+
+fn body_element_to_image(bodyel: &c::BodyElement) -> &e::Image {
+    match bodyel {
+        c::BodyElement::Image(ref i) => i,
+        ref c => panic!("Expected Image, not {:?}", c),
     }
 }
 
@@ -91,4 +110,15 @@ fn convert_skipped_section() {
         lvl3b
     );
     //TODO: test title lvl3b[0]
+}
+
+#[test]
+fn test_convert_image_scale() {
+    let doctree = parse(".. image:: /path/to/img.jpg\n   :scale: 90%\n\n").unwrap();
+    let lvl0 = doctree.children();
+    assert_eq!(lvl0.len(), 1, "Should be a single image: {:?}", lvl0);
+    let be = ssubel_to_body_element(&lvl0[0]);
+    let img = body_element_to_image(be);
+    assert_eq!(img.extra().scale, Some(90));
+    assert_eq!(img.extra().uri, "/path/to/img.jpg".parse().unwrap());
 }
