@@ -89,7 +89,7 @@ replace = { ^"replace::" ~ " "* ~ paragraph }
 image_directive = _{ ".." ~ PUSH(" "+) ~ image ~ DROP }
 image           =  { ^"image::" ~ line ~ image_opt_block? }
 image_opt_block = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ image_option ~ (PEEK[..] ~ image_option)* }
-image_option    =  {":" ~ image_opt_name ~ ":" ~ line }
+image_option    =  { ":" ~ image_opt_name ~ ":" ~ line }
 image_opt_name  =  { common_opt_name | "alt" | "height" | "width" | "scale" | "align" | "target" }
 
 // Code block. A directive that allows adding a language to a literal block
