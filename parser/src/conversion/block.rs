@@ -164,7 +164,7 @@ where
 fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
     let input = pair.as_str().trim();
     let input = if let Some(percentage) = input.strip_suffix('%') {
-        percentage
+        percentage.trim_end()
     } else {
         input
     };
