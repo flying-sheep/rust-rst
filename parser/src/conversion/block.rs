@@ -162,10 +162,11 @@ where
 }
 
 fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
-    let input = if pair.as_str().ends_with('%') {
-        &pair.as_str()[..pair.as_str().len() - 1]
+    let input = pair.as_str().trim();
+    let input = if let Some(percentage) = input.strip_suffix('%') {
+        percentage.trim_end()
     } else {
-        pair.as_str()
+        input
     };
     use pest::error::{Error, ErrorVariant};
     Ok(input.parse().map_err(|e: std::num::ParseIntError| {
