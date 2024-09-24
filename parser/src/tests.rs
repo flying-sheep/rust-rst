@@ -423,6 +423,32 @@ fn substitution_image_with_alt() {
     };
 }
 
+#[allow(clippy::cognitive_complexity)]
+#[test]
+fn substitution_image_with_many_indents() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. image:: thing.png
+    :target: foo.html
+.. image:: another.png
+",
+        rule: Rule::document,
+        tokens: [
+            image(3, 43, [
+                line(10, 21, [ str(10, 20) ]),
+                image_option(25, 43, [
+                    image_opt_name(26, 32),
+                    line(33, 43, [ str(33, 42) ]),
+                ]),
+            ]),
+            image(46, 66, [
+                line(53, 66, [ str(53, 65) ]),
+            ]),
+        ]
+    };
+}
+
 // TODO: test images
 
 #[allow(clippy::cognitive_complexity)]
