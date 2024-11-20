@@ -16,5 +16,5 @@ jobs:
     - uses: dtolnay/rust-toolchain@stable
     - uses: MarcoIeni/release-plz-action@v0.5
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
