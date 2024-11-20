@@ -16,14 +16,12 @@ jobs:
   build_and_test:
     name: Build, check, and test
     runs-on: ubuntu-latest
-    permissions:
-      # Give the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
-      contents: write
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         filter: blob:none
+        token: ${{ secrets.RELEASE_PLZ_TOKEN }}
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: clippy

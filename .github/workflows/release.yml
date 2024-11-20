@@ -1,5 +1,8 @@
 name: Create release PR or publish GitHub release and Rust crate
 
+# These aren’t used since we use secrets.RELEASE_PLZ_TOKEN
+# that token has these same permissions
+# see https://release-plz.ieni.dev/docs/github/token#use-a-personal-access-token
 permissions:
   pull-requests: write
   contents: write
@@ -12,9 +15,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        filter: blob:none
+        token: ${{ secrets.RELEASE_PLZ_TOKEN }}
     - uses: dtolnay/rust-toolchain@stable
     - uses: MarcoIeni/release-plz-action@v0.5
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
