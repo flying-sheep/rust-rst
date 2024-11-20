@@ -15,8 +15,10 @@ enum Format {
 
 #[derive(Debug, Parser)]
 struct Cli {
+    /// Output format
     #[arg(short = 'f', long, default_value = "html")]
     format: Format,
+    /// Input file
     file: Option<String>,
     #[command(flatten)]
     verbosity: clap_verbosity_flag::Verbosity,

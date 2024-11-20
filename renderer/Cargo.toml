@@ -21,4 +21,4 @@ serde-xml-rs = '0.5'
 [dev-dependencies]
 rst_parser = { path = '../parser' }
 
-pretty_assertions = '0.6.1'
+pretty_assertions = '1.4.1'
