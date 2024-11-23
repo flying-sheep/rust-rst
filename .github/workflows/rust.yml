@@ -19,9 +19,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        token: ${{ secrets.PAT_GITHUB }}
         fetch-depth: 0
         filter: blob:none
+        token: ${{ secrets.RELEASE_PLZ_TOKEN }}
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: clippy
@@ -38,32 +38,3 @@ jobs:
     - uses: stefanzweifel/git-auto-commit-action@v5
       if: failure()
     - run: just test
-  doc:
-    name: Build and publish docs
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        filter: blob:none
-    - uses: actions/configure-pages@v3
-      if: github.ref_name == 'main'
-    - uses: dtolnay/rust-toolchain@nightly
-    - uses: taiki-e/install-action@v2
-      with:
-        tool: just
-    - uses: Swatinem/rust-cache@v2
-    - run: just doc
-    - uses: actions/upload-pages-artifact@v3
-      if: github.ref_name == 'main'
-      with:
-        path: target/doc
-    - uses: actions/deploy-pages@v4
-      if: github.ref_name == 'main'
-      id: deployment

@@ -1,37 +1,37 @@
-use clap::arg_enum;
-use quicli::{
-    fs::read_file,
-    prelude::{CliResult, Error, Verbosity},
-};
-use structopt::StructOpt;
+use clap::Parser;
 
 use rst_parser::parse;
 use rst_renderer::{render_html, render_json, render_xml};
 
 use std::io::{self, Read};
 
-arg_enum! {
-    #[derive(Debug)]
-    #[allow(non_camel_case_types)]
-    enum Format { json, xml, html }
+#[derive(Debug, Clone, clap::ValueEnum)]
+#[allow(non_camel_case_types)]
+enum Format {
+    json,
+    xml,
+    html,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+#[derive(Debug, Parser)]
 struct Cli {
-    #[structopt(
-        long = "format", short = "f", default_value = "html",  // xml is pretty defunct…
-        raw(possible_values = "&Format::variants()", case_insensitive = "true"),
-    )]
+    /// Output format
+    #[arg(short = 'f', long, default_value = "html")]
     format: Format,
+    /// Input file
     file: Option<String>,
-    #[structopt(flatten)]
-    verbosity: Verbosity,
+    #[command(flatten)]
+    verbosity: clap_verbosity_flag::Verbosity,
 }
 
-fn main() -> CliResult {
-    let args = Cli::from_args();
-    args.verbosity.setup_env_logger("rst")?;
+fn main() -> Result<(), anyhow::Error> {
+    let args = Cli::parse();
+
+    let level_filter = args.verbosity.log_level().unwrap().to_level_filter();
+    env_logger::Builder::new()
+        .filter(Some("rst"), level_filter)
+        .filter(None, log::Level::Warn.to_level_filter())
+        .try_init()?;
 
     let content = preprocess_content(args.file.as_deref())?;
     let document = parse(&content)?;
@@ -44,9 +44,9 @@ fn main() -> CliResult {
     Ok(())
 }
 
-fn preprocess_content(file: Option<&str>) -> Result<String, Error> {
+fn preprocess_content(file: Option<&str>) -> Result<String, clap::Error> {
     let mut content = if let Some(file) = file {
-        read_file(file)?
+        std::fs::read_to_string(file)?
     } else {
         let mut stdin = String::new();
         io::stdin().read_to_string(&mut stdin)?;

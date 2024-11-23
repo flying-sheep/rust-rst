@@ -6,7 +6,7 @@ mod simplify;
 pub mod tests;
 pub mod token;
 
-use failure::Error;
+use anyhow::Error;
 use pest::Parser;
 
 use document_tree::Document;
