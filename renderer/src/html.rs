@@ -6,7 +6,7 @@ use std::io::Write;
 use anyhow::Error;
 
 // use crate::url::Url;
-use crate::opt::{RenderOptionsBuilder, RenderOptionsStandalone, RenderOptionsStandaloneBuilder};
+use crate::opt::RenderOptions;
 use document_tree::{
     attribute_types as at, element_categories as c, elements as e, extra_attributes as a, Document,
     Element, ExtraAttributes, HasChildren,
@@ -17,14 +17,14 @@ use document_tree::{
 pub fn render_html<W, O>(document: &Document, stream: W, opts: O) -> Result<(), Error>
 where
     W: Write,
-    O: Into<RenderOptionsStandalone>,
+    O: Into<RenderOptions>,
 {
-    let opts = opts.into();
+    let opts: RenderOptions = opts.into();
     let mut renderer = HTMLRenderer {
         stream,
-        level: opts.initial_header_level(),
+        level: opts.initial_header_level,
     };
-    if opts.standalone() {
+    if opts.standalone {
         document.render_html(&mut renderer)
     } else {
         for c in document.children() {
