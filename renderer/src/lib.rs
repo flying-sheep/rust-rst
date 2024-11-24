@@ -1,5 +1,7 @@
 mod html;
 pub mod opt;
+#[cfg(test)]
+mod tests;
 
 use std::io::Write;
 
@@ -7,6 +9,7 @@ use anyhow::{anyhow, Error};
 
 use document_tree::Document;
 
+pub use html::render_html;
 use opt::RenderOptions;
 
 pub fn render_json<W, O>(document: &Document, stream: W, opts: O) -> Result<(), Error>
@@ -29,5 +32,3 @@ where
         .map_err(|e| anyhow!("Failed to serialize XML: {}", e))?;
     Ok(())
 }
-
-pub use html::render_html;

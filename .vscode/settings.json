@@ -3,6 +3,7 @@
     "restructuredtext.confPath": "",
     "rust-analyzer.check.features": "all",
     "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.features": "all",
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
         "editor.formatOnSave": true,
