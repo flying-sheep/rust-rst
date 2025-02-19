@@ -18,6 +18,7 @@ hanging_block = _{
     | raw_directive
     | admonition
     | admonition_gen
+    | block_quote_directive
     | target
     | literal_block
     // Comments should be below the directives to try to match them first, but
@@ -60,9 +61,10 @@ bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blank_line* ~ blist_body? ~
 blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 // Block quote. A block type.
-block_quote = { PUSH("  " ~ " "+) ~ hanging_block ~ (!attribution ~ block)* ~ attribution? ~ DROP }
+block_quote         =  { PUSH("  " ~ " "+) ~ block_quote_content ~ DROP }
 // https://github.com/docutils/docutils/blob/f704fb58904d62bf5c6d7db82a9628f29e4ed246/docutils/docutils/parsers/rst/states.py#L1201
-attribution = { (("--" ~ "-"? ~ !"-") |"\u{2014}") ~ " "* ~ line }
+attribution         =  { (("--" ~ "-"? ~ !"-") |"\u{2014}") ~ " "* ~ line }
+block_quote_content = _{ hanging_block ~ (!attribution ~ block)* ~ attribution? }
 
 // paragraph. A block type.
 paragraph =  { inlines }
@@ -122,6 +124,14 @@ admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::" ~ line  ~ blank_line
 admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
 admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
+
+// Block quote directives. The generic one is defined by simply indenting a block
+
+block_quote_directive =  {
+    ".." ~ PUSH(" "+) ~  block_quote_type ~ "::" ~ (blank_line | line) ~ blank_line* ~
+    PEEK[..-1] ~ PUSH("  " ~ POP) ~ block_quote_content? ~ DROP
+}
+block_quote_type =  { ^"epigraph" | ^"highlights" | ^"pull-quote" }
 
 // Comments.
 
