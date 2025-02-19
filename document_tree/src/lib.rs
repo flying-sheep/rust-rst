@@ -1,9 +1,9 @@
 #![recursion_limit = "256"]
 
-/// See [doctree][] reference.
-/// Serves as AST.
-///
-/// [doctree]: http://docutils.sourceforge.net/docs/ref/doctree.html
+//! See [doctree][] reference.
+//! Serves as AST.
+//!
+//! [doctree]: http://docutils.sourceforge.net/docs/ref/doctree.html
 
 #[macro_use]
 mod macro_util;
