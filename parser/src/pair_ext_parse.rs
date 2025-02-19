@@ -14,7 +14,7 @@ where
         E: ToString;
 }
 
-impl<'l, R> PairExt<R> for Pair<'l, R>
+impl<R> PairExt<R> for Pair<'_, R>
 where
     R: pest::RuleType,
 {

@@ -50,6 +50,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
         Rule::admonition_gen => convert_admonition_gen(pair)?,
         Rule::image => convert_image::<e::Image>(pair)?.into(),
         Rule::bullet_list => convert_bullet_list(pair)?.into(),
+        Rule::block_quote => convert_block_quote(pair)?.into(),
         Rule::literal_block => convert_literal_block(pair).into(),
         Rule::code_directive => convert_code_directive(pair).into(),
         Rule::raw_directive => convert_raw_directive(pair).into(),
@@ -213,6 +214,20 @@ fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
         children.push(convert_body_elem(p)?);
     }
     Ok(e::ListItem::with_children(children))
+}
+
+fn convert_block_quote(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
+    Ok(e::BlockQuote::with_children(
+        pair.into_inner()
+            .map(|pair| -> Result<_, Error> {
+                Ok(if pair.as_rule() == Rule::attribution {
+                    e::Attribution::with_children(convert_inlines(pair)?).into()
+                } else {
+                    convert_body_elem(pair)?.into()
+                })
+            })
+            .collect::<Result<_, _>>()?,
+    ))
 }
 
 fn convert_literal_block(pair: Pair<Rule>) -> e::LiteralBlock {
