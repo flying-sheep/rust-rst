@@ -2,7 +2,7 @@
 name = 'document_tree'
 version = "0.4.1"
 authors = ['Philipp A. <flying-sheep@web.de>']
-edition = '2018'
+edition = '2021'
 description = 'reStructuredText’s DocumentTree representation'
 license = 'MIT OR Apache-2.0'
 readme = 'README.md'
