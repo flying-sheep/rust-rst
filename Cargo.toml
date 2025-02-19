@@ -5,3 +5,4 @@ members = [
     'renderer',
     'rst',
 ]
+resolver = "2"
