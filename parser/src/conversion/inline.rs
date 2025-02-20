@@ -2,8 +2,8 @@ use anyhow::Error;
 use pest::iterators::Pair;
 
 use document_tree::{
-    attribute_types as at, element_categories as c, elements as e, extra_attributes as a, url::Url,
-    HasChildren,
+    HasChildren, attribute_types as at, element_categories as c, elements as e,
+    extra_attributes as a, url::Url,
 };
 
 use super::whitespace_normalize_name;

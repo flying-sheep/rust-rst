@@ -1,12 +1,12 @@
 use document_tree::{
-    element_categories as c, elements as e, extra_attributes::ExtraAttributes, HasChildren,
+    HasChildren, element_categories as c, elements as e, extra_attributes::ExtraAttributes,
 };
 
 use crate::parse;
 
 fn ssubel_to_section(ssubel: &c::StructuralSubElement) -> &e::Section {
     match ssubel {
-        c::StructuralSubElement::SubStructure(ref b) => match **b {
+        c::StructuralSubElement::SubStructure(b) => match **b {
             c::SubStructure::Section(ref s) => s,
             ref c => panic!("Expected section, not {:?}", c),
         },
@@ -16,7 +16,7 @@ fn ssubel_to_section(ssubel: &c::StructuralSubElement) -> &e::Section {
 
 fn ssubel_to_body_element(ssubel: &c::StructuralSubElement) -> &c::BodyElement {
     match ssubel {
-        c::StructuralSubElement::SubStructure(ref b) => match **b {
+        c::StructuralSubElement::SubStructure(b) => match **b {
             c::SubStructure::BodyElement(ref b) => b,
             ref c => panic!("Expected BodyElement, not {:?}", c),
         },
@@ -26,7 +26,7 @@ fn ssubel_to_body_element(ssubel: &c::StructuralSubElement) -> &c::BodyElement {
 
 fn body_element_to_image(bodyel: &c::BodyElement) -> &e::Image {
     match bodyel {
-        c::BodyElement::Image(ref i) => i,
+        c::BodyElement::Image(i) => i,
         ref c => panic!("Expected Image, not {:?}", c),
     }
 }

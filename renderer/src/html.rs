@@ -7,8 +7,8 @@ use anyhow::Error;
 
 // use crate::url::Url;
 use document_tree::{
-    attribute_types as at, element_categories as c, elements as e, extra_attributes as a, Document,
-    Element, ExtraAttributes, HasChildren,
+    Document, Element, ExtraAttributes, HasChildren, attribute_types as at,
+    element_categories as c, elements as e, extra_attributes as a,
 };
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];

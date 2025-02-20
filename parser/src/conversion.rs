@@ -7,14 +7,14 @@ use anyhow::Error;
 use pest::iterators::Pairs;
 
 use document_tree::{
-    attribute_types as at, element_categories as c, elements as e, Element, HasChildren,
+    Element, HasChildren, attribute_types as at, element_categories as c, elements as e,
 };
 
 use crate::pest_rst::Rule;
 
 fn ssubel_to_section_unchecked_mut(ssubel: &mut c::StructuralSubElement) -> &mut e::Section {
     match ssubel {
-        c::StructuralSubElement::SubStructure(ref mut b) => match **b {
+        c::StructuralSubElement::SubStructure(b) => match **b {
             c::SubStructure::Section(ref mut s) => s,
             _ => unreachable!(),
         },
