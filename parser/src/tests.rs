@@ -148,6 +148,149 @@ fn admonitions() {
     };
 }
 
+#[test]
+fn blockquote_no_attribution() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   Block quote.
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+            paragraph(0, 10, [ str(0, 10) ]),
+            block_quote(12, 29, [
+                paragraph(15, 27, [ str(15, 27) ]),
+            ]),
+            paragraph(29, 39, [ str(29, 39) ]),
+        ]
+    };
+}
+
+#[test]
+fn blockquote_fake_attribution() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   -- Not an attribution
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+            paragraph(0, 10, [ str(0, 10) ]),
+            block_quote(12, 38, [
+                paragraph(15, 36, [ str(15, 36) ]),
+            ]),
+            paragraph(38, 48, [ str(38, 48) ]),
+        ]
+    };
+}
+
+#[test]
+fn blockquote_simple() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   Block quote.
+
+   -- Attribution
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+            paragraph(0, 10, [ str(0, 10) ]),
+            block_quote(12, 47, [
+                paragraph(15, 27, [ str(15, 27) ]),
+                attribution(29, 47, [ line(35, 47, [ str(35, 46) ]) ]),
+            ]),
+            paragraph(48, 58, [ str(48, 58) ]),
+        ]
+    };
+}
+
+#[test]
+fn blockquote_multiline_attribution() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   Block quote.
+
+   --Attribution line one
+   and line two
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+            paragraph(0, 10, [ str(0, 10) ]),
+            block_quote(12, 71, [
+                paragraph(15, 27, [ str(15, 27) ]),
+                attribution(29, 71, [
+                    line(34, 55, [ str(34, 54) ]),
+                    line(55, 71, [ str(55, 70) ])
+                ]),
+            ]),
+            paragraph(72, 82, [ str(72, 82) ]),
+        ]
+    };
+}
+
+#[test]
+fn blockquote_multiline_attribution_2() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   -- Invalid attribution
+
+   Block quote.
+
+   -- Attribution line one
+      and line two
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+        ]
+    };
+}
+
+#[test]
+fn blockquote_back_to_back() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+Paragraph.
+
+   Block quote 1.
+
+   -- Attribution 1
+
+   Block quote 2.
+
+   --Attribution 2
+
+Paragraph.
+",
+        rule: Rule::document,
+        tokens: [
+        ]
+    };
+}
+
 #[allow(clippy::cognitive_complexity)]
 #[test]
 fn literal_block() {

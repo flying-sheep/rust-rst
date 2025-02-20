@@ -62,9 +62,9 @@ blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 // Block quote. A block type.
 block_quote         =  { PUSH("  " ~ " "+) ~ block_quote_content ~ DROP }
+block_quote_content = _{ hanging_block ~ blank_line* ~ (!attribution ~ block)* ~ attribution? }
 // https://github.com/docutils/docutils/blob/f704fb58904d62bf5c6d7db82a9628f29e4ed246/docutils/docutils/parsers/rst/states.py#L1201
-attribution         =  { (("--" ~ "-"? ~ !"-") |"\u{2014}") ~ " "* ~ line }
-block_quote_content = _{ hanging_block ~ (!attribution ~ block)* ~ attribution? }
+attribution         =  { PEEK[..] ~ (("--" ~ "-"? ~ !"-") | "\u{2014}") ~ " "* ~ line+ }
 
 // paragraph. A block type.
 paragraph =  { inlines }
