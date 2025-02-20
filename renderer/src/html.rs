@@ -265,7 +265,7 @@ where
         W: Write,
     {
         let extra = self.extra();
-        if let Some(ref target) = extra.target {
+        if let Some(target) = extra.target.as_ref() {
             write!(
                 renderer.stream,
                 "<a href=\"{}\">",
@@ -273,7 +273,7 @@ where
             )?;
         }
         write!(renderer.stream, "<img")?;
-        if let Some(ref alt) = extra.alt {
+        if let Some(alt) = extra.alt.as_ref() {
             write!(renderer.stream, " alt=\"{}\"", escape_html(alt))?;
         }
         // TODO: align: Option<AlignHV>
@@ -461,7 +461,7 @@ impl HTMLRender for e::Reference {
     {
         let extra = self.extra();
         write!(renderer.stream, "<a")?;
-        if let Some(ref target) = extra.refuri {
+        if let Some(target) = extra.refuri.as_ref() {
             write!(
                 renderer.stream,
                 " href=\"{}\"",
@@ -469,7 +469,7 @@ impl HTMLRender for e::Reference {
             )?;
         }
         /*
-        if let Some(ref name) = extra.name {
+        if let Some(name) = extra.name.as_ref() {
             write!(renderer.stream, " title=\"{}\"", escape_html(&name.0))?;
         }
         */

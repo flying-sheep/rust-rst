@@ -10,7 +10,7 @@ fn ssubel_to_section(ssubel: &c::StructuralSubElement) -> &e::Section {
             c::SubStructure::Section(ref s) => s,
             ref c => panic!("Expected section, not {:?}", c),
         },
-        ref c => panic!("Expected SubStructure, not {:?}", c),
+        c => panic!("Expected SubStructure, not {:?}", c),
     }
 }
 
@@ -20,14 +20,14 @@ fn ssubel_to_body_element(ssubel: &c::StructuralSubElement) -> &c::BodyElement {
             c::SubStructure::BodyElement(ref b) => b,
             ref c => panic!("Expected BodyElement, not {:?}", c),
         },
-        ref c => panic!("Expected SubStructure, not {:?}", c),
+        c => panic!("Expected SubStructure, not {:?}", c),
     }
 }
 
 fn body_element_to_image(bodyel: &c::BodyElement) -> &e::Image {
     match bodyel {
         c::BodyElement::Image(i) => i,
-        ref c => panic!("Expected Image, not {:?}", c),
+        c => panic!("Expected Image, not {:?}", c),
     }
 }
 
