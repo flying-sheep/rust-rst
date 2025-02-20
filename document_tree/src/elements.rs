@@ -1,7 +1,7 @@
 use serde_derive::Serialize;
 use std::path::PathBuf;
 
-use crate::attribute_types::{CanBeEmpty, NameToken, ID};
+use crate::attribute_types::{CanBeEmpty, ID, NameToken};
 use crate::element_categories::*;
 use crate::extra_attributes::{self, ExtraAttributes};
 

@@ -74,11 +74,14 @@ reference and the target.</p>\
 
 #[test]
 fn standalone_hyperlinks() {
-    check_renders_to("\
+    check_renders_to(
+        "\
 Some http://url and a not_url_scheme:foo that is not supposed to be an url.
-", "\
+",
+        "\
 <p>Some <a href=\"http://url/\">http://url</a> and a not_url_scheme:foo that is not supposed to be an url.</p>\
-");
+",
+    );
 }
 
 #[test]

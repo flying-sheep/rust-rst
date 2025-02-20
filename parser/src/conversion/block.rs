@@ -1,9 +1,9 @@
-use anyhow::{bail, Error};
+use anyhow::{Error, bail};
 use pest::iterators::Pair;
 
 use document_tree::{
-    attribute_types as at, element_categories as c, elements as e, extra_attributes as a, Element,
-    ExtraAttributes, HasChildren,
+    Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
+    elements as e, extra_attributes as a,
 };
 
 use super::{inline::convert_inlines, whitespace_normalize_name};
