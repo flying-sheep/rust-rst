@@ -22,12 +22,12 @@ TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/b
 use std::collections::HashMap;
 
 use document_tree::{
+    Document, HasChildren,
     attribute_types::NameToken,
     element_categories as c,
     elements::{self as e, Element},
     extra_attributes::ExtraAttributes,
     url::Url,
-    Document, HasChildren,
 };
 
 #[derive(Debug)]

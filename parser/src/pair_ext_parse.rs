@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
+use pest::Span;
 use pest::error::{Error, ErrorVariant};
 use pest::iterators::Pair;
-use pest::Span;
 
 pub trait PairExt<R>
 where

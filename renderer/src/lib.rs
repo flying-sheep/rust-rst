@@ -2,7 +2,7 @@ mod html;
 
 use std::io::Write;
 
-use anyhow::{anyhow, Error};
+use anyhow::{Error, anyhow};
 
 use document_tree::Document;
 

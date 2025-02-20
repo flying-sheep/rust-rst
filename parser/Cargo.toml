@@ -2,7 +2,7 @@
 name = 'rst_parser'
 version = "0.4.1"
 authors = ['Philipp A. <flying-sheep@web.de>']
-edition = '2021'
+edition = '2024'
 description = 'a reStructuredText parser'
 license = 'MIT OR Apache-2.0'
 readme = 'README.md'
