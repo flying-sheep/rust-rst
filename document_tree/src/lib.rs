@@ -38,14 +38,16 @@ mod tests {
 
     #[test]
     fn descriptive() {
-        let doc = Document::with_children(vec![Title::with_children(vec![
-            "Hi".into(),
-            ImageInline::with_extra(extra_attributes::ImageInline::new(
-                "https://example.com/image.jpg".parse().unwrap(),
-            ))
+        let doc = Document::with_children(vec![
+            Title::with_children(vec![
+                "Hi".into(),
+                ImageInline::with_extra(extra_attributes::ImageInline::new(
+                    "https://example.com/image.jpg".parse().unwrap(),
+                ))
+                .into(),
+            ])
             .into(),
-        ])
-        .into()]);
+        ]);
 
         println!("{:?}", doc);
     }

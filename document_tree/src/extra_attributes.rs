@@ -1,8 +1,8 @@
 use serde_derive::Serialize;
 
 use crate::attribute_types::{
-    AlignH, AlignHV, AlignV, CanBeEmpty, EnumeratedListType, FixedSpace, Measure, NameToken,
-    TableAlignH, TableBorder, TableGroupCols, ID,
+    AlignH, AlignHV, AlignV, CanBeEmpty, EnumeratedListType, FixedSpace, ID, Measure, NameToken,
+    TableAlignH, TableBorder, TableGroupCols,
 };
 use crate::url::Url;
 
