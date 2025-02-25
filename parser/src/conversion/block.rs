@@ -47,9 +47,11 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
         Rule::paragraph => convert_paragraph(pair)?.into(),
         Rule::target => convert_target(pair)?.into(),
         Rule::substitution_def => convert_substitution_def(pair)?.into(),
+        Rule::block_quote_directive => convert_block_quote_directive(pair)?.into(),
         Rule::admonition_gen => convert_admonition_gen(pair)?,
         Rule::image => convert_image::<e::Image>(pair)?.into(),
         Rule::bullet_list => convert_bullet_list(pair)?.into(),
+        Rule::block_quote => convert_block_quote(pair)?.into(),
         Rule::literal_block => convert_literal_block(pair).into(),
         Rule::code_directive => convert_code_directive(pair).into(),
         Rule::raw_directive => convert_raw_directive(pair).into(),
@@ -213,6 +215,33 @@ fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
         children.push(convert_body_elem(p)?);
     }
     Ok(e::ListItem::with_children(children))
+}
+
+fn convert_block_quote(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
+    Ok(e::BlockQuote::with_children(
+        pair.into_inner()
+            .map(convert_block_quote_inner)
+            .collect::<Result<_, _>>()?,
+    ))
+}
+
+fn convert_block_quote_directive(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
+    let mut iter = pair.into_inner();
+    let typ = iter.next().unwrap().as_str();
+    let children: Vec<c::SubBlockQuote> = iter
+        .map(convert_block_quote_inner)
+        .collect::<Result<_, _>>()?;
+    let mut bq = e::BlockQuote::with_children(children);
+    bq.classes_mut().push(typ.to_owned());
+    Ok(bq)
+}
+
+fn convert_block_quote_inner(pair: Pair<Rule>) -> Result<c::SubBlockQuote, Error> {
+    Ok(if pair.as_rule() == Rule::attribution {
+        e::Attribution::with_children(convert_inlines(pair)?).into()
+    } else {
+        convert_body_elem(pair)?.into()
+    })
 }
 
 fn convert_literal_block(pair: Pair<Rule>) -> e::LiteralBlock {

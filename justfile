@@ -12,7 +12,7 @@ build:
 
 # Runs clippy on the sources
 check:
-    cargo hack --feature-powerset clippy --locked -- -D warnings
+    cargo hack --feature-powerset clippy --locked --all-targets -- -D warnings
 
 # Runs unit tests
 test:
