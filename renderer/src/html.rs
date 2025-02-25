@@ -6,6 +6,7 @@ use std::io::Write;
 use anyhow::Error;
 
 // use crate::url::Url;
+use crate::opt::RenderOptions;
 use document_tree::{
     Document, Element, ExtraAttributes, HasChildren, attribute_types as at,
     element_categories as c, elements as e, extra_attributes as a,
@@ -13,12 +14,17 @@ use document_tree::{
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
-pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<(), Error>
+pub fn render_html<W, O>(document: &Document, stream: W, opts: O) -> Result<(), Error>
 where
     W: Write,
+    O: Into<RenderOptions>,
 {
-    let mut renderer = HTMLRenderer { stream, level: 0 };
-    if standalone {
+    let opts: RenderOptions = opts.into();
+    let mut renderer = HTMLRenderer {
+        stream,
+        level: opts.initial_header_level,
+    };
+    if opts.standalone {
         document.render_html(&mut renderer)
     } else {
         for c in document.children() {
