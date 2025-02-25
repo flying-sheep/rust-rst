@@ -310,6 +310,28 @@ Paragraph.
         ]
     };
 }
+#[test]
+
+fn block_quote_directive() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. epigraph::
+
+   Single line
+
+The end
+",
+        rule: Rule::document,
+        tokens: [
+            block_quote_directive(0, 31, [
+                block_quote_type(3, 11),
+                paragraph(18, 29, [ str(18, 29) ]),
+            ]),
+            paragraph(31, 38, [ str(31, 38) ]),
+        ]
+    };
+}
 
 #[allow(clippy::cognitive_complexity)]
 #[test]
