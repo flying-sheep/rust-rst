@@ -62,7 +62,7 @@ blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
 
 // Block quote. A block type.
 block_quote         =  { PUSH("  " ~ " "+) ~ block_quote_content ~ DROP }
-block_quote_content = _{ hanging_block ~ blank_line* ~ (!attribution ~ block)* ~ attribution? }
+block_quote_content = _{ hanging_block ~ (blank_line* ~ !attribution ~ block)* ~ blank_line* ~ attribution? }
 // https://github.com/docutils/docutils/blob/f704fb58904d62bf5c6d7db82a9628f29e4ed246/docutils/docutils/parsers/rst/states.py#L1201
 attribution         =  { PEEK[..] ~ (("--" ~ "-"? ~ !"-") | "\u{2014}") ~ " "* ~ line+ }
 
@@ -129,7 +129,7 @@ admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* }
 
 block_quote_directive =  {
     ".." ~ PUSH(" "+) ~  block_quote_type ~ "::" ~ (blank_line | line) ~ blank_line* ~
-    PEEK[..-1] ~ PUSH("  " ~ POP) ~ block_quote_content? ~ DROP
+    PEEK[..-1] ~ PUSH("  " ~ POP) ~ block_quote_content ~ DROP
 }
 block_quote_type =  { ^"epigraph" | ^"highlights" | ^"pull-quote" }
 
