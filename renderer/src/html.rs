@@ -103,17 +103,26 @@ macro_rules! impl_html_render_simple_nochildren {( $($type:ident => $tag:ident),
 
 // Impl
 
+static HEAD: &str = r#"<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+li.symbol {{ list-style-type: symbols(symbolic '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣'); }}
+</style>
+</head>"#;
+
 impl HTMLRender for Document {
     fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
     where
         W: Write,
     {
-        writeln!(renderer.stream, "<!doctype html><html>")?;
+        writeln!(renderer.stream, "<!doctype html>\n<html>\n{HEAD}\n<body>")?;
         for c in self.children() {
             (*c).render_html(renderer)?;
             writeln!(renderer.stream)?;
         }
-        writeln!(renderer.stream, "</html>")?;
+        writeln!(renderer.stream, "</body>\n</html>")?;
         Ok(())
     }
 }
