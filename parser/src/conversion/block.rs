@@ -130,7 +130,9 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut footnote = e::Footnote::with_children(children);
     match label.chars().next().unwrap() {
         '#' => {
-            footnote.ids_mut().push(label[1..].into());
+            if label.len() >= 2 {
+                footnote.names_mut().push(label[1..].into());
+            }
             footnote.extra_mut().auto = Some(at::AutoFootnoteType::Number);
         }
         '*' => {

@@ -127,18 +127,22 @@ fn footnote() {
 .. [#] Footnote *1*
 .. [33] Footnote *33*
    More
-.. [#named] Footnote *34*?
+.. [#named] Footnote *2*
 .. [*] Symbol
+.. [#] Footnote *34*
 ",
         "\
 <ol>
 <li><p>Footnote <em>1</em></p></li>
 <li value=\"33\"><p>Footnote <em>33</em></p><p>More</p></li>
-<li><p>Footnote <em>34</em>?</p></li>
+<li><p>Footnote <em>2</em></p></li>
 </ol>
 <ul>
 <li><p>Symbol</p></li>
-</ul>\
+</ul>
+<ol>
+<li><p>Footnote <em>34</em></p></li>
+</ol>\
 ",
     );
 }

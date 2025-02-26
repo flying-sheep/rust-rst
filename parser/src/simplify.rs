@@ -19,7 +19,10 @@ There’s also anonymous links and targets without names.
 TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py
 */
 
-use std::collections::HashMap;
+use std::{
+    collections::{BTreeSet, HashMap},
+    num::NonZero,
+};
 
 use document_tree::{
     Document, HasChildren,
@@ -33,12 +36,9 @@ use document_tree::{
 #[derive(Debug)]
 #[allow(dead_code)]
 enum NamedTargetType {
-    /// auto-numbered or auto-symbol
-    AutoFootnote(AutoFootnoteType),
-    /// auto-numbered “#label”
-    LabeledFootnote(NameToken),
-    /// explicitly numbered
-    NumberedFootnote(usize),
+    // TODO: symbol footnotes
+    NumberedFootnote(NonZero<usize>),
+    LabeledFootnote(NonZero<usize>),
     Citation,
     InternalLink,
     ExternalLink(Url),
@@ -47,8 +47,13 @@ enum NamedTargetType {
 }
 impl NamedTargetType {
     #[allow(dead_code)]
+    /// See https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#implicit-hyperlink-targets
     fn is_implicit_target(&self) -> bool {
-        matches!(self, NamedTargetType::SectionTitle)
+        use NamedTargetType::*;
+        matches!(
+            self,
+            SectionTitle | NumberedFootnote(_) | LabeledFootnote(_) | Citation
+        )
     }
 }
 
@@ -67,6 +72,8 @@ struct TargetsCollected {
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
+    /// Holds used footnote numbers.
+    footnotes: BTreeSet<NonZero<usize>>,
 }
 impl TargetsCollected {
     fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
@@ -93,6 +100,18 @@ impl TargetsCollected {
         self.substitutions
             .get(&name)
             .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
+    }
+
+    fn add_footnote_number(&mut self, named: bool) -> NonZero<usize> {
+        // Auto-numbered named footnotes get the *lowest* available number.
+        // Auto-numbered anonymous footnotes get the *next* available number.
+        // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
+        let it = self.footnotes.iter().cloned();
+        let n = if named { it.min() } else { it.max() }
+            .map(|n| n.saturating_add(1))
+            .unwrap_or(NonZero::new(1usize).unwrap());
+        self.footnotes.insert(n);
+        n
     }
 }
 
@@ -277,6 +296,15 @@ impl ResolvableRefs for c::BodyElement {
                 1. (here) add auto-id and running count to “ids” of footnote references and footnotes
                 2. see below
                 */
+                if matches!(e.extra().auto, Some(AutoFootnoteType::Number)) {
+                    let n = refs.add_footnote_number(!e.names().is_empty());
+                    for name in e.names() {
+                        refs.named_targets
+                            .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
+                    }
+                    //e.children_mut();
+                }
+                // TODO: symbolic footnotes
                 sub_pop(e.as_ref(), refs);
             }
             Citation(e) => sub_pop(&**e, refs),
