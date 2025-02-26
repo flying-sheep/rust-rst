@@ -19,14 +19,11 @@ There’s also anonymous links and targets without names.
 TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py
 */
 
-use std::{
-    collections::{BTreeSet, HashMap},
-    num::NonZero,
-};
+use std::{collections::HashMap, num::NonZero};
 
 use document_tree::{
     Document, HasChildren,
-    attribute_types::{AutoFootnoteType, NameToken},
+    attribute_types::{AutoFootnoteType, ID, NameToken},
     element_categories as c,
     elements::{self as e, Element},
     extra_attributes::ExtraAttributes,
@@ -73,7 +70,7 @@ struct TargetsCollected {
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
     /// Holds used footnote numbers.
-    footnotes: BTreeSet<NonZero<usize>>,
+    footnotes: HashMap<ID, NonZero<usize>>,
 }
 impl TargetsCollected {
     fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
@@ -102,16 +99,14 @@ impl TargetsCollected {
             .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
     }
 
-    fn add_footnote_number(&mut self, named: bool) -> NonZero<usize> {
+    fn next_footnote(&mut self, named: bool) -> NonZero<usize> {
         // Auto-numbered named footnotes get the *lowest* available number.
         // Auto-numbered anonymous footnotes get the *next* available number.
         // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
-        let it = self.footnotes.iter().cloned();
-        let n = if named { it.min() } else { it.max() }
+        let it = self.footnotes.values().cloned();
+        if named { it.min() } else { it.max() }
             .map(|n| n.saturating_add(1))
-            .unwrap_or(NonZero::new(1usize).unwrap());
-        self.footnotes.insert(n);
-        n
+            .unwrap_or(NonZero::new(1usize).unwrap())
     }
 }
 
@@ -298,17 +293,26 @@ impl ResolvableRefs for c::BodyElement {
                 1. (here) add auto-id and running count to “ids” of footnote references and footnotes
                 2. see below
                 */
-                if matches!(e.extra().auto, Some(AutoFootnoteType::Number)) {
-                    let n = refs.add_footnote_number(!e.names().is_empty());
-                    for name in e.names() {
-                        refs.named_targets
-                            .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
+                let n = match e.extra().auto {
+                    Some(AutoFootnoteType::Number) => {
+                        let n = refs.next_footnote(!e.names().is_empty());
+                        for name in e.names() {
+                            refs.named_targets
+                                .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
+                        }
+                        Some(n)
                     }
-                    if e.names().is_empty() {
-                        // TODO: track unnamed footnotes
+                    Some(AutoFootnoteType::Symbol) => {
+                        // TODO: symbolic footnotes. use different counter?
+                        None
+                    }
+                    None => e.get_label().ok().and_then(|l| l.parse().ok()),
+                };
+                if let Some(n) = n {
+                    for id in e.ids() {
+                        refs.footnotes.insert(id.clone(), n);
                     }
                 }
-                // TODO: symbolic footnotes
                 sub_pop(e.as_ref(), refs);
             }
             Citation(e) => sub_pop(&**e, refs),
@@ -355,17 +359,15 @@ impl ResolvableRefs for c::BodyElement {
                 1. see above
                 2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
                 */
-                let label = e
-                    .names()
-                    .first()
-                    .and_then(|k| refs.named_targets.get(k))
-                    .and_then(|t| match t {
-                        NamedTargetType::LabeledFootnote(n) => Some(n),
-                        _ => None,
-                    })
-                    .map_or_else(|| "???".to_owned(), |n| n.to_string());
-                e.children_mut()
-                    .insert(0, e::Label::with_children(vec![label.into()]).into());
+                if e.get_label().is_err() {
+                    let label = e
+                        .ids()
+                        .iter()
+                        .find_map(|id| refs.footnotes.get(id))
+                        .map_or_else(|| "???".into(), |n| n.to_string());
+                    e.children_mut()
+                        .insert(0, e::Label::with_children(vec![label.into()]).into());
+                }
                 sub_res(*e, refs).into()
             }
             Citation(e) => sub_res(*e, refs).into(),

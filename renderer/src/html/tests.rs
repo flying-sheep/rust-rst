@@ -133,15 +133,15 @@ fn footnote() {
 ",
         "\
 <ol>
-<li><p>Footnote <em>1</em></p></li>
+<li value=\"1\"><p>Footnote <em>1</em></p></li>
 <li value=\"33\"><p>Footnote <em>33</em></p><p>More</p></li>
-<li><p>Footnote <em>2</em></p></li>
+<li value=\"2\"><p>Footnote <em>2</em></p></li>
 </ol>
 <ul>
 <li><p>Symbol</p></li>
 </ul>
 <ol>
-<li><p>Footnote <em>34</em></p></li>
+<li value=\"34\"><p>Footnote <em>34</em></p></li>
 </ol>\
 ",
     );

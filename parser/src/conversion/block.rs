@@ -5,6 +5,7 @@ use document_tree::{
     Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
     elements as e, extra_attributes as a,
 };
+use uuid::Uuid;
 
 use super::{inline::convert_inlines, whitespace_normalize_name};
 use crate::{pair_ext_parse::PairExt, pest_rst::Rule};
@@ -120,7 +121,6 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
 fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();
-    // we don’t add `label` here as it can only be known after reference resolving.
     let mut children: Vec<c::SubFootnote> = vec![];
     // turn `line` into paragraph
     children.push(convert_paragraph(pairs.next().unwrap())?.into());
@@ -138,8 +138,13 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
         '*' => {
             footnote.extra_mut().auto = Some(at::AutoFootnoteType::Symbol);
         }
-        _ => {} //digit
+        _ => {
+            footnote
+                .children_mut()
+                .insert(0, e::Label::with_children(vec![label.into()]).into());
+        }
     };
+    footnote.ids_mut().push(at::ID(Uuid::new_v4().to_string()));
     Ok(footnote)
 }
 

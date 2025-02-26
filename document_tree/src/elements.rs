@@ -347,3 +347,25 @@ impl<'a> From<&'a str> for TextOrInlineElement {
         s.to_owned().into()
     }
 }
+
+impl Footnote {
+    pub fn get_label(&self) -> Result<&str, anyhow::Error> {
+        use anyhow::{Context, bail};
+
+        match self
+            .children()
+            .first()
+            .context("Footnote has no children")?
+        {
+            SubFootnote::Label(e) => match e
+                .children()
+                .first()
+                .context("Footnote label has no child")?
+            {
+                TextOrInlineElement::String(s) => Ok(s.as_ref()),
+                _ => bail!("Footnote label is not a string"),
+            },
+            _ => bail!("Non-auto footnote has no label"),
+        }
+    }
+}

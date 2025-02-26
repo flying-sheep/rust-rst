@@ -396,26 +396,8 @@ impl HTMLRender for e::Footnote {
         use c::SubFootnote::*;
 
         let mut children = self.children().iter();
-        let label = if let Some(Label(l)) = self.children().first() {
-            children.next(); // skip the label
-            Some(
-                l.children()
-                    .iter()
-                    .map(|c| {
-                        if let c::TextOrInlineElement::String(s) = c {
-                            Ok((**s).as_ref())
-                        } else {
-                            bail!("Footnote label must be a string")
-                        }
-                    })
-                    .collect::<Result<Vec<_>, _>>()?
-                    .join(""),
-            )
-        } else {
-            None
-        };
-
-        if let Some(label) = label {
+        if let Ok(label) = self.get_label() {
+            children.next(); // skip over the label
             write!(renderer.stream, "<li value=\"{label}\">")?;
         } else {
             write!(renderer.stream, "<li>")?;
