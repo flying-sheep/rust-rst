@@ -8,6 +8,7 @@
 document = _{ SOI ~ blank_line* ~ blocks ~ EOI }
 blocks   = _{ block ~ (blank_line* ~ block)* ~ blank_line? }
 block    = _{ PEEK[..] ~ hanging_block }
+hanging_blocks = _{ hanging_block ~ blank_line* ~ blocks? }
 
 // This is the list of all block-level elements
 // They’re defined hanging, i.e. without the first PEEK[..]
@@ -20,6 +21,7 @@ hanging_block = _{
     | admonition_gen
     | block_quote_directive
     | target
+    | footnote
     | literal_block
     // Comments should be below the directives to try to match them first, but
     // above the title that will interpret ".." as a title marker.
@@ -44,11 +46,16 @@ inline_dirblock   = _{ replace | image }  // TODO: implement others
 
 // Target. A block type
 target         =  { target_qu | target_uq }
-target_uq      = _{ ".. _"  ~         target_name_uq ~           ":" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
-target_qu      = _{ ".. _`" ~ !"``" ~ target_name_qu ~ !"``:" ~ "`:" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
-target_name_uq =  { ( !("_"|":"|"`") ~ !NEWLINE ~ ANY )* }
+target_uq      = _{ ".." ~ " "+ ~ "_"  ~         target_name_uq ~           ":" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
+target_qu      = _{ ".." ~ " "+ ~ "_`" ~ !"``" ~ target_name_qu ~ !"``:" ~ "`:" ~ (" " ~ link_target)? ~ " "* ~ NEWLINE }
+target_name_uq =  { ( !("_"|":"|"`"|NEWLINE) ~ ANY )* }
 target_name_qu =  { ( !(":"|"`"|"_>") ~ ANY )* }
 link_target    =  { nonspacechar+ }
+
+// Footnote. A block type
+footnote       =  { ".." ~ PUSH(" "+) ~ "[" ~ footnote_label ~ "]" ~ " "+ ~ line ~ blank_line* ~ footnote_body? ~ DROP }
+footnote_label =  { "#" ~ (!("]"|NEWLINE) ~ ANY)* | ASCII_DIGIT+ }
+footnote_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_blocks }
 
 // Title. A block type
 title = { title_double | title_single }
@@ -58,7 +65,7 @@ title_single = { line ~ PEEK[..] ~ adornments ~ NEWLINE }
 // Bullet list. A block type.
 bullet_list =  { bullet_item ~ (PEEK[..] ~ bullet_item)* }
 bullet_item =  { bullet_marker ~ PUSH(" "+) ~ line ~ blank_line* ~ blist_body? ~ DROP }
-blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_block ~ block* }
+blist_body  = _{ PEEK[..-1] ~ PUSH(" " ~ POP) ~ hanging_blocks }
 
 // Block quote. A block type.
 block_quote         =  { PUSH("  " ~ " "+) ~ block_quote_content ~ DROP }
@@ -123,7 +130,7 @@ raw_line          = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 admonition         =  { ".." ~ PUSH(" "+) ~ ^"admonition::" ~ line  ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_gen     =  { ".." ~ PUSH(" "+) ~  admonition_type ~ "::" ~ (blank_line | line) ~ blank_line* ~ admonition_content? ~ DROP }
 admonition_type    =  { ^"attention" | ^"caution" | ^"danger" | ^"error" | ^"hint" | ^"important" | ^"note" | ^"tip" | ^"warning" }
-admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_block ~ block* } //TODO: merge with other directives?
+admonition_content = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_blocks } //TODO: merge with other directives?
 
 // Block quote directives. The generic one is defined by simply indenting a block
 
