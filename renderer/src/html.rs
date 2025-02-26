@@ -396,11 +396,18 @@ impl HTMLRender for e::Footnote {
         use c::SubFootnote::*;
 
         let mut children = self.children().iter();
-        if let Ok(label) = self.get_label() {
-            children.next(); // skip over the label
-            write!(renderer.stream, "<li value=\"{label}\">")?;
-        } else {
-            write!(renderer.stream, "<li>")?;
+        match (self.get_label(), self.extra().auto) {
+            (Ok(label), Some(at::AutoFootnoteType::Symbol)) => {
+                children.next(); // skip over the label
+                write!(renderer.stream, "<li value=\"{label}\" class=\"symbol\">")?;
+            }
+            (Ok(label), _) => {
+                children.next(); // skip over the label
+                write!(renderer.stream, "<li value=\"{label}\">")?;
+            }
+            (Err(_), _) => {
+                write!(renderer.stream, "<li>")?;
+            }
         }
         for child in children {
             let BodyElement(child) = child else {

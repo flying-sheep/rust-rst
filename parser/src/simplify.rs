@@ -70,7 +70,8 @@ struct TargetsCollected {
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
     /// Holds used footnote numbers.
-    footnotes: HashMap<ID, NonZero<usize>>,
+    footnotes_number: HashMap<ID, NonZero<usize>>,
+    footnotes_symbol: HashMap<ID, NonZero<usize>>,
 }
 impl TargetsCollected {
     fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
@@ -99,11 +100,16 @@ impl TargetsCollected {
             .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
     }
 
-    fn next_footnote(&mut self, named: bool) -> NonZero<usize> {
+    fn next_footnote(&mut self, typ: AutoFootnoteType, named: bool) -> NonZero<usize> {
         // Auto-numbered named footnotes get the *lowest* available number.
         // Auto-numbered anonymous footnotes get the *next* available number.
         // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
-        let it = self.footnotes.values().cloned();
+        let it = match typ {
+            AutoFootnoteType::Number => &mut self.footnotes_number,
+            AutoFootnoteType::Symbol => &mut self.footnotes_symbol,
+        }
+        .values()
+        .cloned();
         if named { it.min() } else { it.max() }
             .map(|n| n.saturating_add(1))
             .unwrap_or(NonZero::new(1usize).unwrap())
@@ -294,23 +300,25 @@ impl ResolvableRefs for c::BodyElement {
                 2. see below
                 */
                 let n = match e.extra().auto {
-                    Some(AutoFootnoteType::Number) => {
-                        let n = refs.next_footnote(!e.names().is_empty());
+                    Some(t @ AutoFootnoteType::Number) => {
+                        let n = refs.next_footnote(t, !e.names().is_empty());
                         for name in e.names() {
                             refs.named_targets
                                 .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
                         }
                         Some(n)
                     }
-                    Some(AutoFootnoteType::Symbol) => {
-                        // TODO: symbolic footnotes. use different counter?
-                        None
-                    }
+                    Some(t @ AutoFootnoteType::Symbol) => Some(refs.next_footnote(t, false)),
                     None => e.get_label().ok().and_then(|l| l.parse().ok()),
                 };
                 if let Some(n) = n {
                     for id in e.ids() {
-                        refs.footnotes.insert(id.clone(), n);
+                        match e.extra().auto {
+                            Some(AutoFootnoteType::Symbol) => {
+                                refs.footnotes_symbol.insert(id.clone(), n)
+                            }
+                            _ => refs.footnotes_number.insert(id.clone(), n),
+                        };
                     }
                 }
                 sub_pop(e.as_ref(), refs);
@@ -363,7 +371,10 @@ impl ResolvableRefs for c::BodyElement {
                     let label = e
                         .ids()
                         .iter()
-                        .find_map(|id| refs.footnotes.get(id))
+                        .find_map(|id| match e.extra().auto {
+                            Some(AutoFootnoteType::Symbol) => refs.footnotes_symbol.get(id),
+                            _ => refs.footnotes_number.get(id),
+                        })
                         .map_or_else(|| "???".into(), |n| n.to_string());
                     e.children_mut()
                         .insert(0, e::Label::with_children(vec![label.into()]).into());
