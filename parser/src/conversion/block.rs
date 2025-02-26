@@ -116,7 +116,7 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     }
     Ok(elem)
 }
-//https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+
 fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();

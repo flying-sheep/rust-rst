@@ -23,7 +23,7 @@ use std::collections::HashMap;
 
 use document_tree::{
     Document, HasChildren,
-    attribute_types::NameToken,
+    attribute_types::{AutoFootnoteType, NameToken},
     element_categories as c,
     elements::{self as e, Element},
     extra_attributes::ExtraAttributes,
@@ -33,8 +33,12 @@ use document_tree::{
 #[derive(Debug)]
 #[allow(dead_code)]
 enum NamedTargetType {
+    /// auto-numbered or auto-symbol
+    AutoFootnote(AutoFootnoteType),
+    /// auto-numbered “#label”
+    LabeledFootnote(NameToken),
+    /// explicitly numbered
     NumberedFootnote(usize),
-    LabeledFootnote(usize),
     Citation,
     InternalLink,
     ExternalLink(Url),
@@ -268,7 +272,13 @@ impl ResolvableRefs for c::BodyElement {
             Important(e) => sub_pop(&**e, refs),
             Tip(e) => sub_pop(&**e, refs),
             Warning(e) => sub_pop(&**e, refs),
-            Footnote(e) => sub_pop(&**e, refs),
+            Footnote(e) => {
+                /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                1. (here) add auto-id and running count to “ids” of footnote references and footnotes
+                2. see below
+                */
+                sub_pop(e.as_ref(), refs);
+            }
             Citation(e) => sub_pop(&**e, refs),
             SystemMessage(e) => sub_pop(&**e, refs),
             Figure(e) => sub_pop(&**e, refs),
@@ -308,7 +318,13 @@ impl ResolvableRefs for c::BodyElement {
             Important(e) => sub_res(*e, refs).into(),
             Tip(e) => sub_res(*e, refs).into(),
             Warning(e) => sub_res(*e, refs).into(),
-            Footnote(e) => sub_res(*e, refs).into(),
+            Footnote(e) => {
+                /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                1. see above
+                2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
+                */
+                sub_res(*e, refs).into()
+            }
             Citation(e) => sub_res(*e, refs).into(),
             SystemMessage(e) => sub_res(*e, refs).into(),
             Figure(e) => sub_res(*e, refs).into(),
