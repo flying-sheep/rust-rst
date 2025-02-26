@@ -116,7 +116,9 @@ impl TargetsCollected {
 }
 
 trait ResolvableRefs {
+    /// Populate `TargetsCollected`
     fn populate_targets(&self, refs: &mut TargetsCollected);
+    /// Transform `self` based on the complete `TargetsCollected`
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self>
     where
         Self: Sized;
@@ -302,7 +304,9 @@ impl ResolvableRefs for c::BodyElement {
                         refs.named_targets
                             .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
                     }
-                    //e.children_mut();
+                    if e.names().is_empty() {
+                        // TODO: track unnamed footnotes
+                    }
                 }
                 // TODO: symbolic footnotes
                 sub_pop(e.as_ref(), refs);
@@ -346,11 +350,22 @@ impl ResolvableRefs for c::BodyElement {
             Important(e) => sub_res(*e, refs).into(),
             Tip(e) => sub_res(*e, refs).into(),
             Warning(e) => sub_res(*e, refs).into(),
-            Footnote(e) => {
+            Footnote(mut e) => {
                 /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
                 1. see above
                 2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
                 */
+                let label = e
+                    .names()
+                    .first()
+                    .and_then(|k| refs.named_targets.get(k))
+                    .and_then(|t| match t {
+                        NamedTargetType::LabeledFootnote(n) => Some(n),
+                        _ => None,
+                    })
+                    .map_or_else(|| "???".to_owned(), |n| n.to_string());
+                e.children_mut()
+                    .insert(0, e::Label::with_children(vec![label.into()]).into());
                 sub_res(*e, refs).into()
             }
             Citation(e) => sub_res(*e, refs).into(),
