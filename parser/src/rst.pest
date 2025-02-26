@@ -52,9 +52,9 @@ target_name_uq =  { ( !("_"|":"|"`"|NEWLINE) ~ ANY )* }
 target_name_qu =  { ( !(":"|"`"|"_>") ~ ANY )* }
 link_target    =  { nonspacechar+ }
 
-// Footnote. A block type
+// Footnote. A block type. https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnotes
 footnote       =  { ".." ~ PUSH(" "+) ~ "[" ~ footnote_label ~ "]" ~ " "+ ~ line ~ blank_line* ~ footnote_body? ~ DROP }
-footnote_label =  { "#" ~ (!("]"|NEWLINE) ~ ANY)* | ASCII_DIGIT+ }
+footnote_label =  { "#" ~ (!("]"|NEWLINE) ~ ANY)* | "*" | ASCII_DIGIT+ }
 footnote_body  = _{ PEEK[..-1] ~ PUSH("  " ~ POP) ~ hanging_blocks }
 
 // Title. A block type

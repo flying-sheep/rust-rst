@@ -15,6 +15,12 @@ pub enum EnumeratedListType {
     UpperRoman,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+pub enum AutoFootnoteType {
+    Number,
+    Symbol,
+}
+
 #[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone)]
 pub enum FixedSpace {
     Default,

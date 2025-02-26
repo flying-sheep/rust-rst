@@ -118,6 +118,27 @@ hello ``foo.map(|world| world + 42)``
     );
 }
 
+#[test]
+fn footnote() {
+    // TODO: reference resolution
+    // TODO: auto-numbering over separate blocks
+    check_renders_to(
+        "\
+.. [#] Footnote *1*
+.. [33] Footnote *33*
+   More
+.. [#named] Footnote *34*?
+",
+        "\
+<ol>
+<li><p>Footnote <em>1</em></p></li>
+<li value=\"33\"><p>Footnote <em>33</em></p></li>
+<li><p>Footnote <em>35</em>?</p></li>
+</ol>\
+",
+    );
+}
+
 /*
 #[test]
 fn test_section_hierarchy() {

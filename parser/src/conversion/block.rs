@@ -46,6 +46,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
     Ok(match pair.as_rule() {
         Rule::paragraph => convert_paragraph(pair)?.into(),
         Rule::target => convert_target(pair)?.into(),
+        Rule::footnote => convert_footnote(pair)?.into(),
         Rule::substitution_def => convert_substitution_def(pair)?.into(),
         Rule::block_quote_directive => convert_block_quote_directive(pair)?.into(),
         Rule::admonition_gen => convert_admonition_gen(pair)?,
@@ -114,6 +115,25 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
         }
     }
     Ok(elem)
+}
+
+fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
+    let mut pairs = pair.into_inner();
+    let label = pairs.next().unwrap().as_str();
+    let mut children: Vec<c::SubFootnote> =
+        vec![e::Label::with_children(vec![label.into()]).into()];
+    // turn `line` into paragraph
+    children.push(convert_paragraph(pairs.next().unwrap())?.into());
+    for p in pairs {
+        children.push(convert_body_elem(p)?.into());
+    }
+    let mut footnote = e::Footnote::with_children(children);
+    footnote.extra_mut().auto = match (label.chars().next().unwrap(), label.len()) {
+        ('#', _) => Some(at::AutoFootnoteType::Number),
+        ('*', 1) => Some(at::AutoFootnoteType::Symbol),
+        _ => None,
+    };
+    Ok(footnote)
 }
 
 fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition, Error> {
