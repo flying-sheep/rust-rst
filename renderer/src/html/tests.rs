@@ -128,13 +128,17 @@ fn footnote() {
 .. [33] Footnote *33*
    More
 .. [#named] Footnote *34*?
+.. [*] Symbol
 ",
         "\
 <ol>
 <li><p>Footnote <em>1</em></p></li>
 <li value=\"33\"><p>Footnote <em>33</em></p></li>
 <li><p>Footnote <em>35</em>?</p></li>
-</ol>\
+</ol>
+<ul>
+<li><p>Symbol</p></li>
+</ul>\
 ",
     );
 }

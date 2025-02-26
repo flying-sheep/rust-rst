@@ -116,22 +116,27 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     }
     Ok(elem)
 }
-
+//https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
 fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();
-    let mut children: Vec<c::SubFootnote> =
-        vec![e::Label::with_children(vec![label.into()]).into()];
+    // we don’t add `label` here as it can only be known after reference resolving.
+    let mut children: Vec<c::SubFootnote> = vec![];
     // turn `line` into paragraph
     children.push(convert_paragraph(pairs.next().unwrap())?.into());
     for p in pairs {
         children.push(convert_body_elem(p)?.into());
     }
     let mut footnote = e::Footnote::with_children(children);
-    footnote.extra_mut().auto = match (label.chars().next().unwrap(), label.len()) {
-        ('#', _) => Some(at::AutoFootnoteType::Number),
-        ('*', 1) => Some(at::AutoFootnoteType::Symbol),
-        _ => None,
+    match label.chars().next().unwrap() {
+        '#' => {
+            footnote.ids_mut().push(label[1..].into());
+            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Number);
+        }
+        '*' => {
+            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Symbol);
+        }
+        _ => {} //digit
     };
     Ok(footnote)
 }

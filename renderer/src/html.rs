@@ -3,7 +3,7 @@ pub mod tests;
 
 use std::io::Write;
 
-use anyhow::Error;
+use anyhow::{Error, bail};
 
 // use crate::url::Url;
 use document_tree::{
@@ -389,11 +389,45 @@ impl HTMLRender for e::Raw {
 }
 
 impl HTMLRender for e::Footnote {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
     where
         W: Write,
     {
-        unimplemented!();
+        use c::SubFootnote::*;
+
+        let mut children = self.children().iter();
+        let label = if let Some(Label(l)) = self.children().first() {
+            children.next(); // skip the label
+            Some(
+                l.children()
+                    .iter()
+                    .map(|c| {
+                        if let c::TextOrInlineElement::String(s) = c {
+                            Ok((**s).as_ref())
+                        } else {
+                            bail!("Footnote label must be a string")
+                        }
+                    })
+                    .collect::<Result<Vec<_>, _>>()?
+                    .join(""),
+            )
+        } else {
+            None
+        };
+
+        if let Some(label) = label {
+            write!(renderer.stream, "<li value=\"{label}\">")?;
+        } else {
+            write!(renderer.stream, "<li>")?;
+        }
+        for child in children {
+            let BodyElement(child) = child else {
+                bail!("Cannot have a footnote label anywhere but as first child node");
+            };
+            child.render_html(renderer)?;
+        }
+        write!(renderer.stream, "</li>")?;
+        Ok(())
     }
 }
 
