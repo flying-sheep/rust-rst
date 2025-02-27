@@ -114,42 +114,26 @@ fn convert_reference_target(concrete: Pair<'_, Rule>) -> Result<e::Reference, Er
 
 fn convert_reference_auto(concrete: Pair<'_, Rule>) -> c::TextOrInlineElement {
     let rt_inner = concrete.into_inner().next().unwrap();
-    match rt_inner.as_rule() {
-        Rule::url_auto => match Url::parse_absolute(rt_inner.as_str()) {
-            Ok(target) => e::Reference::new(
-                CommonAttributes::default(),
-                a::Reference {
-                    name: None,
-                    refuri: Some(target),
-                    refid: None,
-                    refname: Vec::new(),
-                },
-                vec![rt_inner.as_str().into()],
-            )
-            .into(),
-            // if our parser got a URL wrong, return it as a string
-            Err(_) => rt_inner.as_str().into(),
-        },
-        Rule::email => {
-            let mailto_url = String::from("mailto:") + rt_inner.as_str();
-            match Url::parse_absolute(&mailto_url) {
-                Ok(target) => e::Reference::new(
-                    CommonAttributes::default(),
-                    a::Reference {
-                        name: None,
-                        refuri: Some(target),
-                        refid: None,
-                        refname: Vec::new(),
-                    },
-                    vec![rt_inner.as_str().into()],
-                )
-                .into(),
-                // if our parser got a URL wrong, return it as a string
-                Err(_) => rt_inner.as_str().into(),
-            }
-        }
+    let str: c::TextOrInlineElement = rt_inner.as_str().into();
+    let Ok(target) = (match rt_inner.as_rule() {
+        Rule::url_auto => Url::parse_absolute(rt_inner.as_str()),
+        Rule::email => Url::parse_absolute(&format!("mailto:{}", rt_inner.as_str())),
         _ => unreachable!(),
-    }
+    }) else {
+        // if our parser got a URL wrong, return it as a string
+        return str;
+    };
+    e::Reference::new(
+        CommonAttributes::default(),
+        a::Reference {
+            name: None,
+            refuri: Some(target),
+            refid: None,
+            refname: Vec::new(),
+        },
+        vec![str],
+    )
+    .into()
 }
 
 fn convert_substitution_ref(pair: &Pair<Rule>) -> e::SubstitutionReference {
