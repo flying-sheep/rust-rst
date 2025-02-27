@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 mod html;
 
 use std::io::Write;
@@ -6,6 +8,10 @@ use anyhow::{Error, anyhow};
 
 use document_tree::Document;
 
+/// Render a document tree as JSON.
+///
+/// # Errors
+/// Returns an error if serialization fails.
 pub fn render_json<W>(document: &Document, stream: W) -> Result<(), Error>
 where
     W: Write,
@@ -14,6 +20,10 @@ where
     Ok(())
 }
 
+/// Render a document tree as XML.
+///
+/// # Errors
+/// Returns an error if serialization fails.
 pub fn render_xml<W>(document: &Document, stream: W) -> Result<(), Error>
 where
     W: Write,

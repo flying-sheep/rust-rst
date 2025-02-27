@@ -91,14 +91,14 @@ pub enum Measure {
 impl FromStr for AlignHV {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::AlignHV::*;
+        use self::AlignHV as A;
         Ok(match s {
-            "top" => Top,
-            "middle" => Middle,
-            "bottom" => Bottom,
-            "left" => Left,
-            "center" => Center,
-            "right" => Right,
+            "top" => A::Top,
+            "middle" => A::Middle,
+            "bottom" => A::Bottom,
+            "left" => A::Left,
+            "center" => A::Center,
+            "right" => A::Right,
             s => bail!("Invalid Alignment {}", s),
         })
     }
@@ -119,7 +119,7 @@ impl From<&str> for NameToken {
 impl FromStr for Measure {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::Measure::*;
+        use self::Measure as M;
         let re =
             Regex::new(r"(?P<float>\d+\.\d*|\.?\d+)\s*(?P<unit>em|ex|mm|cm|in|px|pt|pc)").unwrap();
         let caps: regex::Captures = re
@@ -127,14 +127,14 @@ impl FromStr for Measure {
             .ok_or_else(|| format_err!("Invalid measure"))?;
         let value: f64 = caps["float"].parse()?;
         Ok(match &caps["unit"] {
-            "em" => Em(value),
-            "ex" => Ex(value),
-            "mm" => Mm(value),
-            "cm" => Cm(value),
-            "in" => In(value),
-            "px" => Px(value),
-            "pt" => Pt(value),
-            "pc" => Pc(value),
+            "em" => M::Em(value),
+            "ex" => M::Ex(value),
+            "mm" => M::Mm(value),
+            "cm" => M::Cm(value),
+            "in" => M::In(value),
+            "px" => M::Px(value),
+            "pt" => M::Pt(value),
+            "pc" => M::Pc(value),
             _ => unreachable!(),
         })
     }

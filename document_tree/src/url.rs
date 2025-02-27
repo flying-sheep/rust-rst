@@ -29,9 +29,19 @@ fn starts_with_scheme(input: &str) -> bool {
 pub struct Url(String);
 
 impl Url {
+    /// Parse an absolute URL.
+    ///
+    /// # Errors
+    /// Returns an error if the string is not a valid absolute URL.
     pub fn parse_absolute(input: &str) -> Result<Self, ParseError> {
         Ok(url::Url::parse(input)?.into())
     }
+
+    /// Parse a relative path as URL.
+    ///
+    /// # Errors
+    /// Returns an error if the string is not a relative path or can’t be converted to an url.
+    #[allow(clippy::missing_panics_doc)]
     pub fn parse_relative(input: &str) -> Result<Self, ParseError> {
         // We're assuming that any scheme through which RsT documents are being
         // accessed is a hierarchical scheme, and so we can parse relative to a
@@ -49,6 +59,7 @@ impl Url {
             Err(ParseError::SetHostOnCannotBeABaseUrl)
         }
     }
+    #[must_use]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }

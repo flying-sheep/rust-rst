@@ -13,6 +13,10 @@ use document_tree::{
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
+/// Render document as HTML
+///
+/// # Errors
+/// Returns error if serialization fails
 pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<(), Error>
 where
     W: Write,
@@ -22,7 +26,7 @@ where
         document.render_html(&mut renderer)
     } else {
         for c in document.children() {
-            (*c).render_html(&mut renderer)?;
+            c.render_html(&mut renderer)?;
             writeln!(renderer.stream)?;
         }
         Ok(())
@@ -54,7 +58,7 @@ macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
     impl HTMLRender for c::$cat {
         fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
             match self {$(
-                c::$cat::$member(elem) => (**elem).render_html(renderer),
+                c::$cat::$member(elem) => elem.render_html(renderer),
             )+}
         }
     }
@@ -82,7 +86,7 @@ macro_rules! impl_html_render_simple {
                 write!(renderer.stream, ">")?;
                 if multiple_children { write!(renderer.stream, $post)?; }
                 for c in self.children() {
-                    (*c).render_html(renderer)?;
+                    c.render_html(renderer)?;
                     if multiple_children { write!(renderer.stream, $post)?; }
                 }
                 write!(renderer.stream, "</{}>", stringify!($tag))?;
@@ -110,7 +114,7 @@ impl HTMLRender for Document {
     {
         writeln!(renderer.stream, "<!doctype html><html>")?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
             writeln!(renderer.stream)?;
         }
         writeln!(renderer.stream, "</html>")?;
@@ -137,11 +141,11 @@ impl HTMLRender for e::Title {
         } else {
             renderer.level
         };
-        write!(renderer.stream, "<h{0}>", level)?;
+        write!(renderer.stream, "<h{level}>")?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
-        write!(renderer.stream, "</h{0}>", level)?;
+        write!(renderer.stream, "</h{level}>")?;
         Ok(())
     }
 }
@@ -183,7 +187,7 @@ impl HTMLRender for e::Section {
         renderer.level += 1;
         writeln!(renderer.stream, "<section id=\"{0}\">", self.ids()[0].0)?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
             writeln!(renderer.stream)?;
         }
         write!(renderer.stream, "</section>")?;
@@ -303,13 +307,13 @@ impl HTMLRender for e::LiteralBlock {
         if is_code {
             // TODO: support those classes not being at the start
             if let Some(lang) = cls_iter.next() {
-                write!(renderer.stream, "<code class=\"language-{}\">", lang)?;
+                write!(renderer.stream, "<code class=\"language-{lang}\">")?;
             } else {
                 write!(renderer.stream, "<code>")?;
             }
         }
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
         if is_code {
             write!(renderer.stream, "</code>")?;
@@ -346,7 +350,7 @@ impl HTMLRender for e::Comment {
     {
         write!(renderer.stream, "<!--")?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
         write!(renderer.stream, "-->")?;
         Ok(())
@@ -381,7 +385,7 @@ impl HTMLRender for e::Raw {
         let extra = self.extra();
         if extra.format.contains(&at::NameToken("html".to_owned())) {
             for c in self.children() {
-                write!(renderer.stream, "{}", c)?;
+                write!(renderer.stream, "{c}")?;
             }
         }
         Ok(())
@@ -413,7 +417,7 @@ impl HTMLRender for e::SystemMessage {
     {
         write!(renderer.stream, "<figure><caption>System Message</caption>")?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
         write!(renderer.stream, "</figure>")?;
         Ok(())
@@ -475,7 +479,7 @@ impl HTMLRender for e::Reference {
         */
         write!(renderer.stream, ">")?;
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
         write!(renderer.stream, "</a>")?;
         Ok(())
@@ -518,7 +522,7 @@ impl HTMLRender for e::RawInline {
         W: Write,
     {
         for c in self.children() {
-            write!(renderer.stream, "{}", c)?;
+            write!(renderer.stream, "{c}")?;
         }
         Ok(())
     }
@@ -575,7 +579,7 @@ impl HTMLRender for e::Line {
         W: Write,
     {
         for c in self.children() {
-            (*c).render_html(renderer)?;
+            c.render_html(renderer)?;
         }
         write!(renderer.stream, "<br>")?;
         Ok(())

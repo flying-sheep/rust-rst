@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 #![recursion_limit = "256"]
 
 //! See [doctree][] reference.
@@ -33,7 +34,7 @@ mod tests {
         title.append_child(image);
         doc.append_child(title);
 
-        println!("{:?}", doc);
+        println!("{doc:?}");
     }
 
     #[test]
@@ -49,6 +50,6 @@ mod tests {
             .into(),
         ]);
 
-        println!("{:?}", doc);
+        println!("{doc:?}");
     }
 }

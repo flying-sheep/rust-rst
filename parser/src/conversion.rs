@@ -14,8 +14,8 @@ use crate::pest_rst::Rule;
 
 fn ssubel_to_section_unchecked_mut(ssubel: &mut c::StructuralSubElement) -> &mut e::Section {
     match ssubel {
-        c::StructuralSubElement::SubStructure(b) => match **b {
-            c::SubStructure::Section(ref mut s) => s,
+        c::StructuralSubElement::SubStructure(b) => match b.as_mut() {
+            c::SubStructure::Section(s) => s,
             _ => unreachable!(),
         },
         _ => unreachable!(),
@@ -27,16 +27,14 @@ fn get_level<'tl>(
     section_idxs: &[Option<usize>],
 ) -> &'tl mut Vec<c::StructuralSubElement> {
     let mut level = toplevel;
-    for maybe_i in section_idxs {
-        if let Some(i) = *maybe_i {
-            level = ssubel_to_section_unchecked_mut(&mut level[i]).children_mut();
-        }
+    for i in section_idxs.iter().flatten().copied() {
+        level = ssubel_to_section_unchecked_mut(&mut level[i]).children_mut();
     }
     level
 }
 
 pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
-    use self::block::TitleOrSsubel::*;
+    use self::block::TitleOrSsubel::{Ssubel, Title};
 
     let mut toplevel: Vec<c::StructuralSubElement> = vec![];
     // The kinds of section titles encountered.
@@ -60,7 +58,7 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
                             // If idx > len: Add None for skipped levels
                             // TODO: test skipped levels
                             while section_idxs.len() < idx {
-                                section_idxs.push(None)
+                                section_idxs.push(None);
                             }
                         }
                         None => kinds.push(kind),
