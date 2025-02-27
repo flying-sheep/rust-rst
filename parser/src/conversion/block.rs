@@ -22,7 +22,7 @@ pub(super) enum TitleOrSsubel {
 }
 
 pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, Error> {
-    use self::TitleOrSsubel::*;
+    use self::TitleOrSsubel::{Ssubel, Title};
     Ok(Some(match pair.as_rule() {
         Rule::title => {
             let (t, k) = convert_title(pair)?;
@@ -50,7 +50,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
         Rule::footnote => convert_footnote(pair)?.into(),
         Rule::substitution_def => convert_substitution_def(pair)?.into(),
         Rule::block_quote_directive => convert_block_quote_directive(pair)?.into(),
-        Rule::admonition_gen => convert_admonition_gen(pair)?,
+        Rule::admonition_gen => convert_admonition_gen(pair),
         Rule::image => convert_image::<e::Image>(pair)?.into(),
         Rule::bullet_list => convert_bullet_list(pair)?.into(),
         Rule::block_quote => convert_block_quote(pair)?.into(),
@@ -76,7 +76,7 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
                 title_inlines = Some(convert_inlines(p)?);
             }
             Rule::adornments => {
-                adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?"))
+                adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?"));
             }
             rule => unimplemented!("Unexpected rule in title: {:?}", rule),
         };
@@ -102,7 +102,7 @@ fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph, Error> {
 }
 
 fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
-    let mut elem: e::Target = Default::default();
+    let mut elem = e::Target::default();
     elem.extra_mut().anonymous = false;
     for p in pair.into_inner() {
         match p.as_rule() {
@@ -112,7 +112,7 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
             }
             // TODO: also handle non-urls
             Rule::link_target => elem.extra_mut().refuri = Some(p.parse()?),
-            rule => panic!("Unexpected rule in target: {:?}", rule),
+            rule => panic!("Unexpected rule in target: {rule:?}"),
         }
     }
     Ok(elem)
@@ -155,7 +155,7 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
     let inner: Vec<c::TextOrInlineElement> = match inner_pair.as_rule() {
         Rule::replace => convert_replace(inner_pair)?,
         Rule::image => vec![convert_image::<e::ImageInline>(inner_pair)?.into()],
-        rule => panic!("Unknown substitution rule {:?}", rule),
+        rule => panic!("Unknown substitution rule {rule:?}"),
     };
     let mut subst_def = e::SubstitutionDefinition::with_children(inner);
     subst_def.names_mut().push(at::NameToken(name));
@@ -196,13 +196,14 @@ where
 }
 
 fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
+    use pest::error::{Error, ErrorVariant};
+
     let input = pair.as_str().trim();
     let input = if let Some(percentage) = input.strip_suffix('%') {
         percentage.trim_end()
     } else {
         input
     };
-    use pest::error::{Error, ErrorVariant};
     Ok(input.parse().map_err(|e: std::num::ParseIntError| {
         let var: ErrorVariant<Rule> = ErrorVariant::CustomError {
             message: e.to_string(),
@@ -211,14 +212,14 @@ fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
     })?)
 }
 
-fn convert_admonition_gen(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
+fn convert_admonition_gen(pair: Pair<Rule>) -> document_tree::element_categories::BodyElement {
     let mut iter = pair.into_inner();
     let typ = iter.next().unwrap().as_str();
     // TODO: in reality it contains body elements.
     let children: Vec<c::BodyElement> = iter
         .map(|p| e::Paragraph::with_children(vec![p.as_str().into()]).into())
         .collect();
-    Ok(match typ {
+    match typ {
         "attention" => e::Attention::with_children(children).into(),
         "hint" => e::Hint::with_children(children).into(),
         "note" => e::Note::with_children(children).into(),
@@ -228,8 +229,8 @@ fn convert_admonition_gen(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
         "important" => e::Important::with_children(children).into(),
         "tip" => e::Tip::with_children(children).into(),
         "warning" => e::Warning::with_children(children).into(),
-        typ => panic!("Unknown admontion type {}!", typ),
-    })
+        typ => panic!("Unknown admontion type {typ}!"),
+    }
 }
 
 fn convert_bullet_list(pair: Pair<Rule>) -> Result<e::BulletList, Error> {

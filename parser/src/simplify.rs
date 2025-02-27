@@ -44,12 +44,12 @@ enum NamedTargetType {
 }
 impl NamedTargetType {
     #[allow(dead_code)]
-    /// See https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#implicit-hyperlink-targets
+    /// See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#implicit-hyperlink-targets>
     fn is_implicit_target(&self) -> bool {
-        use NamedTargetType::*;
+        use NamedTargetType as T;
         matches!(
             self,
-            SectionTitle | NumberedFootnote(_) | LabeledFootnote(_) | Citation
+            T::SectionTitle | T::NumberedFootnote(_) | T::LabeledFootnote(_) | T::Citation
         )
     }
 }
@@ -76,9 +76,10 @@ struct TargetsCollected {
 impl TargetsCollected {
     fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
         // TODO: Check if the target would expand circularly
-        if refname.len() != 1 {
-            panic!("Expected exactly one name in a reference.");
-        }
+        assert!(
+            refname.len() == 1,
+            "Expected exactly one name in a reference."
+        );
         let name = refname[0].clone();
         match self.named_targets.get(&name)? {
             NamedTargetType::ExternalLink(url) => Some(url),
@@ -91,9 +92,10 @@ impl TargetsCollected {
         refname: &[NameToken],
     ) -> Option<&'t Substitution> {
         // TODO: Check if the substitution would expand circularly
-        if refname.len() != 1 {
-            panic!("Expected exactly one name in a substitution reference.");
-        }
+        assert!(
+            refname.len() == 1,
+            "Expected exactly one name in a substitution reference."
+        );
         let name = refname[0].clone();
         self.substitutions
             .get(&name)
@@ -109,10 +111,9 @@ impl TargetsCollected {
             AutoFootnoteType::Symbol => &mut self.footnotes_symbol,
         }
         .values()
-        .cloned();
+        .copied();
         if named { it.min() } else { it.max() }
-            .map(|n| n.saturating_add(1))
-            .unwrap_or(NonZero::new(1usize).unwrap())
+            .map_or(NonZero::new(1usize).unwrap(), |n| n.saturating_add(1))
     }
 }
 
@@ -126,7 +127,7 @@ trait ResolvableRefs {
 }
 
 pub fn resolve_references(mut doc: Document) -> Document {
-    let mut references: TargetsCollected = Default::default();
+    let mut references = TargetsCollected::default();
     for c in doc.children() {
         c.populate_targets(&mut references);
     }
@@ -190,60 +191,59 @@ where
 
 impl ResolvableRefs for c::StructuralSubElement {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::StructuralSubElement::*;
+        use c::StructuralSubElement as S;
         match self {
-            Title(e) => sub_pop(&**e, refs),
-            Subtitle(e) => sub_pop(&**e, refs),
-            Decoration(e) => sub_pop(&**e, refs),
-            Docinfo(e) => sub_pop(&**e, refs),
-            SubStructure(e) => e.populate_targets(refs),
+            S::Title(e) => sub_pop(e.as_ref(), refs),
+            S::Subtitle(e) => sub_pop(e.as_ref(), refs),
+            S::Decoration(e) => sub_pop(e.as_ref(), refs),
+            S::Docinfo(e) => sub_pop(e.as_ref(), refs),
+            S::SubStructure(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::StructuralSubElement::*;
+        use c::StructuralSubElement as S;
         vec![match self {
-            Title(e) => sub_res(*e, refs).into(),
-            Subtitle(e) => sub_res(*e, refs).into(),
-            Decoration(e) => sub_res(*e, refs).into(),
-            Docinfo(e) => sub_res(*e, refs).into(),
-            SubStructure(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+            S::Title(e) => sub_res(*e, refs).into(),
+            S::Subtitle(e) => sub_res(*e, refs).into(),
+            S::Decoration(e) => sub_res(*e, refs).into(),
+            S::Docinfo(e) => sub_res(*e, refs).into(),
+            S::SubStructure(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
         }]
     }
 }
 
 impl ResolvableRefs for c::SubStructure {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubStructure::*;
+        use c::SubStructure as S;
         match self {
-            Topic(e) => sub_pop(&**e, refs),
-            Sidebar(e) => sub_pop(&**e, refs),
-            Transition(_) => {}
-            Section(e) => sub_pop(&**e, refs),
-            BodyElement(e) => e.populate_targets(refs),
+            S::Topic(e) => sub_pop(e.as_ref(), refs),
+            S::Sidebar(e) => sub_pop(e.as_ref(), refs),
+            S::Transition(_) => {}
+            S::Section(e) => sub_pop(e.as_ref(), refs),
+            S::BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubStructure::*;
+        use c::SubStructure as S;
         vec![match self {
-            Topic(e) => sub_res(*e, refs).into(),
-            Sidebar(e) => sub_res(*e, refs).into(),
-            Transition(e) => Transition(e),
-            Section(e) => sub_res(*e, refs).into(),
-            BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+            S::Topic(e) => sub_res(*e, refs).into(),
+            S::Sidebar(e) => sub_res(*e, refs).into(),
+            S::Transition(e) => S::Transition(e),
+            S::Section(e) => sub_res(*e, refs).into(),
+            S::BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
         }]
     }
 }
 
 impl ResolvableRefs for c::BodyElement {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::BodyElement::*;
+        use c::BodyElement as B;
         match self {
-            Paragraph(e) => sub_pop(&**e, refs),
-            LiteralBlock(e) => sub_pop(&**e, refs),
-            DoctestBlock(e) => sub_pop(&**e, refs),
-            MathBlock(_) => {}
-            Rubric(e) => sub_pop(&**e, refs),
-            SubstitutionDefinition(e) => {
+            B::Paragraph(e) => sub_pop(e.as_ref(), refs),
+            B::LiteralBlock(e) => sub_pop(e.as_ref(), refs),
+            B::DoctestBlock(e) => sub_pop(e.as_ref(), refs),
+            B::Rubric(e) => sub_pop(e.as_ref(), refs),
+            B::SubstitutionDefinition(e) => {
                 let subst = Substitution {
                     content: e.children().clone(),
                     ltrim: e.extra().ltrim,
@@ -259,11 +259,10 @@ impl ResolvableRefs for c::BodyElement {
                         .insert(name.0.to_lowercase(), subst.clone());
                 }
             }
-            Comment(_) => {}
-            Pending(_) => {
+            B::Pending(_) => {
                 unimplemented!();
             }
-            Target(e) => {
+            B::Target(e) => {
                 if let Some(uri) = &e.extra().refuri {
                     for name in e.names() {
                         refs.named_targets
@@ -273,28 +272,26 @@ impl ResolvableRefs for c::BodyElement {
                 // TODO: as is, people can only refer to the target directly containing the URL.
                 // add refid and refnames to some HashMap and follow those later.
             }
-            Raw(_) => {}
-            Image(_) => {}
-            Compound(e) => sub_pop(&**e, refs),
-            Container(e) => sub_pop(&**e, refs),
-            BulletList(e) => sub_sub_pop(&**e, refs),
-            EnumeratedList(e) => sub_sub_pop(&**e, refs),
-            DefinitionList(e) => sub_sub_pop(&**e, refs),
-            FieldList(e) => sub_sub_pop(&**e, refs),
-            OptionList(e) => sub_sub_pop(&**e, refs),
-            LineBlock(e) => sub_pop(&**e, refs),
-            BlockQuote(e) => sub_pop(&**e, refs),
-            Admonition(e) => sub_pop(&**e, refs),
-            Attention(e) => sub_pop(&**e, refs),
-            Hint(e) => sub_pop(&**e, refs),
-            Note(e) => sub_pop(&**e, refs),
-            Caution(e) => sub_pop(&**e, refs),
-            Danger(e) => sub_pop(&**e, refs),
-            Error(e) => sub_pop(&**e, refs),
-            Important(e) => sub_pop(&**e, refs),
-            Tip(e) => sub_pop(&**e, refs),
-            Warning(e) => sub_pop(&**e, refs),
-            Footnote(e) => {
+            B::Compound(e) => sub_pop(e.as_ref(), refs),
+            B::Container(e) => sub_pop(e.as_ref(), refs),
+            B::BulletList(e) => sub_sub_pop(e.as_ref(), refs),
+            B::EnumeratedList(e) => sub_sub_pop(e.as_ref(), refs),
+            B::DefinitionList(e) => sub_sub_pop(e.as_ref(), refs),
+            B::FieldList(e) => sub_sub_pop(e.as_ref(), refs),
+            B::OptionList(e) => sub_sub_pop(e.as_ref(), refs),
+            B::LineBlock(e) => sub_pop(e.as_ref(), refs),
+            B::BlockQuote(e) => sub_pop(e.as_ref(), refs),
+            B::Admonition(e) => sub_pop(e.as_ref(), refs),
+            B::Attention(e) => sub_pop(e.as_ref(), refs),
+            B::Hint(e) => sub_pop(e.as_ref(), refs),
+            B::Note(e) => sub_pop(e.as_ref(), refs),
+            B::Caution(e) => sub_pop(e.as_ref(), refs),
+            B::Danger(e) => sub_pop(e.as_ref(), refs),
+            B::Error(e) => sub_pop(e.as_ref(), refs),
+            B::Important(e) => sub_pop(e.as_ref(), refs),
+            B::Tip(e) => sub_pop(e.as_ref(), refs),
+            B::Warning(e) => sub_pop(e.as_ref(), refs),
+            B::Footnote(e) => {
                 /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
                 1. (here) add auto-id and running count to “ids” of footnote references and footnotes
                 2. see below
@@ -323,46 +320,47 @@ impl ResolvableRefs for c::BodyElement {
                 }
                 sub_pop(e.as_ref(), refs);
             }
-            Citation(e) => sub_pop(&**e, refs),
-            SystemMessage(e) => sub_pop(&**e, refs),
-            Figure(e) => sub_pop(&**e, refs),
-            Table(e) => sub_pop(&**e, refs),
+            B::Citation(e) => sub_pop(e.as_ref(), refs),
+            B::SystemMessage(e) => sub_pop(e.as_ref(), refs),
+            B::Figure(e) => sub_pop(e.as_ref(), refs),
+            B::Table(e) => sub_pop(e.as_ref(), refs),
+            B::MathBlock(_) | B::Comment(_) | B::Raw(_) | B::Image(_) => {}
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::BodyElement::*;
+        use c::BodyElement as B;
         vec![match self {
-            Paragraph(e) => sub_res(*e, refs).into(),
-            LiteralBlock(e) => sub_res(*e, refs).into(),
-            DoctestBlock(e) => sub_res(*e, refs).into(),
-            MathBlock(e) => MathBlock(e),
-            Rubric(e) => sub_res(*e, refs).into(),
-            SubstitutionDefinition(_) => return vec![],
-            Comment(e) => Comment(e),
-            Pending(e) => Pending(e),
-            Target(e) => Target(e),
-            Raw(e) => Raw(e),
-            Image(e) => Image(e),
-            Compound(e) => sub_res(*e, refs).into(),
-            Container(e) => sub_res(*e, refs).into(),
-            BulletList(e) => sub_sub_res(*e, refs).into(),
-            EnumeratedList(e) => sub_sub_res(*e, refs).into(),
-            DefinitionList(e) => sub_sub_res(*e, refs).into(),
-            FieldList(e) => sub_sub_res(*e, refs).into(),
-            OptionList(e) => sub_sub_res(*e, refs).into(),
-            LineBlock(e) => sub_res(*e, refs).into(),
-            BlockQuote(e) => sub_res(*e, refs).into(),
-            Admonition(e) => sub_res(*e, refs).into(),
-            Attention(e) => sub_res(*e, refs).into(),
-            Hint(e) => sub_res(*e, refs).into(),
-            Note(e) => sub_res(*e, refs).into(),
-            Caution(e) => sub_res(*e, refs).into(),
-            Danger(e) => sub_res(*e, refs).into(),
-            Error(e) => sub_res(*e, refs).into(),
-            Important(e) => sub_res(*e, refs).into(),
-            Tip(e) => sub_res(*e, refs).into(),
-            Warning(e) => sub_res(*e, refs).into(),
-            Footnote(mut e) => {
+            B::Paragraph(e) => sub_res(*e, refs).into(),
+            B::LiteralBlock(e) => sub_res(*e, refs).into(),
+            B::DoctestBlock(e) => sub_res(*e, refs).into(),
+            B::MathBlock(e) => B::MathBlock(e),
+            B::Rubric(e) => sub_res(*e, refs).into(),
+            B::SubstitutionDefinition(_) => return vec![],
+            B::Comment(e) => B::Comment(e),
+            B::Pending(e) => B::Pending(e),
+            B::Target(e) => B::Target(e),
+            B::Raw(e) => B::Raw(e),
+            B::Image(e) => B::Image(e),
+            B::Compound(e) => sub_res(*e, refs).into(),
+            B::Container(e) => sub_res(*e, refs).into(),
+            B::BulletList(e) => sub_sub_res(*e, refs).into(),
+            B::EnumeratedList(e) => sub_sub_res(*e, refs).into(),
+            B::DefinitionList(e) => sub_sub_res(*e, refs).into(),
+            B::FieldList(e) => sub_sub_res(*e, refs).into(),
+            B::OptionList(e) => sub_sub_res(*e, refs).into(),
+            B::LineBlock(e) => sub_res(*e, refs).into(),
+            B::BlockQuote(e) => sub_res(*e, refs).into(),
+            B::Admonition(e) => sub_res(*e, refs).into(),
+            B::Attention(e) => sub_res(*e, refs).into(),
+            B::Hint(e) => sub_res(*e, refs).into(),
+            B::Note(e) => sub_res(*e, refs).into(),
+            B::Caution(e) => sub_res(*e, refs).into(),
+            B::Danger(e) => sub_res(*e, refs).into(),
+            B::Error(e) => sub_res(*e, refs).into(),
+            B::Important(e) => sub_res(*e, refs).into(),
+            B::Tip(e) => sub_res(*e, refs).into(),
+            B::Warning(e) => sub_res(*e, refs).into(),
+            B::Footnote(mut e) => {
                 /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
                 1. see above
                 2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
@@ -375,91 +373,89 @@ impl ResolvableRefs for c::BodyElement {
                             Some(AutoFootnoteType::Symbol) => refs.footnotes_symbol.get(id),
                             _ => refs.footnotes_number.get(id),
                         })
-                        .map_or_else(|| "???".into(), |n| n.to_string());
+                        .map_or_else(|| "???".into(), ToString::to_string);
                     e.children_mut()
                         .insert(0, e::Label::with_children(vec![label.into()]).into());
                 }
                 sub_res(*e, refs).into()
             }
-            Citation(e) => sub_res(*e, refs).into(),
-            SystemMessage(e) => sub_res(*e, refs).into(),
-            Figure(e) => sub_res(*e, refs).into(),
-            Table(e) => sub_res(*e, refs).into(),
+            B::Citation(e) => sub_res(*e, refs).into(),
+            B::SystemMessage(e) => sub_res(*e, refs).into(),
+            B::Figure(e) => sub_res(*e, refs).into(),
+            B::Table(e) => sub_res(*e, refs).into(),
         }]
     }
 }
 
 impl ResolvableRefs for c::BibliographicElement {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::BibliographicElement::*;
+        use c::BibliographicElement as B;
         match self {
-            Author(e) => sub_pop(&**e, refs),
-            Authors(e) => sub_pop(&**e, refs),
-            Organization(e) => sub_pop(&**e, refs),
-            Address(e) => sub_pop(&**e, refs),
-            Contact(e) => sub_pop(&**e, refs),
-            Version(e) => sub_pop(&**e, refs),
-            Revision(e) => sub_pop(&**e, refs),
-            Status(e) => sub_pop(&**e, refs),
-            Date(e) => sub_pop(&**e, refs),
-            Copyright(e) => sub_pop(&**e, refs),
-            Field(e) => sub_pop(&**e, refs),
+            B::Author(e) => sub_pop(e.as_ref(), refs),
+            B::Authors(e) => sub_pop(e.as_ref(), refs),
+            B::Organization(e) => sub_pop(e.as_ref(), refs),
+            B::Address(e) => sub_pop(e.as_ref(), refs),
+            B::Contact(e) => sub_pop(e.as_ref(), refs),
+            B::Version(e) => sub_pop(e.as_ref(), refs),
+            B::Revision(e) => sub_pop(e.as_ref(), refs),
+            B::Status(e) => sub_pop(e.as_ref(), refs),
+            B::Date(e) => sub_pop(e.as_ref(), refs),
+            B::Copyright(e) => sub_pop(e.as_ref(), refs),
+            B::Field(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::BibliographicElement::*;
+        use c::BibliographicElement as B;
         vec![match self {
-            Author(e) => sub_res(*e, refs).into(),
-            Authors(e) => sub_res(*e, refs).into(),
-            Organization(e) => sub_res(*e, refs).into(),
-            Address(e) => sub_res(*e, refs).into(),
-            Contact(e) => sub_res(*e, refs).into(),
-            Version(e) => sub_res(*e, refs).into(),
-            Revision(e) => sub_res(*e, refs).into(),
-            Status(e) => sub_res(*e, refs).into(),
-            Date(e) => sub_res(*e, refs).into(),
-            Copyright(e) => sub_res(*e, refs).into(),
-            Field(e) => sub_res(*e, refs).into(),
+            B::Author(e) => sub_res(*e, refs).into(),
+            B::Authors(e) => sub_res(*e, refs).into(),
+            B::Organization(e) => sub_res(*e, refs).into(),
+            B::Address(e) => sub_res(*e, refs).into(),
+            B::Contact(e) => sub_res(*e, refs).into(),
+            B::Version(e) => sub_res(*e, refs).into(),
+            B::Revision(e) => sub_res(*e, refs).into(),
+            B::Status(e) => sub_res(*e, refs).into(),
+            B::Date(e) => sub_res(*e, refs).into(),
+            B::Copyright(e) => sub_res(*e, refs).into(),
+            B::Field(e) => sub_res(*e, refs).into(),
         }]
     }
 }
 
 impl ResolvableRefs for c::TextOrInlineElement {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::TextOrInlineElement::*;
+        use c::TextOrInlineElement as T;
         match self {
-            String(_) => {}
-            Emphasis(e) => sub_pop(&**e, refs),
-            Strong(e) => sub_pop(&**e, refs),
-            Literal(_) => {}
-            Reference(e) => sub_pop(&**e, refs),
-            FootnoteReference(e) => sub_pop(&**e, refs),
-            CitationReference(e) => sub_pop(&**e, refs),
-            SubstitutionReference(e) => sub_pop(&**e, refs),
-            TitleReference(e) => sub_pop(&**e, refs),
-            Abbreviation(e) => sub_pop(&**e, refs),
-            Acronym(e) => sub_pop(&**e, refs),
-            Superscript(e) => sub_pop(&**e, refs),
-            Subscript(e) => sub_pop(&**e, refs),
-            Inline(e) => sub_pop(&**e, refs),
-            Problematic(e) => sub_pop(&**e, refs),
-            Generated(e) => sub_pop(&**e, refs),
-            Math(_) => {}
-            TargetInline(_) => {
+            T::Emphasis(e) => sub_pop(e.as_ref(), refs),
+            T::Strong(e) => sub_pop(e.as_ref(), refs),
+            T::Reference(e) => sub_pop(e.as_ref(), refs),
+            T::FootnoteReference(e) => sub_pop(e.as_ref(), refs),
+            T::CitationReference(e) => sub_pop(e.as_ref(), refs),
+            T::SubstitutionReference(e) => sub_pop(e.as_ref(), refs),
+            T::TitleReference(e) => sub_pop(e.as_ref(), refs),
+            T::Abbreviation(e) => sub_pop(e.as_ref(), refs),
+            T::Acronym(e) => sub_pop(e.as_ref(), refs),
+            T::Superscript(e) => sub_pop(e.as_ref(), refs),
+            T::Subscript(e) => sub_pop(e.as_ref(), refs),
+            T::Inline(e) => sub_pop(e.as_ref(), refs),
+            T::Problematic(e) => sub_pop(e.as_ref(), refs),
+            T::Generated(e) => sub_pop(e.as_ref(), refs),
+            T::TargetInline(_) => {
                 unimplemented!();
             }
-            RawInline(_) => {}
-            ImageInline(_) => {}
+            T::String(_) | T::Literal(_) | T::Math(_) | T::RawInline(_) | T::ImageInline(_) => {}
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::TextOrInlineElement::*;
+        use c::TextOrInlineElement as T;
+        use document_tree::Problematic;
+
         vec![match self {
-            String(e) => String(e),
-            Emphasis(e) => sub_res(*e, refs).into(),
-            Strong(e) => sub_res(*e, refs).into(),
-            Literal(e) => Literal(e),
-            Reference(mut e) => {
+            T::String(e) => T::String(e),
+            T::Emphasis(e) => sub_res(*e, refs).into(),
+            T::Strong(e) => sub_res(*e, refs).into(),
+            T::Literal(e) => T::Literal(e),
+            T::Reference(mut e) => {
                 if e.extra().refuri.is_none() {
                     if let Some(uri) = refs.target_url(&e.extra().refname) {
                         e.extra_mut().refuri = Some(uri.clone());
@@ -467,14 +463,15 @@ impl ResolvableRefs for c::TextOrInlineElement {
                 }
                 (*e).into()
             }
-            FootnoteReference(e) => sub_res(*e, refs).into(),
-            CitationReference(e) => sub_res(*e, refs).into(),
-            SubstitutionReference(e) => match refs.substitution(&e.extra().refname) {
-                Some(Substitution {
+            T::FootnoteReference(e) => sub_res(*e, refs).into(),
+            T::CitationReference(e) => sub_res(*e, refs).into(),
+            T::SubstitutionReference(e) => {
+                if let Some(Substitution {
                     content,
                     ltrim,
                     rtrim,
-                }) => {
+                }) = refs.substitution(&e.extra().refname)
+                {
                     // (level 3 system message).
                     // TODO: ltrim and rtrim.
                     if *ltrim || *rtrim {
@@ -482,71 +479,68 @@ impl ResolvableRefs for c::TextOrInlineElement {
                     }
                     return content.clone();
                 }
-                None => {
-                    // Undefined substitution name (level 3 system message).
-                    // TODO: This replaces the reference by a Problematic node.
-                    // The corresponding SystemMessage node should go in a generated
-                    // section with class "system-messages" at the end of the document.
-                    use document_tree::Problematic;
-                    let mut replacement: Box<Problematic> = Box::default();
-                    replacement
-                        .children_mut()
-                        .push(c::TextOrInlineElement::String(Box::new(format!(
-                            "|{}|",
-                            e.extra().refname[0].0
-                        ))));
-                    // TODO: Create an ID for replacement for the system_message to reference.
-                    // TODO: replacement.refid pointing to the system_message.
-                    Problematic(replacement)
-                }
-            },
-            TitleReference(e) => sub_res(*e, refs).into(),
-            Abbreviation(e) => sub_res(*e, refs).into(),
-            Acronym(e) => sub_res(*e, refs).into(),
-            Superscript(e) => sub_res(*e, refs).into(),
-            Subscript(e) => sub_res(*e, refs).into(),
-            Inline(e) => sub_res(*e, refs).into(),
-            Problematic(e) => sub_res(*e, refs).into(),
-            Generated(e) => sub_res(*e, refs).into(),
-            Math(e) => Math(e),
-            TargetInline(e) => TargetInline(e),
-            RawInline(e) => RawInline(e),
-            ImageInline(e) => ImageInline(e),
+                // Undefined substitution name (level 3 system message).
+                // TODO: This replaces the reference by a Problematic node.
+                // The corresponding SystemMessage node should go in a generated
+                // section with class "system-messages" at the end of the document.
+                let mut replacement: Box<Problematic> = Box::default();
+                replacement
+                    .children_mut()
+                    .push(c::TextOrInlineElement::String(Box::new(format!(
+                        "|{}|",
+                        e.extra().refname[0].0
+                    ))));
+                // TODO: Create an ID for replacement for the system_message to reference.
+                // TODO: replacement.refid pointing to the system_message.
+                T::Problematic(replacement)
+            }
+            T::TitleReference(e) => sub_res(*e, refs).into(),
+            T::Abbreviation(e) => sub_res(*e, refs).into(),
+            T::Acronym(e) => sub_res(*e, refs).into(),
+            T::Superscript(e) => sub_res(*e, refs).into(),
+            T::Subscript(e) => sub_res(*e, refs).into(),
+            T::Inline(e) => sub_res(*e, refs).into(),
+            T::Problematic(e) => sub_res(*e, refs).into(),
+            T::Generated(e) => sub_res(*e, refs).into(),
+            T::Math(e) => T::Math(e),
+            T::TargetInline(e) => T::TargetInline(e),
+            T::RawInline(e) => T::RawInline(e),
+            T::ImageInline(e) => T::ImageInline(e),
         }]
     }
 }
 
 impl ResolvableRefs for c::AuthorInfo {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::AuthorInfo::*;
+        use c::AuthorInfo as A;
         match self {
-            Author(e) => sub_pop(&**e, refs),
-            Organization(e) => sub_pop(&**e, refs),
-            Address(e) => sub_pop(&**e, refs),
-            Contact(e) => sub_pop(&**e, refs),
+            A::Author(e) => sub_pop(e.as_ref(), refs),
+            A::Organization(e) => sub_pop(e.as_ref(), refs),
+            A::Address(e) => sub_pop(e.as_ref(), refs),
+            A::Contact(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::AuthorInfo::*;
+        use c::AuthorInfo as A;
         vec![match self {
-            Author(e) => sub_res(*e, refs).into(),
-            Organization(e) => sub_res(*e, refs).into(),
-            Address(e) => sub_res(*e, refs).into(),
-            Contact(e) => sub_res(*e, refs).into(),
+            A::Author(e) => sub_res(*e, refs).into(),
+            A::Organization(e) => sub_res(*e, refs).into(),
+            A::Address(e) => sub_res(*e, refs).into(),
+            A::Contact(e) => sub_res(*e, refs).into(),
         }]
     }
 }
 
 impl ResolvableRefs for c::DecorationElement {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::DecorationElement::*;
+        use c::DecorationElement::{Footer, Header};
         match self {
-            Header(e) => sub_pop(&**e, refs),
-            Footer(e) => sub_pop(&**e, refs),
+            Header(e) => sub_pop(e.as_ref(), refs),
+            Footer(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::DecorationElement::*;
+        use c::DecorationElement::{Footer, Header};
         vec![match self {
             Header(e) => sub_res(*e, refs).into(),
             Footer(e) => sub_res(*e, refs).into(),
@@ -556,14 +550,14 @@ impl ResolvableRefs for c::DecorationElement {
 
 impl ResolvableRefs for c::SubTopic {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubTopic::*;
+        use c::SubTopic::{BodyElement, Title};
         match self {
-            Title(e) => sub_pop(&**e, refs),
+            Title(e) => sub_pop(e.as_ref(), refs),
             BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubTopic::*;
+        use c::SubTopic::{BodyElement, Title};
         match self {
             Title(e) => vec![sub_res(*e, refs).into()],
             BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
@@ -573,36 +567,36 @@ impl ResolvableRefs for c::SubTopic {
 
 impl ResolvableRefs for c::SubSidebar {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubSidebar::*;
+        use c::SubSidebar as S;
         match self {
-            Topic(e) => sub_pop(&**e, refs),
-            Title(e) => sub_pop(&**e, refs),
-            Subtitle(e) => sub_pop(&**e, refs),
-            BodyElement(e) => e.populate_targets(refs),
+            S::Topic(e) => sub_pop(e.as_ref(), refs),
+            S::Title(e) => sub_pop(e.as_ref(), refs),
+            S::Subtitle(e) => sub_pop(e.as_ref(), refs),
+            S::BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubSidebar::*;
+        use c::SubSidebar as S;
         vec![match self {
-            Topic(e) => sub_res(*e, refs).into(),
-            Title(e) => sub_res(*e, refs).into(),
-            Subtitle(e) => sub_res(*e, refs).into(),
-            BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
+            S::Topic(e) => sub_res(*e, refs).into(),
+            S::Title(e) => sub_res(*e, refs).into(),
+            S::Subtitle(e) => sub_res(*e, refs).into(),
+            S::BodyElement(e) => return e.resolve_refs(refs).drain(..).map(Into::into).collect(),
         }]
     }
 }
 
 impl ResolvableRefs for c::SubDLItem {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubDLItem::*;
+        use c::SubDLItem::{Classifier, Definition, Term};
         match self {
-            Term(e) => sub_pop(&**e, refs),
-            Classifier(e) => sub_pop(&**e, refs),
-            Definition(e) => sub_pop(&**e, refs),
+            Term(e) => sub_pop(e.as_ref(), refs),
+            Classifier(e) => sub_pop(e.as_ref(), refs),
+            Definition(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubDLItem::*;
+        use c::SubDLItem::{Classifier, Definition, Term};
         vec![match self {
             Term(e) => sub_res(*e, refs).into(),
             Classifier(e) => sub_res(*e, refs).into(),
@@ -613,14 +607,14 @@ impl ResolvableRefs for c::SubDLItem {
 
 impl ResolvableRefs for c::SubField {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubField::*;
+        use c::SubField::{FieldBody, FieldName};
         match self {
-            FieldName(e) => sub_pop(&**e, refs),
-            FieldBody(e) => sub_pop(&**e, refs),
+            FieldName(e) => sub_pop(e.as_ref(), refs),
+            FieldBody(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubField::*;
+        use c::SubField::{FieldBody, FieldName};
         vec![match self {
             FieldName(e) => sub_res(*e, refs).into(),
             FieldBody(e) => sub_res(*e, refs).into(),
@@ -630,14 +624,14 @@ impl ResolvableRefs for c::SubField {
 
 impl ResolvableRefs for c::SubOptionListItem {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubOptionListItem::*;
+        use c::SubOptionListItem::{Description, OptionGroup};
         match self {
-            OptionGroup(e) => sub_sub_pop(&**e, refs),
-            Description(e) => sub_pop(&**e, refs),
+            OptionGroup(e) => sub_sub_pop(e.as_ref(), refs),
+            Description(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubOptionListItem::*;
+        use c::SubOptionListItem::{Description, OptionGroup};
         vec![match self {
             OptionGroup(e) => sub_sub_res(*e, refs).into(),
             Description(e) => sub_res(*e, refs).into(),
@@ -654,14 +648,14 @@ impl ResolvableRefs for c::SubOption {
 
 impl ResolvableRefs for c::SubLineBlock {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubLineBlock::*;
+        use c::SubLineBlock::{Line, LineBlock};
         match self {
-            LineBlock(e) => sub_pop(&**e, refs),
-            Line(e) => sub_pop(&**e, refs),
+            LineBlock(e) => sub_pop(e.as_ref(), refs),
+            Line(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubLineBlock::*;
+        use c::SubLineBlock::{Line, LineBlock};
         vec![match self {
             LineBlock(e) => sub_res(*e, refs).into(),
             Line(e) => sub_res(*e, refs).into(),
@@ -671,14 +665,14 @@ impl ResolvableRefs for c::SubLineBlock {
 
 impl ResolvableRefs for c::SubBlockQuote {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubBlockQuote::*;
+        use c::SubBlockQuote::{Attribution, BodyElement};
         match self {
-            Attribution(e) => sub_pop(&**e, refs),
+            Attribution(e) => sub_pop(e.as_ref(), refs),
             BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubBlockQuote::*;
+        use c::SubBlockQuote::{Attribution, BodyElement};
         match self {
             Attribution(e) => vec![sub_res(*e, refs).into()],
             BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
@@ -688,14 +682,14 @@ impl ResolvableRefs for c::SubBlockQuote {
 
 impl ResolvableRefs for c::SubFootnote {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubFootnote::*;
+        use c::SubFootnote::{BodyElement, Label};
         match self {
-            Label(e) => sub_pop(&**e, refs),
+            Label(e) => sub_pop(e.as_ref(), refs),
             BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubFootnote::*;
+        use c::SubFootnote::{BodyElement, Label};
         match self {
             Label(e) => vec![sub_res(*e, refs).into()],
             BodyElement(e) => e.resolve_refs(refs).drain(..).map(Into::into).collect(),
@@ -705,15 +699,15 @@ impl ResolvableRefs for c::SubFootnote {
 
 impl ResolvableRefs for c::SubFigure {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubFigure::*;
+        use c::SubFigure::{BodyElement, Caption, Legend};
         match self {
-            Caption(e) => sub_pop(&**e, refs),
-            Legend(e) => sub_pop(&**e, refs),
+            Caption(e) => sub_pop(e.as_ref(), refs),
+            Legend(e) => sub_pop(e.as_ref(), refs),
             BodyElement(e) => e.populate_targets(refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubFigure::*;
+        use c::SubFigure::{BodyElement, Caption, Legend};
         vec![match self {
             Caption(e) => sub_res(*e, refs).into(),
             Legend(e) => sub_res(*e, refs).into(),
@@ -724,14 +718,14 @@ impl ResolvableRefs for c::SubFigure {
 
 impl ResolvableRefs for c::SubTable {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubTable::*;
+        use c::SubTable::{TableGroup, Title};
         match self {
-            Title(e) => sub_pop(&**e, refs),
-            TableGroup(e) => sub_pop(&**e, refs),
+            Title(e) => sub_pop(e.as_ref(), refs),
+            TableGroup(e) => sub_pop(e.as_ref(), refs),
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubTable::*;
+        use c::SubTable::{TableGroup, Title};
         vec![match self {
             Title(e) => sub_res(*e, refs).into(),
             TableGroup(e) => sub_res(*e, refs).into(),
@@ -741,7 +735,7 @@ impl ResolvableRefs for c::SubTable {
 
 impl ResolvableRefs for c::SubTableGroup {
     fn populate_targets(&self, refs: &mut TargetsCollected) {
-        use c::SubTableGroup::*;
+        use c::SubTableGroup::{TableBody, TableColspec, TableHead};
         match self {
             TableColspec(_) => {
                 unimplemented!();
@@ -759,7 +753,7 @@ impl ResolvableRefs for c::SubTableGroup {
         }
     }
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self> {
-        use c::SubTableGroup::*;
+        use c::SubTableGroup::{TableBody, TableColspec, TableHead};
         vec![match self {
             TableColspec(e) => TableColspec(e),
             TableHead(mut e) => {

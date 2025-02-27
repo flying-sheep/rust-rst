@@ -5,13 +5,13 @@ use rst_parser::parse;
 use crate::html::render_html;
 
 fn check_renders_to(rst: &str, expected: &str) {
-    println!("Rendering:\n{}\n---", rst);
+    println!("Rendering:\n{rst}\n---");
     let doc = parse(rst).expect("Cannot parse");
     let mut result_data: Vec<u8> = vec![];
     render_html(&doc, &mut result_data, false).expect("Render error");
     let result = String::from_utf8(result_data).expect("Could not decode");
     assert_eq!(result.as_str().trim(), expected);
-    println!("{}", expected);
+    println!("{expected}");
 }
 
 #[test]

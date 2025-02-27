@@ -106,6 +106,7 @@ impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 pub type ImageInline = Image;
 
 impl Image {
+    #[must_use]
     pub fn new(uri: Url) -> Image {
         Image {
             uri,
