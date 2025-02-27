@@ -2,6 +2,7 @@ use serde_derive::Serialize;
 use std::path::PathBuf;
 
 use crate::attribute_types::{CanBeEmpty, ID, NameToken};
+#[allow(clippy::wildcard_imports)]
 use crate::element_categories::*;
 use crate::extra_attributes::{self, ExtraAttributes};
 
@@ -132,6 +133,7 @@ macro_rules! impl_new {(
         $(#[$fattr])* $field: $typ,
     )* }
     impl $name {
+        #[must_use]
         pub fn new( $( $field: $typ, )* ) -> $name { $name { $( $field, )* } }
     }
 )}

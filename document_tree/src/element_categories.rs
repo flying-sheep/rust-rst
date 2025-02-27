@@ -2,6 +2,7 @@ use std::fmt::{self, Debug, Formatter};
 
 use serde_derive::Serialize;
 
+#[allow(clippy::wildcard_imports)]
 use crate::elements::*;
 
 pub trait HasChildren<C> {

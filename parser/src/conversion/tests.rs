@@ -6,28 +6,28 @@ use crate::parse;
 
 fn ssubel_to_section(ssubel: &c::StructuralSubElement) -> &e::Section {
     match ssubel {
-        c::StructuralSubElement::SubStructure(b) => match **b {
-            c::SubStructure::Section(ref s) => s,
-            ref c => panic!("Expected section, not {:?}", c),
+        c::StructuralSubElement::SubStructure(b) => match b.as_ref() {
+            c::SubStructure::Section(s) => s,
+            c => panic!("Expected section, not {c:?}"),
         },
-        c => panic!("Expected SubStructure, not {:?}", c),
+        c => panic!("Expected SubStructure, not {c:?}"),
     }
 }
 
 fn ssubel_to_body_element(ssubel: &c::StructuralSubElement) -> &c::BodyElement {
     match ssubel {
-        c::StructuralSubElement::SubStructure(b) => match **b {
-            c::SubStructure::BodyElement(ref b) => b,
-            ref c => panic!("Expected BodyElement, not {:?}", c),
+        c::StructuralSubElement::SubStructure(b) => match b.as_ref() {
+            c::SubStructure::BodyElement(b) => b,
+            c => panic!("Expected BodyElement, not {c:?}"),
         },
-        c => panic!("Expected SubStructure, not {:?}", c),
+        c => panic!("Expected SubStructure, not {c:?}"),
     }
 }
 
 fn body_element_to_image(bodyel: &c::BodyElement) -> &e::Image {
     match bodyel {
         c::BodyElement::Image(i) => i,
-        c => panic!("Expected Image, not {:?}", c),
+        c => panic!("Expected Image, not {c:?}"),
     }
 }
 
@@ -58,8 +58,7 @@ fn convert_skipped_section() {
     assert_eq!(
         lvl0.len(),
         3,
-        "Should be a paragraph and 2 sections: {:?}",
-        lvl0
+        "Should be a paragraph and 2 sections: {lvl0:?}"
     );
 
     assert_eq!(
@@ -69,45 +68,40 @@ fn convert_skipped_section() {
         "The intro text should fit"
     );
 
-    let lvl1a = ssubel_to_section(&lvl0[1]).children();
+    let lvl1_a = ssubel_to_section(&lvl0[1]).children();
     assert_eq!(
-        lvl1a.len(),
+        lvl1_a.len(),
         2,
-        "The 1st lvl1 section should have (a title and) a single lvl2 section as child: {:?}",
-        lvl1a
+        "The 1st lvl1 section should have (a title and) a single lvl2 section as child: {lvl1_a:?}"
     );
     //TODO: test title lvl1a[0]
-    let lvl2 = ssubel_to_section(&lvl1a[1]).children();
+    let lvl2 = ssubel_to_section(&lvl1_a[1]).children();
     assert_eq!(
         lvl2.len(),
         2,
-        "The lvl2 section should have (a title and) a single lvl3 section as child: {:?}",
-        lvl2
+        "The lvl2 section should have (a title and) a single lvl3 section as child: {lvl2:?}"
     );
     //TODO: test title lvl2[0]
-    let lvl3a = ssubel_to_section(&lvl2[1]).children();
+    let lvl3_a = ssubel_to_section(&lvl2[1]).children();
     assert_eq!(
-        lvl3a.len(),
+        lvl3_a.len(),
         1,
-        "The 1st lvl3 section should just a title: {:?}",
-        lvl3a
+        "The 1st lvl3 section should just a title: {lvl3_a:?}"
     );
     //TODO: test title lvl3a[0]
 
-    let lvl1b = ssubel_to_section(&lvl0[2]).children();
+    let lvl1_b = ssubel_to_section(&lvl0[2]).children();
     assert_eq!(
-        lvl1b.len(),
+        lvl1_b.len(),
         2,
-        "The 2nd lvl1 section should have (a title and) a single lvl2 section as child: {:?}",
-        lvl1b
+        "The 2nd lvl1 section should have (a title and) a single lvl2 section as child: {lvl1_b:?}"
     );
     //TODO: test title lvl1b[0]
-    let lvl3b = ssubel_to_section(&lvl1b[1]).children();
+    let lvl3_b = ssubel_to_section(&lvl1_b[1]).children();
     assert_eq!(
-        lvl3b.len(),
+        lvl3_b.len(),
         1,
-        "The 2nd lvl3 section should have just a title: {:?}",
-        lvl3b
+        "The 2nd lvl3 section should have just a title: {lvl3_b:?}"
     );
     //TODO: test title lvl3b[0]
 }
@@ -116,7 +110,7 @@ fn convert_skipped_section() {
 fn test_convert_image_scale() {
     let doctree = parse(".. image:: /path/to/img.jpg\n   :scale: 90%\n\n").unwrap();
     let lvl0 = doctree.children();
-    assert_eq!(lvl0.len(), 1, "Should be a single image: {:?}", lvl0);
+    assert_eq!(lvl0.len(), 1, "Should be a single image: {lvl0:?}");
     let be = ssubel_to_body_element(&lvl0[0]);
     let img = body_element_to_image(be);
     assert_eq!(img.extra().scale, Some(90));
