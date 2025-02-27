@@ -6,7 +6,7 @@ use serde_derive::Serialize;
 
 use crate::url::Url;
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum EnumeratedListType {
     Arabic,
     LowerAlpha,
@@ -15,7 +15,13 @@ pub enum EnumeratedListType {
     UpperRoman,
 }
 
-#[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+pub enum AutoFootnoteType {
+    Number,
+    Symbol,
+}
+
+#[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum FixedSpace {
     Default,
     // yes, default really is not “Default”
@@ -23,13 +29,13 @@ pub enum FixedSpace {
     Preserve,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum AlignH {
     Left,
     Center,
     Right,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum AlignHV {
     Top,
     Middle,
@@ -38,14 +44,14 @@ pub enum AlignHV {
     Center,
     Right,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum AlignV {
     Top,
     Middle,
     Bottom,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum TableAlignH {
     Left,
     Right,
@@ -53,7 +59,7 @@ pub enum TableAlignH {
     Justify,
     Char,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum TableBorder {
     Top,
     Bottom,

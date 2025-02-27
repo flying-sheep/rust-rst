@@ -19,11 +19,11 @@ There’s also anonymous links and targets without names.
 TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py
 */
 
-use std::collections::HashMap;
+use std::{collections::HashMap, num::NonZero};
 
 use document_tree::{
     Document, HasChildren,
-    attribute_types::NameToken,
+    attribute_types::{AutoFootnoteType, ID, NameToken},
     element_categories as c,
     elements::{self as e, Element},
     extra_attributes::ExtraAttributes,
@@ -33,8 +33,9 @@ use document_tree::{
 #[derive(Debug)]
 #[allow(dead_code)]
 enum NamedTargetType {
-    NumberedFootnote(usize),
-    LabeledFootnote(usize),
+    // TODO: symbol footnotes
+    NumberedFootnote(NonZero<usize>),
+    LabeledFootnote(NonZero<usize>),
     Citation,
     InternalLink,
     ExternalLink(Url),
@@ -43,8 +44,13 @@ enum NamedTargetType {
 }
 impl NamedTargetType {
     #[allow(dead_code)]
+    /// See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#implicit-hyperlink-targets>
     fn is_implicit_target(&self) -> bool {
-        matches!(self, NamedTargetType::SectionTitle)
+        use NamedTargetType as T;
+        matches!(
+            self,
+            T::SectionTitle | T::NumberedFootnote(_) | T::LabeledFootnote(_) | T::Citation
+        )
     }
 }
 
@@ -63,6 +69,9 @@ struct TargetsCollected {
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
+    /// Holds used footnote numbers.
+    footnotes_number: HashMap<ID, NonZero<usize>>,
+    footnotes_symbol: HashMap<ID, NonZero<usize>>,
 }
 impl TargetsCollected {
     fn target_url<'t>(self: &'t TargetsCollected, refname: &[NameToken]) -> Option<&'t Url> {
@@ -92,10 +101,26 @@ impl TargetsCollected {
             .get(&name)
             .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
     }
+
+    fn next_footnote(&mut self, typ: AutoFootnoteType, named: bool) -> NonZero<usize> {
+        // Auto-numbered named footnotes get the *lowest* available number.
+        // Auto-numbered anonymous footnotes get the *next* available number.
+        // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
+        let it = match typ {
+            AutoFootnoteType::Number => &mut self.footnotes_number,
+            AutoFootnoteType::Symbol => &mut self.footnotes_symbol,
+        }
+        .values()
+        .copied();
+        if named { it.min() } else { it.max() }
+            .map_or(NonZero::new(1usize).unwrap(), |n| n.saturating_add(1))
+    }
 }
 
 trait ResolvableRefs {
+    /// Populate `TargetsCollected`
     fn populate_targets(&self, refs: &mut TargetsCollected);
+    /// Transform `self` based on the complete `TargetsCollected`
     fn resolve_refs(self, refs: &TargetsCollected) -> Vec<Self>
     where
         Self: Sized;
@@ -266,7 +291,35 @@ impl ResolvableRefs for c::BodyElement {
             B::Important(e) => sub_pop(e.as_ref(), refs),
             B::Tip(e) => sub_pop(e.as_ref(), refs),
             B::Warning(e) => sub_pop(e.as_ref(), refs),
-            B::Footnote(e) => sub_pop(e.as_ref(), refs),
+            B::Footnote(e) => {
+                /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                1. (here) add auto-id and running count to “ids” of footnote references and footnotes
+                2. see below
+                */
+                let n = match e.extra().auto {
+                    Some(t @ AutoFootnoteType::Number) => {
+                        let n = refs.next_footnote(t, !e.names().is_empty());
+                        for name in e.names() {
+                            refs.named_targets
+                                .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
+                        }
+                        Some(n)
+                    }
+                    Some(t @ AutoFootnoteType::Symbol) => Some(refs.next_footnote(t, false)),
+                    None => e.get_label().ok().and_then(|l| l.parse().ok()),
+                };
+                if let Some(n) = n {
+                    for id in e.ids() {
+                        match e.extra().auto {
+                            Some(AutoFootnoteType::Symbol) => {
+                                refs.footnotes_symbol.insert(id.clone(), n)
+                            }
+                            _ => refs.footnotes_number.insert(id.clone(), n),
+                        };
+                    }
+                }
+                sub_pop(e.as_ref(), refs);
+            }
             B::Citation(e) => sub_pop(e.as_ref(), refs),
             B::SystemMessage(e) => sub_pop(e.as_ref(), refs),
             B::Figure(e) => sub_pop(e.as_ref(), refs),
@@ -307,7 +360,25 @@ impl ResolvableRefs for c::BodyElement {
             B::Important(e) => sub_res(*e, refs).into(),
             B::Tip(e) => sub_res(*e, refs).into(),
             B::Warning(e) => sub_res(*e, refs).into(),
-            B::Footnote(e) => sub_res(*e, refs).into(),
+            B::Footnote(mut e) => {
+                /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                1. see above
+                2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
+                */
+                if e.get_label().is_err() {
+                    let label = e
+                        .ids()
+                        .iter()
+                        .find_map(|id| match e.extra().auto {
+                            Some(AutoFootnoteType::Symbol) => refs.footnotes_symbol.get(id),
+                            _ => refs.footnotes_number.get(id),
+                        })
+                        .map_or_else(|| "???".into(), ToString::to_string);
+                    e.children_mut()
+                        .insert(0, e::Label::with_children(vec![label.into()]).into());
+                }
+                sub_res(*e, refs).into()
+            }
             B::Citation(e) => sub_res(*e, refs).into(),
             B::SystemMessage(e) => sub_res(*e, refs).into(),
             B::Figure(e) => sub_res(*e, refs).into(),

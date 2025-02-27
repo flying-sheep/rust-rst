@@ -105,6 +105,51 @@ fn two_targets() {
 }
 
 #[test]
+fn footnote() {
+    parses_to! {
+        parser: RstParser,
+        input: ".. [#] A\n",
+        rule: Rule::footnote,
+        tokens: [
+            footnote(0, 9, [
+                footnote_label(4, 5),
+                line(7, 9, [ str(7, 8) ]),
+            ]),
+        ]
+    };
+}
+
+#[test]
+fn footnotes() {
+    parses_to! {
+        parser: RstParser,
+        input: "\
+.. [#] A
+.. [#b] B
+   More
+
+.. [32] C
+",
+        rule: Rule::document,
+        tokens: [
+            footnote(0, 9, [
+                footnote_label(4, 5),
+                line(7, 9, [ str(7, 8) ]),
+            ]),
+            footnote(9, 28, [
+                footnote_label(13, 15),
+                line(17, 19, [ str(17, 18) ]),
+                paragraph(22, 26, [ str(22, 26) ]),
+            ]),
+            footnote(28, 38, [
+                footnote_label(32, 34),
+                line(36, 38, [ str(36, 37) ]),
+            ]),
+        ]
+    };
+}
+
+#[test]
 fn inline_code_literal_with_underscore() {
     parses_to! {
         parser: RstParser,
@@ -132,11 +177,11 @@ fn admonitions() {
 ",
         rule: Rule::document,
         tokens: [
-            admonition_gen(0, 27, [
+            admonition_gen(0, 28, [
                 admonition_type(3, 7),
                 paragraph(13, 27, [ str(13, 27) ]),
             ]),
-            admonition(28, 71, [
+            admonition(28, 73, [
                 line(43, 58, [ str(43, 57) ]),
                 paragraph(62, 71, [ str(62, 71) ]),
             ]),

@@ -1,8 +1,8 @@
 use serde_derive::Serialize;
 
 use crate::attribute_types::{
-    AlignH, AlignHV, AlignV, CanBeEmpty, EnumeratedListType, FixedSpace, ID, Measure, NameToken,
-    TableAlignH, TableBorder, TableGroupCols,
+    AlignH, AlignHV, AlignV, AutoFootnoteType, CanBeEmpty, EnumeratedListType, FixedSpace, ID,
+    Measure, NameToken, TableAlignH, TableBorder, TableGroupCols,
 };
 use crate::url::Url;
 
@@ -63,7 +63,7 @@ impl_extra!(#[derive(Debug,PartialEq,Serialize,Clone)] Image {
 impl_extra!(BulletList { bullet: Option<String> });
 impl_extra!(EnumeratedList { enumtype: Option<EnumeratedListType>, prefix: Option<String>, suffix: Option<String> });
 
-impl_extra!(Footnote { backrefs: Vec<ID>, auto: bool });
+impl_extra!(Footnote { backrefs: Vec<ID>, auto: Option<AutoFootnoteType> });
 impl_extra!(Citation { backrefs: Vec<ID> });
 impl_extra!(SystemMessage { backrefs: Vec<ID>, level: Option<usize>, line: Option<usize>, type_: Option<NameToken> });
 impl_extra!(Figure { align: Option<AlignH>, width: Option<usize> });
