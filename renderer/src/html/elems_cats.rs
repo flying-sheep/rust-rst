@@ -53,6 +53,9 @@ macro_rules! impl_html_render_simple_nochildren {( $($type:ident => $tag:ident),
         }
     }
 )+ }}
+
+// Impl
+
 impl_html_render_cat!(StructuralSubElement {
     Title,
     Subtitle,
