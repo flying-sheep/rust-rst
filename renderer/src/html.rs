@@ -25,11 +25,7 @@ where
     if standalone {
         document.render_html(&mut renderer)
     } else {
-        for c in document.children() {
-            c.render_html(&mut renderer)?;
-            writeln!(renderer.stream)?;
-        }
-        Ok(())
+        document.children().render_html(&mut renderer)
     }
 }
 
@@ -66,29 +62,21 @@ macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
 
 macro_rules! impl_html_render_simple {
     (
-        $type1:ident => $tag1:ident $( [$($post1:tt)+] )?,
-        $( $type:ident => $tag:ident $( [$($post:tt)+] )? ),+
+        $type1:ident => $tag1:ident,
+        $( $type:ident => $tag:ident ),+
     ) => {
-        impl_html_render_simple!($type1 => $tag1 $([$($post1)+])?);
-        $( impl_html_render_simple!($type => $tag $([$($post)+])?); )+
+        impl_html_render_simple!($type1 => $tag1);
+        $( impl_html_render_simple!($type => $tag); )+
     };
     ( $type:ident => $tag:ident ) => {
-        impl_html_render_simple!($type => $tag[""]);
-    };
-    ( $type:ident => $tag:ident [ $post:expr ] ) => {
         impl HTMLRender for e::$type {
             fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
-                let multiple_children = self.children().len() > 1;
                 write!(renderer.stream, "<{}", stringify!($tag))?;
                 if self.classes().len() > 0 {
                     write!(renderer.stream, " class=\"{}\"", self.classes().join(" "))?;
                 }
                 write!(renderer.stream, ">")?;
-                if multiple_children { write!(renderer.stream, $post)?; }
-                for c in self.children() {
-                    c.render_html(renderer)?;
-                    if multiple_children { write!(renderer.stream, $post)?; }
-                }
+                self.children().render_html(renderer)?;
                 write!(renderer.stream, "</{}>", stringify!($tag))?;
                 Ok(())
             }
@@ -105,7 +93,57 @@ macro_rules! impl_html_render_simple_nochildren {( $($type:ident => $tag:ident),
     }
 )+ }}
 
+macro_rules! impl_html_render_multi {
+    (
+        $type1:path $( [$($post1:tt)+] )?,
+        $( $type:path $( [$($post:tt)+] )? ),+
+    ) => {
+        impl_html_render_multi!($type1 $([$($post1)+])?);
+        $( impl_html_render_multi!($type $([$($post)+])?); )+
+    };
+    ( $type:path ) => {
+        impl_html_render_multi!($type[""]);
+    };
+    ( $type:path [ $post:expr ] ) => {
+        impl HTMLRender for [$type] {
+            fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+            where
+                W: Write,
+            {
+                let many = self.len() > 1;
+                if many {
+                    write!(renderer.stream, $post)?;
+                }
+                for c in self {
+                    c.render_html(renderer)?;
+                    if many {
+                        write!(renderer.stream, $post)?;
+                    }
+                }
+                Ok(())
+            }
+        }
+    };
+}
+
 // Impl
+
+impl_html_render_multi!(
+    c::StructuralSubElement["\n"],
+    c::SubStructure["\n"],
+    c::BodyElement["\n"],
+    c::TextOrInlineElement,
+    c::SubSidebar,
+    c::SubLineBlock,
+    c::SubBlockQuote,
+    c::SubTopic,
+    c::SubFigure,
+    e::ListItem["\n"],
+    e::DefinitionListItem,
+    e::Field,
+    e::OptionListItem,
+    String
+);
 
 static HEAD: &str = r#"<head>
 <meta charset="utf-8">
@@ -122,10 +160,7 @@ impl HTMLRender for Document {
         W: Write,
     {
         writeln!(renderer.stream, "<!doctype html>\n<html>\n{HEAD}\n<body>")?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-            writeln!(renderer.stream)?;
-        }
+        self.children().render_html(renderer)?;
         writeln!(renderer.stream, "</body>\n</html>")?;
         Ok(())
     }
@@ -151,9 +186,7 @@ impl HTMLRender for e::Title {
             renderer.level
         };
         write!(renderer.stream, "<h{level}>")?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "</h{level}>")?;
         Ok(())
     }
@@ -194,11 +227,8 @@ impl HTMLRender for e::Section {
         W: Write,
     {
         renderer.level += 1;
-        writeln!(renderer.stream, "<section id=\"{0}\">", self.ids()[0].0)?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-            writeln!(renderer.stream)?;
-        }
+        write!(renderer.stream, "<section id=\"{0}\">", self.ids()[0].0)?;
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "</section>")?;
         renderer.level -= 1;
         Ok(())
@@ -262,7 +292,7 @@ impl_html_render_cat!(BodyElement {
     Figure,
     Table
 });
-impl_html_render_simple!(Paragraph => p, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul["\n"], EnumeratedList => ol["\n"], DefinitionList => dl["\n"], FieldList => dl["\n"], OptionList => pre, LineBlock => div["\n"], BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
+impl_html_render_simple!(Paragraph => p, MathBlock => math, Rubric => a, Compound => p, Container => div, BulletList => ul, EnumeratedList => ol, DefinitionList => dl, FieldList => dl, OptionList => pre, LineBlock => div, BlockQuote => blockquote, Admonition => aside, Attention => aside, Hint => aside, Note => aside, Caution => aside, Danger => aside, Error => aside, Important => aside, Tip => aside, Warning => aside, Figure => figure);
 impl_html_render_simple_nochildren!(Table => table); //TODO: after implementing the table, move it to elems with children
 
 // circumvent E0119
@@ -321,9 +351,7 @@ impl HTMLRender for e::LiteralBlock {
                 write!(renderer.stream, "<code>")?;
             }
         }
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         if is_code {
             write!(renderer.stream, "</code>")?;
         }
@@ -358,9 +386,7 @@ impl HTMLRender for e::Comment {
         W: Write,
     {
         write!(renderer.stream, "<!--")?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "-->")?;
         Ok(())
     }
@@ -448,9 +474,7 @@ impl HTMLRender for e::SystemMessage {
         W: Write,
     {
         write!(renderer.stream, "<figure><caption>System Message</caption>")?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "</figure>")?;
         Ok(())
     }
@@ -510,9 +534,7 @@ impl HTMLRender for e::Reference {
         }
         */
         write!(renderer.stream, ">")?;
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "</a>")?;
         Ok(())
     }
@@ -553,10 +575,7 @@ impl HTMLRender for e::RawInline {
     where
         W: Write,
     {
-        for c in self.children() {
-            write!(renderer.stream, "{c}")?;
-        }
-        Ok(())
+        self.children().render_html(renderer)
     }
 }
 
@@ -610,9 +629,7 @@ impl HTMLRender for e::Line {
     where
         W: Write,
     {
-        for c in self.children() {
-            c.render_html(renderer)?;
-        }
+        self.children().render_html(renderer)?;
         write!(renderer.stream, "<br>")?;
         Ok(())
     }
