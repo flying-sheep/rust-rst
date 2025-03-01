@@ -180,7 +180,6 @@ inline_special = _{
     | literal_outer
 //     | ul_or_star_line
 //     | space
-//     | note_reference
 //     //| citation
 //     | code
 //     | application_depent

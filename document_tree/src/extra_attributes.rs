@@ -87,7 +87,7 @@ impl_extra!(Reference {
     /// Internal reference to the names attribute of another element
     refname: Vec<NameToken>,
 });
-impl_extra!(FootnoteReference { refid: Option<ID>, refname: Vec<NameToken>, auto: bool });
+impl_extra!(FootnoteReference { refid: Option<ID>, refname: Vec<NameToken>, auto: Option<AutoFootnoteType> });
 impl_extra!(CitationReference { refid: Option<ID>, refname: Vec<NameToken> });
 impl_extra!(SubstitutionReference { refname: Vec<NameToken> });
 impl_extra!(Problematic { refid: Option<ID> });

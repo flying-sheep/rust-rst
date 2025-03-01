@@ -5,8 +5,8 @@ use anyhow::{Error, bail};
 // use crate::url::Url;
 use super::{HTMLRender, HTMLRenderer, escape_html};
 use document_tree::{
-    Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
-    elements as e, extra_attributes as a,
+    Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
+    element_categories as c, elements as e, extra_attributes as a,
 };
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
@@ -392,7 +392,7 @@ impl_html_render_cat!(TextOrInlineElement {
     RawInline,
     ImageInline
 });
-impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, FootnoteReference => a, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
+impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
 
 impl HTMLRender for String {
     fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
@@ -447,6 +447,24 @@ impl HTMLRender for e::Problematic {
     {
         // Broken inline markup leads to insertion of this in docutils
         unimplemented!();
+    }
+}
+
+impl HTMLRender for e::FootnoteReference {
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    where
+        W: Write,
+    {
+        // TODO: handle missing stuff
+        write!(
+            renderer.stream,
+            "<a id=\"{}\" href=\"#{}\">",
+            self.ids().first().unwrap().0,
+            self.extra().refid.as_ref().unwrap().0,
+        )?;
+        self.children().render_html(renderer)?;
+        write!(renderer.stream, "</a>")?;
+        Ok(())
     }
 }
 
