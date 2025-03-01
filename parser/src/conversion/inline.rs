@@ -2,9 +2,10 @@ use anyhow::Error;
 use pest::iterators::Pair;
 
 use document_tree::{
-    CommonAttributes, HasChildren, attribute_types as at, element_categories as c, elements as e,
-    extra_attributes as a, url::Url,
+    CommonAttributes, Element, ExtraAttributes, HasChildren, attribute_types as at,
+    element_categories as c, elements as e, extra_attributes as a, url::Url,
 };
+use uuid::Uuid;
 
 use super::whitespace_normalize_name;
 use crate::pest_rst::Rule;
@@ -18,6 +19,7 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
         Rule::emph => e::Emphasis::with_children(convert_inlines(pair)?).into(),
         Rule::strong => e::Strong::with_children(convert_inlines(pair)?).into(),
         Rule::literal => e::Literal::with_children(vec![pair.as_str().to_owned()]).into(),
+        Rule::footnote_reference => convert_footnote_reference(pair).into(),
         rule => unimplemented!("unknown rule {:?}", rule),
     })
 }
@@ -141,4 +143,21 @@ fn convert_substitution_ref(pair: &Pair<Rule>) -> e::SubstitutionReference {
     a::ExtraAttributes::with_extra(a::SubstitutionReference {
         refname: vec![at::NameToken(name)],
     })
+}
+
+fn convert_footnote_reference(pair: Pair<Rule>) -> e::FootnoteReference {
+    let label = pair.into_inner().next().unwrap().as_str();
+
+    let mut fr = e::FootnoteReference::default();
+    fr.ids_mut()
+        .push(at::ID(format!("footnote-{}", Uuid::new_v4())));
+    if label.len() > 1 {
+        let name = whitespace_normalize_name(&label[1..]);
+        fr.names_mut().push(at::NameToken(name));
+    }
+    fr.extra_mut().auto = label.chars().next().unwrap().try_into().ok();
+    if fr.extra().auto.is_none() {
+        fr.children_mut().push(label.into());
+    }
+    fr
 }

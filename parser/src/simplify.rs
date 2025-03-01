@@ -22,7 +22,7 @@ TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/b
 use std::{collections::HashMap, num::NonZero};
 
 use document_tree::{
-    Document, HasChildren,
+    Document, HasChildren, LabelledFootnote as _,
     attribute_types::{AutoFootnoteType, ID, NameToken},
     element_categories as c,
     elements::{self as e, Element},
@@ -69,7 +69,9 @@ struct TargetsCollected {
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
-    /// Holds used footnote numbers.
+    // TODO: symbol ones only need counters, not vecs!
+    footnote_refs_number: HashMap<ID, NonZero<usize>>,
+    footnote_refs_symbol: HashMap<ID, NonZero<usize>>,
     footnotes_number: HashMap<ID, NonZero<usize>>,
     footnotes_symbol: HashMap<ID, NonZero<usize>>,
 }
@@ -102,13 +104,20 @@ impl TargetsCollected {
             .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
     }
 
-    fn next_footnote(&mut self, typ: AutoFootnoteType, named: bool) -> NonZero<usize> {
+    fn next_footnote(
+        &mut self,
+        typ: AutoFootnoteType,
+        is_ref: bool,
+        named: bool,
+    ) -> NonZero<usize> {
         // Auto-numbered named footnotes get the *lowest* available number.
         // Auto-numbered anonymous footnotes get the *next* available number.
         // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
-        let it = match typ {
-            AutoFootnoteType::Number => &mut self.footnotes_number,
-            AutoFootnoteType::Symbol => &mut self.footnotes_symbol,
+        let it = match (typ, is_ref) {
+            (AutoFootnoteType::Number, true) => &mut self.footnote_refs_number,
+            (AutoFootnoteType::Symbol, true) => &mut self.footnote_refs_symbol,
+            (AutoFootnoteType::Number, false) => &mut self.footnotes_number,
+            (AutoFootnoteType::Symbol, false) => &mut self.footnotes_symbol,
         }
         .values()
         .copied();
@@ -292,20 +301,21 @@ impl ResolvableRefs for c::BodyElement {
             B::Tip(e) => sub_pop(e.as_ref(), refs),
             B::Warning(e) => sub_pop(e.as_ref(), refs),
             B::Footnote(e) => {
-                /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                // TODO: dedupe
+                /*
                 1. (here) add auto-id and running count to “ids” of footnote references and footnotes
                 2. see below
                 */
                 let n = match e.extra().auto {
                     Some(t @ AutoFootnoteType::Number) => {
-                        let n = refs.next_footnote(t, !e.names().is_empty());
+                        let n = refs.next_footnote(t, false, !e.names().is_empty());
                         for name in e.names() {
                             refs.named_targets
                                 .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
                         }
                         Some(n)
                     }
-                    Some(t @ AutoFootnoteType::Symbol) => Some(refs.next_footnote(t, false)),
+                    Some(t @ AutoFootnoteType::Symbol) => Some(refs.next_footnote(t, false, false)),
                     None => e.get_label().ok().and_then(|l| l.parse().ok()),
                 };
                 if let Some(n) = n {
@@ -361,6 +371,7 @@ impl ResolvableRefs for c::BodyElement {
             B::Tip(e) => sub_res(*e, refs).into(),
             B::Warning(e) => sub_res(*e, refs).into(),
             B::Footnote(mut e) => {
+                // TODO: dedupe
                 /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
                 1. see above
                 2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
@@ -429,7 +440,32 @@ impl ResolvableRefs for c::TextOrInlineElement {
             T::Emphasis(e) => sub_pop(e.as_ref(), refs),
             T::Strong(e) => sub_pop(e.as_ref(), refs),
             T::Reference(e) => sub_pop(e.as_ref(), refs),
-            T::FootnoteReference(e) => sub_pop(e.as_ref(), refs),
+            T::FootnoteReference(e) => {
+                // TODO: dedupe
+                let n = match e.extra().auto {
+                    Some(t @ AutoFootnoteType::Number) => {
+                        let n = refs.next_footnote(t, true, !e.names().is_empty());
+                        for name in e.names() {
+                            refs.named_targets
+                                .insert(name.clone(), NamedTargetType::LabeledFootnote(n));
+                        }
+                        Some(n)
+                    }
+                    Some(t @ AutoFootnoteType::Symbol) => Some(refs.next_footnote(t, true, false)),
+                    None => e.get_label().ok().and_then(|l| l.parse().ok()),
+                };
+                if let Some(n) = n {
+                    for id in e.ids() {
+                        match e.extra().auto {
+                            Some(AutoFootnoteType::Symbol) => {
+                                refs.footnote_refs_symbol.insert(id.clone(), n)
+                            }
+                            _ => refs.footnote_refs_number.insert(id.clone(), n),
+                        };
+                    }
+                }
+                sub_pop(e.as_ref(), refs);
+            }
             T::CitationReference(e) => sub_pop(e.as_ref(), refs),
             T::SubstitutionReference(e) => sub_pop(e.as_ref(), refs),
             T::TitleReference(e) => sub_pop(e.as_ref(), refs),
@@ -463,7 +499,23 @@ impl ResolvableRefs for c::TextOrInlineElement {
                 }
                 (*e).into()
             }
-            T::FootnoteReference(e) => sub_res(*e, refs).into(),
+            T::FootnoteReference(mut e) => {
+                // TODO: dedupe
+                // https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+                let n = e
+                    .ids()
+                    .iter()
+                    .find_map(|id| match e.extra().auto {
+                        Some(AutoFootnoteType::Symbol) => refs.footnote_refs_symbol.get(id),
+                        _ => refs.footnote_refs_number.get(id),
+                    })
+                    .expect("Footnote reference without id");
+                e.extra_mut().refid = Some(ID(format!("footnote-{n}")));
+                if e.get_label().is_err() {
+                    e.children_mut().insert(0, n.to_string().into());
+                }
+                sub_res(*e, refs).into()
+            }
             T::CitationReference(e) => sub_res(*e, refs).into(),
             T::SubstitutionReference(e) => {
                 if let Some(Substitution {

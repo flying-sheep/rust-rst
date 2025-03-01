@@ -128,23 +128,24 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
         children.push(convert_body_elem(p)?.into());
     }
     let mut footnote = e::Footnote::with_children(children);
-    match label.chars().next().unwrap() {
-        '#' => {
-            if label.len() >= 2 {
-                footnote.names_mut().push(label[1..].into());
+    footnote.extra_mut().auto = label.chars().next().unwrap().try_into().ok();
+    match footnote.extra().auto {
+        Some(at::AutoFootnoteType::Number) => {
+            if label.len() > 1 {
+                let name = whitespace_normalize_name(&label[1..]);
+                footnote.names_mut().push(at::NameToken(name));
             }
-            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Number);
         }
-        '*' => {
-            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Symbol);
-        }
-        _ => {
+        Some(at::AutoFootnoteType::Symbol) => {}
+        None => {
             footnote
                 .children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
     };
-    footnote.ids_mut().push(at::ID(Uuid::new_v4().to_string()));
+    footnote
+        .ids_mut()
+        .push(at::ID(format!("footnote-{}", Uuid::new_v4())));
     Ok(footnote)
 }
 
