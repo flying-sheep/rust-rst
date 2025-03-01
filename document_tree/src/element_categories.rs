@@ -82,6 +82,28 @@ synonymous_enum!(BodyElement: SubTopic, SubSidebar, SubBlockQuote, SubFootnote, 
     LineBlock, BlockQuote, Admonition, Attention, Hint, Note, Caution, Danger, Error, Important, Tip, Warning, Footnote, Citation, SystemMessage, Figure, Table
 });
 
+impl<'a> TryFrom<&'a StructuralSubElement> for &'a BodyElement {
+    type Error = ();
+
+    fn try_from(value: &'a StructuralSubElement) -> Result<Self, ()> {
+        match value {
+            StructuralSubElement::SubStructure(s) => s.as_ref().try_into(),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a SubStructure> for &'a BodyElement {
+    type Error = ();
+
+    fn try_from(value: &'a SubStructure) -> Result<Self, ()> {
+        match value {
+            SubStructure::BodyElement(s) => Ok(s.as_ref()),
+            _ => Err(()),
+        }
+    }
+}
+
 synonymous_enum!(BibliographicElement {
     Author,
     Authors,

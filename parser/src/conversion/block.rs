@@ -5,6 +5,7 @@ use document_tree::{
     Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
     elements as e, extra_attributes as a,
 };
+use uuid::Uuid;
 
 use super::{inline::convert_inlines, whitespace_normalize_name};
 use crate::{pair_ext_parse::PairExt, pest_rst::Rule};
@@ -46,6 +47,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
     Ok(match pair.as_rule() {
         Rule::paragraph => convert_paragraph(pair)?.into(),
         Rule::target => convert_target(pair)?.into(),
+        Rule::footnote => convert_footnote(pair)?.into(),
         Rule::substitution_def => convert_substitution_def(pair)?.into(),
         Rule::block_quote_directive => convert_block_quote_directive(pair)?.into(),
         Rule::admonition_gen => convert_admonition_gen(pair),
@@ -114,6 +116,36 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
         }
     }
     Ok(elem)
+}
+
+fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
+    let mut pairs = pair.into_inner();
+    let label = pairs.next().unwrap().as_str();
+    let mut children: Vec<c::SubFootnote> = vec![];
+    // turn `line` into paragraph
+    children.push(convert_paragraph(pairs.next().unwrap())?.into());
+    for p in pairs {
+        children.push(convert_body_elem(p)?.into());
+    }
+    let mut footnote = e::Footnote::with_children(children);
+    match label.chars().next().unwrap() {
+        '#' => {
+            if label.len() >= 2 {
+                footnote.names_mut().push(label[1..].into());
+            }
+            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Number);
+        }
+        '*' => {
+            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Symbol);
+        }
+        _ => {
+            footnote
+                .children_mut()
+                .insert(0, e::Label::with_children(vec![label.into()]).into());
+        }
+    };
+    footnote.ids_mut().push(at::ID(Uuid::new_v4().to_string()));
+    Ok(footnote)
 }
 
 fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition, Error> {
