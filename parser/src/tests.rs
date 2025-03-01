@@ -150,6 +150,26 @@ fn footnotes() {
 }
 
 #[test]
+fn footnote_refs() {
+    parses_to! {
+        parser: RstParser,
+        input: "A-[#one]_ and [#]_ and [*]_.",
+        rule: Rule::document,
+        tokens: [
+            paragraph(0, 28, [
+                str(0, 2),
+                footnote_reference(2, 9, [ footnote_label(3, 7) ]),
+                str(9, 14),
+                footnote_reference(14, 18, [ footnote_label(15, 16) ]),
+                str(18, 23),
+                footnote_reference(23, 27, [ footnote_label(24, 25) ]),
+                str(27, 28),
+            ]),
+        ]
+    };
+}
+
+#[test]
 fn inline_code_literal_with_underscore() {
     parses_to! {
         parser: RstParser,

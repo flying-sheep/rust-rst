@@ -172,7 +172,8 @@ inlines    = _{ !marker ~ inline+ ~ ( ( ws_newline ~ PEEK[..] ~ !marker ~ inline
 ws_newline =  { NEWLINE }
 inline     = _{ inline_special | str }
 inline_special = _{
-    reference
+    footnote_reference
+    | reference
     | substitution_ref
     | emph_outer
     | strong_outer
@@ -180,7 +181,6 @@ inline_special = _{
 //     | ul_or_star_line
 //     | space
 //     | note_reference
-//     | footnote
 //     //| citation
 //     | code
 //     | application_depent
@@ -206,10 +206,12 @@ literal_outer = _{ "``" ~ literal ~ "``" }
 literal       =  { (!"``" ~ ANY)+ }
 
 // inline links
+footnote_reference = { "[" ~ footnote_label ~ "]_" }
+
 reference = { reference_target | reference_explicit | reference_auto }
 
 reference_target = { (reference_target_uq ~ "_" | reference_target_qu) ~ !(LETTER|NUMBER) }
-reference_target_uq =  { (!("_"|":"|"`") ~ nonspacechar)+ }
+reference_target_uq =  { (!("_"|":"|"`"|"[") ~ nonspacechar)+ }
 reference_target_qu = { ( !("`"? ~ "`_") ~ "`" ~ !"``" ) ~ reference_text? ~ ("<" ~ reference_bracketed ~ ">")? ~ ( "`" ~ !"``" ) ~ "_" }
 reference_text = { !"<" ~ ( !("`"|"<") ~ ANY )+ }
 reference_bracketed = { url | (target_name_qu ~ "_") | relative_reference }
@@ -540,8 +542,6 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // double_quote_start = { "\"" }
 // double_quote_end = { "\"" }
 // double_quoted = { double_quote_start ~ ( !double_quote_end ~ inline )+ ~ double_quote_end }
-
-// footnote = { "[#" ~ (!"]" ~ inline)+ ~ "]_" }
 
 // definition = {
 //     &( (!defmark ~ nonspacechar ~ raw_line) ~ blank_line? ~ defmark) ~
