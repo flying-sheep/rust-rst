@@ -6,7 +6,7 @@ mod pest_rst;
 #[cfg(test)]
 pub mod tests;
 pub mod token;
-mod transform;
+pub mod transform;
 
 use anyhow::Error;
 use pest::Parser;
