@@ -3,10 +3,10 @@
 mod conversion;
 mod pair_ext_parse;
 mod pest_rst;
-mod simplify;
 #[cfg(test)]
 pub mod tests;
 pub mod token;
+mod transform;
 
 use anyhow::Error;
 use pest::Parser;
@@ -15,7 +15,7 @@ use document_tree::Document;
 
 use self::conversion::convert_document;
 use self::pest_rst::{RstParser, Rule};
-use self::simplify::resolve_references;
+use self::transform::resolve_references;
 
 /// Parse into a document tree and resolve sections, but not references.
 ///

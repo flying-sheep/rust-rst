@@ -19,6 +19,13 @@ There’s also anonymous links and targets without names.
 TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py
 */
 
+mod references;
+mod visit;
+mod visit_mut;
+
+pub use self::visit::Visit;
+pub use self::visit_mut::VisitMut;
+
 use std::{collections::HashMap, num::NonZero};
 
 use document_tree::{
