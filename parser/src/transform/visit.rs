@@ -3,6 +3,12 @@ use document_tree::element_categories as c;
 use document_tree::elements as e;
 
 pub trait Visit<'tree> {
+    fn visit(&mut self, e: &'tree e::Document) {
+        for c in e.children() {
+            self.visit_structural_sub_element(c);
+        }
+    }
+
     ////////////////
     // categories //
     ////////////////
@@ -70,8 +76,8 @@ pub trait Visit<'tree> {
     fn visit_bibliographic_element(&mut self, c: &'tree c::BibliographicElement) {
         use c::BibliographicElement as B;
         match c {
-            B::Author(e) => self.visit_author(e),
             B::Authors(e) => self.visit_authors(e),
+            B::Author(e) => self.visit_author(e),
             B::Organization(e) => self.visit_organization(e),
             B::Address(e) => self.visit_address(e),
             B::Contact(e) => self.visit_contact(e),

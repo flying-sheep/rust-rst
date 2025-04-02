@@ -10,6 +10,7 @@ use document_tree::{
 };
 
 use super::{Visit, VisitMut};
+use crate::transform_children;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -159,7 +160,7 @@ impl<'tree> Visit<'tree> for TargetCollector {
 
 // Second pass
 impl VisitMut for TargetCollector {
-    fn visit_footnote_mut(&mut self, e: &mut e::Footnote) {
+    fn visit_footnote_mut(&mut self, mut e: e::Footnote) -> Vec<c::BodyElement> {
         /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
         1. see above
         2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
@@ -176,18 +177,21 @@ impl VisitMut for TargetCollector {
             e.children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
-        for c in e.children_mut() {
-            self.visit_sub_footnote_mut(c);
-        }
+        transform_children!(e, self.visit_sub_footnote_mut);
+        vec![e.into()]
     }
-    fn visit_reference_mut(&mut self, e: &mut e::Reference) {
+    fn visit_reference_mut(&mut self, mut e: e::Reference) -> Vec<c::TextOrInlineElement> {
         if e.extra().refuri.is_none() {
             if let Some(uri) = self.target_url(&e.extra().refname) {
                 e.extra_mut().refuri = Some(uri.clone());
             }
         }
+        vec![e.into()]
     }
-    fn visit_substitution_reference_mut(&mut self, e: &mut e::SubstitutionReference) {
+    fn visit_substitution_reference_mut(
+        &mut self,
+        e: e::SubstitutionReference,
+    ) -> Vec<c::TextOrInlineElement> {
         if let Some(Substitution {
             content,
             ltrim,
@@ -215,6 +219,6 @@ impl VisitMut for TargetCollector {
         // TODO: Create an ID for replacement for the system_message to reference.
         // TODO: replacement.refid pointing to the system_message.
 
-        todo!("allow replacement") // T::Problematic(replacement)
+        vec![c::TextOrInlineElement::Problematic(replacement)]
     }
 }

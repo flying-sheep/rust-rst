@@ -23,19 +23,15 @@ mod references;
 mod visit;
 mod visit_mut;
 
-use document_tree::{Document, HasChildren as _};
+use document_tree::Document;
 
 use self::references::TargetCollector;
 pub use self::visit::Visit;
 pub use self::visit_mut::VisitMut;
 
-pub fn resolve_references(mut doc: Document) -> Document {
+#[must_use]
+pub fn resolve_references(doc: Document) -> Document {
     let mut references = TargetCollector::default();
-    for c in doc.children() {
-        references.visit_structural_sub_element(c);
-    }
-    for c in doc.children_mut() {
-        references.visit_structural_sub_element_mut(c);
-    }
-    doc
+    references.visit(&doc);
+    references.visit_mut(doc)
 }

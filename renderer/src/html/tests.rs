@@ -113,6 +113,7 @@ hello ``foo.map(|world| world + 42)``
     hay! |x|
 ",
         "<p>hello <code>foo.map(|world| world + 42)</code></p>
+
 <pre><code>foo.map(|world| world + 42)\n</code></pre>
 <pre>hay! |x|\n</pre>",
     );
