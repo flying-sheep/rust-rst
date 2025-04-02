@@ -160,6 +160,12 @@ impl<'tree> Visit<'tree> for TargetCollector {
 
 // Second pass
 impl VisitMut for TargetCollector {
+    fn visit_substitution_definition_mut(
+        &mut self,
+        _: e::SubstitutionDefinition,
+    ) -> Vec<c::BodyElement> {
+        vec![]
+    }
     fn visit_footnote_mut(&mut self, mut e: e::Footnote) -> Vec<c::BodyElement> {
         /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
         1. see above
