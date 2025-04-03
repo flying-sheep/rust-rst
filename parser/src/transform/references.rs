@@ -1,4 +1,4 @@
-use std::{collections::HashMap, num::NonZero};
+use std::{collections::HashMap, iter::once, num::NonZero};
 
 use document_tree::{
     HasChildren,
@@ -163,10 +163,10 @@ impl VisitMut for TargetCollector {
     fn visit_substitution_definition_mut(
         &mut self,
         _: e::SubstitutionDefinition,
-    ) -> Vec<c::BodyElement> {
-        vec![]
+    ) -> impl Iterator<Item = c::BodyElement> {
+        None.into_iter()
     }
-    fn visit_footnote_mut(&mut self, mut e: e::Footnote) -> Vec<c::BodyElement> {
+    fn visit_footnote_mut(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
         /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
         1. see above
         2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
@@ -184,47 +184,53 @@ impl VisitMut for TargetCollector {
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
         transform_children!(e, self.visit_sub_footnote_mut);
-        vec![e.into()]
+        once(e.into())
     }
-    fn visit_reference_mut(&mut self, mut e: e::Reference) -> Vec<c::TextOrInlineElement> {
+    fn visit_reference_mut(
+        &mut self,
+        mut e: e::Reference,
+    ) -> impl Iterator<Item = c::TextOrInlineElement> {
         if e.extra().refuri.is_none() {
             if let Some(uri) = self.target_url(&e.extra().refname) {
                 e.extra_mut().refuri = Some(uri.clone());
             }
         }
-        vec![e.into()]
+        once(e.into())
     }
     fn visit_substitution_reference_mut(
         &mut self,
         e: e::SubstitutionReference,
-    ) -> Vec<c::TextOrInlineElement> {
-        if let Some(Substitution {
+    ) -> impl Iterator<Item = c::TextOrInlineElement> {
+        let r: Box<dyn Iterator<Item = c::TextOrInlineElement>> = if let Some(Substitution {
             content,
             ltrim,
             rtrim,
-        }) = self.substitution(&e.extra().refname)
+        }) =
+            self.substitution(&e.extra().refname)
         {
             // (level 3 system message).
             // TODO: ltrim and rtrim.
             if *ltrim || *rtrim {
                 dbg!(content, ltrim, rtrim);
             }
-            return content.clone();
-        }
-        // Undefined substitution name (level 3 system message).
-        // TODO: This replaces the reference by a Problematic node.
-        // The corresponding SystemMessage node should go in a generated
-        // section with class "system-messages" at the end of the document.
-        let mut replacement: Box<e::Problematic> = Box::default();
-        replacement
-            .children_mut()
-            .push(c::TextOrInlineElement::String(Box::new(format!(
-                "|{}|",
-                e.extra().refname[0].0
-            ))));
-        // TODO: Create an ID for replacement for the system_message to reference.
-        // TODO: replacement.refid pointing to the system_message.
+            Box::new(content.clone().into_iter())
+        } else {
+            // Undefined substitution name (level 3 system message).
+            // TODO: This replaces the reference by a Problematic node.
+            // The corresponding SystemMessage node should go in a generated
+            // section with class "system-messages" at the end of the document.
+            let mut replacement: Box<e::Problematic> = Box::default();
+            replacement
+                .children_mut()
+                .push(c::TextOrInlineElement::String(Box::new(format!(
+                    "|{}|",
+                    e.extra().refname[0].0
+                ))));
+            // TODO: Create an ID for replacement for the system_message to reference.
+            // TODO: replacement.refid pointing to the system_message.
 
-        vec![c::TextOrInlineElement::Problematic(replacement)]
+            Box::new(once(c::TextOrInlineElement::Problematic(replacement)))
+        };
+        r
     }
 }
