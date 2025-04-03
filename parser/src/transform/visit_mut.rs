@@ -15,6 +15,11 @@ macro_rules! transform_children {
     };
 }
 
+#[inline]
+fn box_iter<'a, I>(i: impl Iterator<Item = I> + 'a) -> Box<dyn Iterator<Item = I> + 'a> {
+    Box::new(i)
+}
+
 pub trait VisitMut {
     #[must_use]
     fn visit_mut(&mut self, mut d: e::Document) -> e::Document {
@@ -32,14 +37,13 @@ pub trait VisitMut {
         c: c::StructuralSubElement,
     ) -> impl Iterator<Item = c::StructuralSubElement> {
         use c::StructuralSubElement as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Title(e) => Box::new(self.visit_title_mut(*e).map(Into::into)),
-            S::Subtitle(e) => Box::new(self.visit_subtitle_mut(*e).map(S::from)),
-            S::Decoration(e) => Box::new(self.visit_decoration_mut(*e)),
-            S::Docinfo(e) => Box::new(self.visit_docinfo_mut(*e)),
-            S::SubStructure(e) => Box::new(self.visit_substructure_mut(*e).map(S::from)),
-        };
-        r
+        match c {
+            S::Title(e) => box_iter(self.visit_title_mut(*e).map(Into::into)),
+            S::Subtitle(e) => box_iter(self.visit_subtitle_mut(*e).map(S::from)),
+            S::Decoration(e) => box_iter(self.visit_decoration_mut(*e)),
+            S::Docinfo(e) => box_iter(self.visit_docinfo_mut(*e)),
+            S::SubStructure(e) => box_iter(self.visit_substructure_mut(*e).map(S::from)),
+        }
     }
     #[must_use]
     fn visit_substructure_mut(
@@ -47,14 +51,13 @@ pub trait VisitMut {
         c: c::SubStructure,
     ) -> impl Iterator<Item = c::SubStructure> {
         use c::SubStructure as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Topic(e) => Box::new(self.visit_topic_mut(*e).map(Into::into)),
-            S::Sidebar(e) => Box::new(self.visit_sidebar_mut(*e)),
-            S::Transition(e) => Box::new(self.visit_transition_mut(*e)),
-            S::Section(e) => Box::new(self.visit_section_mut(*e)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Topic(e) => box_iter(self.visit_topic_mut(*e).map(Into::into)),
+            S::Sidebar(e) => box_iter(self.visit_sidebar_mut(*e)),
+            S::Transition(e) => box_iter(self.visit_transition_mut(*e)),
+            S::Section(e) => box_iter(self.visit_section_mut(*e)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_body_element_mut(
@@ -62,44 +65,43 @@ pub trait VisitMut {
         c: c::BodyElement,
     ) -> impl Iterator<Item = c::BodyElement> {
         use c::BodyElement as B;
-        let r: Box<dyn Iterator<Item = B>> = match c {
-            B::Paragraph(e) => Box::new(self.visit_paragraph_mut(*e)),
-            B::LiteralBlock(e) => Box::new(self.visit_literal_block_mut(*e)),
-            B::DoctestBlock(e) => Box::new(self.visit_doctest_block_mut(*e)),
-            B::MathBlock(e) => Box::new(self.visit_math_block_mut(*e)),
-            B::Rubric(e) => Box::new(self.visit_rubric_mut(*e)),
-            B::SubstitutionDefinition(e) => Box::new(self.visit_substitution_definition_mut(*e)),
-            B::Comment(e) => Box::new(self.visit_comment_mut(*e)),
-            B::Pending(e) => Box::new(self.visit_pending_mut(*e)),
-            B::Target(e) => Box::new(self.visit_target_mut(*e)),
-            B::Raw(e) => Box::new(self.visit_raw_mut(*e)),
-            B::Image(e) => Box::new(self.visit_image_mut(*e)),
-            B::Compound(e) => Box::new(self.visit_compound_mut(*e)),
-            B::Container(e) => Box::new(self.visit_container_mut(*e)),
-            B::BulletList(e) => Box::new(self.visit_bullet_list_mut(*e)),
-            B::EnumeratedList(e) => Box::new(self.visit_enumerated_list_mut(*e)),
-            B::DefinitionList(e) => Box::new(self.visit_definition_list_mut(*e)),
-            B::FieldList(e) => Box::new(self.visit_field_list_mut(*e)),
-            B::OptionList(e) => Box::new(self.visit_option_list_mut(*e)),
-            B::LineBlock(e) => Box::new(self.visit_line_block_mut(*e).map(Into::into)),
-            B::BlockQuote(e) => Box::new(self.visit_block_quote_mut(*e)),
-            B::Admonition(e) => Box::new(self.visit_admonition_mut(*e)),
-            B::Attention(e) => Box::new(self.visit_attention_mut(*e)),
-            B::Hint(e) => Box::new(self.visit_hint_mut(*e)),
-            B::Note(e) => Box::new(self.visit_note_mut(*e)),
-            B::Caution(e) => Box::new(self.visit_caution_mut(*e)),
-            B::Danger(e) => Box::new(self.visit_danger_mut(*e)),
-            B::Error(e) => Box::new(self.visit_error_mut(*e)),
-            B::Important(e) => Box::new(self.visit_important_mut(*e)),
-            B::Tip(e) => Box::new(self.visit_tip_mut(*e)),
-            B::Warning(e) => Box::new(self.visit_warning_mut(*e)),
-            B::Footnote(e) => Box::new(self.visit_footnote_mut(*e)),
-            B::Citation(e) => Box::new(self.visit_citation_mut(*e)),
-            B::SystemMessage(e) => Box::new(self.visit_system_message_mut(*e)),
-            B::Figure(e) => Box::new(self.visit_figure_mut(*e)),
-            B::Table(e) => Box::new(self.visit_table_mut(*e)),
-        };
-        r
+        match c {
+            B::Paragraph(e) => box_iter(self.visit_paragraph_mut(*e)),
+            B::LiteralBlock(e) => box_iter(self.visit_literal_block_mut(*e)),
+            B::DoctestBlock(e) => box_iter(self.visit_doctest_block_mut(*e)),
+            B::MathBlock(e) => box_iter(self.visit_math_block_mut(*e)),
+            B::Rubric(e) => box_iter(self.visit_rubric_mut(*e)),
+            B::SubstitutionDefinition(e) => box_iter(self.visit_substitution_definition_mut(*e)),
+            B::Comment(e) => box_iter(self.visit_comment_mut(*e)),
+            B::Pending(e) => box_iter(self.visit_pending_mut(*e)),
+            B::Target(e) => box_iter(self.visit_target_mut(*e)),
+            B::Raw(e) => box_iter(self.visit_raw_mut(*e)),
+            B::Image(e) => box_iter(self.visit_image_mut(*e)),
+            B::Compound(e) => box_iter(self.visit_compound_mut(*e)),
+            B::Container(e) => box_iter(self.visit_container_mut(*e)),
+            B::BulletList(e) => box_iter(self.visit_bullet_list_mut(*e)),
+            B::EnumeratedList(e) => box_iter(self.visit_enumerated_list_mut(*e)),
+            B::DefinitionList(e) => box_iter(self.visit_definition_list_mut(*e)),
+            B::FieldList(e) => box_iter(self.visit_field_list_mut(*e)),
+            B::OptionList(e) => box_iter(self.visit_option_list_mut(*e)),
+            B::LineBlock(e) => box_iter(self.visit_line_block_mut(*e).map(Into::into)),
+            B::BlockQuote(e) => box_iter(self.visit_block_quote_mut(*e)),
+            B::Admonition(e) => box_iter(self.visit_admonition_mut(*e)),
+            B::Attention(e) => box_iter(self.visit_attention_mut(*e)),
+            B::Hint(e) => box_iter(self.visit_hint_mut(*e)),
+            B::Note(e) => box_iter(self.visit_note_mut(*e)),
+            B::Caution(e) => box_iter(self.visit_caution_mut(*e)),
+            B::Danger(e) => box_iter(self.visit_danger_mut(*e)),
+            B::Error(e) => box_iter(self.visit_error_mut(*e)),
+            B::Important(e) => box_iter(self.visit_important_mut(*e)),
+            B::Tip(e) => box_iter(self.visit_tip_mut(*e)),
+            B::Warning(e) => box_iter(self.visit_warning_mut(*e)),
+            B::Footnote(e) => box_iter(self.visit_footnote_mut(*e)),
+            B::Citation(e) => box_iter(self.visit_citation_mut(*e)),
+            B::SystemMessage(e) => box_iter(self.visit_system_message_mut(*e)),
+            B::Figure(e) => box_iter(self.visit_figure_mut(*e)),
+            B::Table(e) => box_iter(self.visit_table_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_bibliographic_element_mut(
@@ -107,20 +109,19 @@ pub trait VisitMut {
         c: c::BibliographicElement,
     ) -> impl Iterator<Item = c::BibliographicElement> {
         use c::BibliographicElement as B;
-        let r: Box<dyn Iterator<Item = B>> = match c {
-            B::Authors(e) => Box::new(self.visit_authors_mut(*e)),
-            B::Author(e) => Box::new(self.visit_author_mut(*e).map(Into::into)),
-            B::Organization(e) => Box::new(self.visit_organization_mut(*e).map(Into::into)),
-            B::Address(e) => Box::new(self.visit_address_mut(*e).map(Into::into)),
-            B::Contact(e) => Box::new(self.visit_contact_mut(*e).map(Into::into)),
-            B::Version(e) => Box::new(self.visit_version_mut(*e)),
-            B::Revision(e) => Box::new(self.visit_revision_mut(*e)),
-            B::Status(e) => Box::new(self.visit_status_mut(*e)),
-            B::Date(e) => Box::new(self.visit_date_mut(*e)),
-            B::Copyright(e) => Box::new(self.visit_copyright_mut(*e)),
-            B::Field(e) => Box::new(self.visit_field_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            B::Authors(e) => box_iter(self.visit_authors_mut(*e)),
+            B::Author(e) => box_iter(self.visit_author_mut(*e).map(Into::into)),
+            B::Organization(e) => box_iter(self.visit_organization_mut(*e).map(Into::into)),
+            B::Address(e) => box_iter(self.visit_address_mut(*e).map(Into::into)),
+            B::Contact(e) => box_iter(self.visit_contact_mut(*e).map(Into::into)),
+            B::Version(e) => box_iter(self.visit_version_mut(*e)),
+            B::Revision(e) => box_iter(self.visit_revision_mut(*e)),
+            B::Status(e) => box_iter(self.visit_status_mut(*e)),
+            B::Date(e) => box_iter(self.visit_date_mut(*e)),
+            B::Copyright(e) => box_iter(self.visit_copyright_mut(*e)),
+            B::Field(e) => box_iter(self.visit_field_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_text_or_inline_element_mut(
@@ -128,40 +129,38 @@ pub trait VisitMut {
         c: c::TextOrInlineElement,
     ) -> impl Iterator<Item = c::TextOrInlineElement> {
         use c::TextOrInlineElement as T;
-        let r: Box<dyn Iterator<Item = T>> = match c {
-            T::String(e) => Box::new(self.visit_string_mut(*e).map(Into::into)),
-            T::Emphasis(e) => Box::new(self.visit_emphasis_mut(*e)),
-            T::Strong(e) => Box::new(self.visit_strong_mut(*e)),
-            T::Literal(e) => Box::new(self.visit_literal_mut(*e)),
-            T::Reference(e) => Box::new(self.visit_reference_mut(*e)),
-            T::FootnoteReference(e) => Box::new(self.visit_footnote_reference_mut(*e)),
-            T::CitationReference(e) => Box::new(self.visit_citation_reference_mut(*e)),
-            T::SubstitutionReference(e) => Box::new(self.visit_substitution_reference_mut(*e)),
-            T::TitleReference(e) => Box::new(self.visit_title_reference_mut(*e)),
-            T::Abbreviation(e) => Box::new(self.visit_abbreviation_mut(*e)),
-            T::Acronym(e) => Box::new(self.visit_acronym_mut(*e)),
-            T::Superscript(e) => Box::new(self.visit_superscript_mut(*e)),
-            T::Subscript(e) => Box::new(self.visit_subscript_mut(*e)),
-            T::Inline(e) => Box::new(self.visit_inline_mut(*e)),
-            T::Problematic(e) => Box::new(self.visit_problematic_mut(*e)),
-            T::Generated(e) => Box::new(self.visit_generated_mut(*e)),
-            T::Math(e) => Box::new(self.visit_math_mut(*e)),
-            T::TargetInline(e) => Box::new(self.visit_target_inline_mut(*e)),
-            T::RawInline(e) => Box::new(self.visit_raw_inline_mut(*e)),
-            T::ImageInline(e) => Box::new(self.visit_image_inline_mut(*e)),
-        };
-        r
+        match c {
+            T::String(e) => box_iter(self.visit_string_mut(*e).map(Into::into)),
+            T::Emphasis(e) => box_iter(self.visit_emphasis_mut(*e)),
+            T::Strong(e) => box_iter(self.visit_strong_mut(*e)),
+            T::Literal(e) => box_iter(self.visit_literal_mut(*e)),
+            T::Reference(e) => box_iter(self.visit_reference_mut(*e)),
+            T::FootnoteReference(e) => box_iter(self.visit_footnote_reference_mut(*e)),
+            T::CitationReference(e) => box_iter(self.visit_citation_reference_mut(*e)),
+            T::SubstitutionReference(e) => box_iter(self.visit_substitution_reference_mut(*e)),
+            T::TitleReference(e) => box_iter(self.visit_title_reference_mut(*e)),
+            T::Abbreviation(e) => box_iter(self.visit_abbreviation_mut(*e)),
+            T::Acronym(e) => box_iter(self.visit_acronym_mut(*e)),
+            T::Superscript(e) => box_iter(self.visit_superscript_mut(*e)),
+            T::Subscript(e) => box_iter(self.visit_subscript_mut(*e)),
+            T::Inline(e) => box_iter(self.visit_inline_mut(*e)),
+            T::Problematic(e) => box_iter(self.visit_problematic_mut(*e)),
+            T::Generated(e) => box_iter(self.visit_generated_mut(*e)),
+            T::Math(e) => box_iter(self.visit_math_mut(*e)),
+            T::TargetInline(e) => box_iter(self.visit_target_inline_mut(*e)),
+            T::RawInline(e) => box_iter(self.visit_raw_inline_mut(*e)),
+            T::ImageInline(e) => box_iter(self.visit_image_inline_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_author_info_mut(&mut self, c: c::AuthorInfo) -> impl Iterator<Item = c::AuthorInfo> {
         use c::AuthorInfo as A;
-        let r: Box<dyn Iterator<Item = A>> = match c {
-            A::Author(e) => Box::new(self.visit_author_mut(*e)),
-            A::Organization(e) => Box::new(self.visit_organization_mut(*e)),
-            A::Address(e) => Box::new(self.visit_address_mut(*e)),
-            A::Contact(e) => Box::new(self.visit_contact_mut(*e)),
-        };
-        r
+        match c {
+            A::Author(e) => box_iter(self.visit_author_mut(*e)),
+            A::Organization(e) => box_iter(self.visit_organization_mut(*e)),
+            A::Address(e) => box_iter(self.visit_address_mut(*e)),
+            A::Contact(e) => box_iter(self.visit_contact_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_decoration_element_mut(
@@ -169,50 +168,45 @@ pub trait VisitMut {
         c: c::DecorationElement,
     ) -> impl Iterator<Item = c::DecorationElement> {
         use c::DecorationElement as D;
-        let r: Box<dyn Iterator<Item = D>> = match c {
-            D::Header(e) => Box::new(self.visit_header_mut(*e)),
-            D::Footer(e) => Box::new(self.visit_footer_mut(*e)),
-        };
-        r
+        match c {
+            D::Header(e) => box_iter(self.visit_header_mut(*e)),
+            D::Footer(e) => box_iter(self.visit_footer_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_topic_mut(&mut self, c: c::SubTopic) -> impl Iterator<Item = c::SubTopic> {
         use c::SubTopic as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Title(e) => Box::new(self.visit_title_mut(*e).map(Into::into)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Title(e) => box_iter(self.visit_title_mut(*e).map(Into::into)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_sub_sidebar_mut(&mut self, c: c::SubSidebar) -> impl Iterator<Item = c::SubSidebar> {
         use c::SubSidebar as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Topic(e) => Box::new(self.visit_topic_mut(*e).map(Into::into)),
-            S::Title(e) => Box::new(self.visit_title_mut(*e).map(Into::into)),
-            S::Subtitle(e) => Box::new(self.visit_subtitle_mut(*e)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Topic(e) => box_iter(self.visit_topic_mut(*e).map(Into::into)),
+            S::Title(e) => box_iter(self.visit_title_mut(*e).map(Into::into)),
+            S::Subtitle(e) => box_iter(self.visit_subtitle_mut(*e)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_sub_dl_item_mut(&mut self, c: c::SubDLItem) -> impl Iterator<Item = c::SubDLItem> {
         use c::SubDLItem as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Term(e) => Box::new(self.visit_term_mut(*e)),
-            S::Classifier(e) => Box::new(self.visit_classifier_mut(*e)),
-            S::Definition(e) => Box::new(self.visit_definition_mut(*e)),
-        };
-        r
+        match c {
+            S::Term(e) => box_iter(self.visit_term_mut(*e)),
+            S::Classifier(e) => box_iter(self.visit_classifier_mut(*e)),
+            S::Definition(e) => box_iter(self.visit_definition_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_field_mut(&mut self, c: c::SubField) -> impl Iterator<Item = c::SubField> {
         use c::SubField as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::FieldName(e) => Box::new(self.visit_field_name_mut(*e)),
-            S::FieldBody(e) => Box::new(self.visit_field_body_mut(*e)),
-        };
-        r
+        match c {
+            S::FieldName(e) => box_iter(self.visit_field_name_mut(*e)),
+            S::FieldBody(e) => box_iter(self.visit_field_body_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_option_list_item_mut(
@@ -220,20 +214,18 @@ pub trait VisitMut {
         c: c::SubOptionListItem,
     ) -> impl Iterator<Item = c::SubOptionListItem> {
         use c::SubOptionListItem as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::OptionGroup(e) => Box::new(self.visit_option_group_mut(*e)),
-            S::Description(e) => Box::new(self.visit_description_mut(*e)),
-        };
-        r
+        match c {
+            S::OptionGroup(e) => box_iter(self.visit_option_group_mut(*e)),
+            S::Description(e) => box_iter(self.visit_description_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_option_mut(&mut self, c: c::SubOption) -> impl Iterator<Item = c::SubOption> {
         use c::SubOption as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::OptionString(e) => Box::new(self.visit_option_string_mut(*e)),
-            S::OptionArgument(e) => Box::new(self.visit_option_argument_mut(*e)),
-        };
-        r
+        match c {
+            S::OptionString(e) => box_iter(self.visit_option_string_mut(*e)),
+            S::OptionArgument(e) => box_iter(self.visit_option_argument_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_line_block_mut(
@@ -241,11 +233,10 @@ pub trait VisitMut {
         c: c::SubLineBlock,
     ) -> impl Iterator<Item = c::SubLineBlock> {
         use c::SubLineBlock as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::LineBlock(e) => Box::new(self.visit_line_block_mut(*e).map(Into::into)),
-            S::Line(e) => Box::new(self.visit_line_mut(*e)),
-        };
-        r
+        match c {
+            S::LineBlock(e) => box_iter(self.visit_line_block_mut(*e).map(Into::into)),
+            S::Line(e) => box_iter(self.visit_line_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_block_quote_mut(
@@ -253,11 +244,10 @@ pub trait VisitMut {
         c: c::SubBlockQuote,
     ) -> impl Iterator<Item = c::SubBlockQuote> {
         use c::SubBlockQuote as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Attribution(e) => Box::new(self.visit_attribution_mut(*e)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Attribution(e) => box_iter(self.visit_attribution_mut(*e)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_sub_footnote_mut(
@@ -265,30 +255,27 @@ pub trait VisitMut {
         c: c::SubFootnote,
     ) -> impl Iterator<Item = c::SubFootnote> {
         use c::SubFootnote as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Label(e) => Box::new(self.visit_label_mut(*e)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Label(e) => box_iter(self.visit_label_mut(*e)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_sub_figure_mut(&mut self, c: c::SubFigure) -> impl Iterator<Item = c::SubFigure> {
         use c::SubFigure as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Caption(e) => Box::new(self.visit_caption_mut(*e)),
-            S::Legend(e) => Box::new(self.visit_legend_mut(*e)),
-            S::BodyElement(e) => Box::new(self.visit_body_element_mut(*e).map(Into::into)),
-        };
-        r
+        match c {
+            S::Caption(e) => box_iter(self.visit_caption_mut(*e)),
+            S::Legend(e) => box_iter(self.visit_legend_mut(*e)),
+            S::BodyElement(e) => box_iter(self.visit_body_element_mut(*e).map(Into::into)),
+        }
     }
     #[must_use]
     fn visit_sub_table_mut(&mut self, c: c::SubTable) -> impl Iterator<Item = c::SubTable> {
         use c::SubTable as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::Title(e) => Box::new(self.visit_title_mut(*e).map(Into::into)),
-            S::TableGroup(e) => Box::new(self.visit_table_group_mut(*e)),
-        };
-        r
+        match c {
+            S::Title(e) => box_iter(self.visit_title_mut(*e).map(Into::into)),
+            S::TableGroup(e) => box_iter(self.visit_table_group_mut(*e)),
+        }
     }
     #[must_use]
     fn visit_sub_table_group_mut(
@@ -296,12 +283,11 @@ pub trait VisitMut {
         c: c::SubTableGroup,
     ) -> impl Iterator<Item = c::SubTableGroup> {
         use c::SubTableGroup as S;
-        let r: Box<dyn Iterator<Item = S>> = match c {
-            S::TableColspec(e) => Box::new(self.visit_table_colspec_mut(*e)),
-            S::TableHead(e) => Box::new(self.visit_table_head_mut(*e)),
-            S::TableBody(e) => Box::new(self.visit_table_body_mut(*e)),
-        };
-        r
+        match c {
+            S::TableColspec(e) => box_iter(self.visit_table_colspec_mut(*e)),
+            S::TableHead(e) => box_iter(self.visit_table_head_mut(*e)),
+            S::TableBody(e) => box_iter(self.visit_table_body_mut(*e)),
+        }
     }
 
     //////////////
