@@ -9,7 +9,7 @@ use document_tree::{
     url::Url,
 };
 
-use super::{Visit, VisitMut};
+use super::{Transform, Visit};
 use crate::transform_children;
 
 #[derive(Debug)]
@@ -159,14 +159,14 @@ impl<'tree> Visit<'tree> for TargetCollector {
 }
 
 // Second pass
-impl VisitMut for TargetCollector {
-    fn visit_substitution_definition_mut(
+impl Transform for TargetCollector {
+    fn transform_substitution_definition(
         &mut self,
         _: e::SubstitutionDefinition,
     ) -> impl Iterator<Item = c::BodyElement> {
         None.into_iter()
     }
-    fn visit_footnote_mut(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
+    fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
         /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
         1. see above
         2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
@@ -183,10 +183,10 @@ impl VisitMut for TargetCollector {
             e.children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
-        transform_children!(e, self.visit_sub_footnote_mut);
+        transform_children!(e, self.transform_sub_footnote);
         once(e.into())
     }
-    fn visit_reference_mut(
+    fn transform_reference(
         &mut self,
         mut e: e::Reference,
     ) -> impl Iterator<Item = c::TextOrInlineElement> {
@@ -197,7 +197,7 @@ impl VisitMut for TargetCollector {
         }
         once(e.into())
     }
-    fn visit_substitution_reference_mut(
+    fn transform_substitution_reference(
         &mut self,
         e: e::SubstitutionReference,
     ) -> impl Iterator<Item = c::TextOrInlineElement> {

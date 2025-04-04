@@ -20,18 +20,18 @@ TODO: continue documenting how it’s done via https://repo.or.cz/docutils.git/b
 */
 
 mod references;
+mod transform;
 mod visit;
-mod visit_mut;
 
 use document_tree::Document;
 
 use self::references::TargetCollector;
+pub use self::transform::Transform;
 pub use self::visit::Visit;
-pub use self::visit_mut::VisitMut;
 
 #[must_use]
 pub fn resolve_references(doc: Document) -> Document {
     let mut references = TargetCollector::default();
     references.visit(&doc);
-    references.visit_mut(doc)
+    references.transform(doc)
 }

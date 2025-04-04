@@ -6,7 +6,7 @@ mod pest_rst;
 #[cfg(test)]
 pub mod tests;
 pub mod token;
-pub mod transform;
+pub mod transforms;
 
 use anyhow::Error;
 use pest::Parser;
@@ -15,7 +15,7 @@ use document_tree::Document;
 
 use self::conversion::convert_document;
 use self::pest_rst::{RstParser, Rule};
-use self::transform::resolve_references;
+use self::transforms::resolve_references;
 
 /// Parse into a document tree and resolve sections, but not references.
 ///
