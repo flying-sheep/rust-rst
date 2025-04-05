@@ -4,7 +4,7 @@
 //! See [doctree][] reference.
 //! Serves as AST.
 //!
-//! [doctree]: http://docutils.sourceforge.net/docs/ref/doctree.html
+//! [doctree]: https://docutils.sourceforge.net/docs/ref/doctree.html
 
 #[macro_use]
 mod macro_util;

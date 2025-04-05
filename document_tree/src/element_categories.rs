@@ -105,11 +105,13 @@ impl<'a> TryFrom<&'a SubStructure> for &'a BodyElement {
 }
 
 synonymous_enum!(BibliographicElement {
-    Author,
     Authors,
+    // author info, contained in Authors above:
+    Author,
     Organization,
     Address,
     Contact,
+    // other:
     Version,
     Revision,
     Status,
@@ -194,6 +196,47 @@ synonymous_enum!(SubTableGroup {
     TableHead,
     TableBody
 });
+
+// indirect conversions
+impl From<SubTopic> for SubSidebar {
+    fn from(inner: SubTopic) -> Self {
+        match inner {
+            SubTopic::Title(e) => (*e).into(),
+            SubTopic::BodyElement(e) => (*e).into(),
+        }
+    }
+}
+
+impl From<SubTopic> for StructuralSubElement {
+    fn from(inner: SubTopic) -> Self {
+        match inner {
+            SubTopic::Title(e) => (*e).into(),
+            SubTopic::BodyElement(e) => (*e).into(),
+        }
+    }
+}
+
+impl From<SubSidebar> for StructuralSubElement {
+    fn from(inner: SubSidebar) -> Self {
+        match inner {
+            SubSidebar::Topic(e) => (*e).into(),
+            SubSidebar::Title(e) => (*e).into(),
+            SubSidebar::Subtitle(e) => (*e).into(),
+            SubSidebar::BodyElement(e) => (*e).into(),
+        }
+    }
+}
+
+impl From<AuthorInfo> for BibliographicElement {
+    fn from(inner: AuthorInfo) -> Self {
+        match inner {
+            AuthorInfo::Author(e) => (*e).into(),
+            AuthorInfo::Organization(e) => (*e).into(),
+            AuthorInfo::Address(e) => (*e).into(),
+            AuthorInfo::Contact(e) => (*e).into(),
+        }
+    }
+}
 
 #[cfg(test)]
 mod conversion_tests {

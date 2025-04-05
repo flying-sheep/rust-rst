@@ -79,7 +79,7 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
                 adornment_char = Some(p.as_str().chars().next().expect("Empty adornment?"));
             }
             rule => unimplemented!("Unexpected rule in title: {:?}", rule),
-        };
+        }
     }
     // now we encountered one line of text and one of adornments
     // TODO: emit error if the adornment line is too short (has to match title length)
@@ -143,7 +143,7 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
                 .children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
-    };
+    }
     footnote.ids_mut().push(at::ID(Uuid::new_v4().to_string()));
     Ok(footnote)
 }
@@ -306,7 +306,7 @@ fn convert_code_directive(pair: Pair<Rule>) -> e::LiteralBlock {
     code_block.classes_mut().push("code".to_owned());
     if let Some(lang) = lang {
         code_block.classes_mut().push(lang.as_str().to_owned());
-    };
+    }
     code_block
 }
 

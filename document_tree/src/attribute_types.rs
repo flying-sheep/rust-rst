@@ -83,7 +83,7 @@ pub struct TableGroupCols(pub usize);
 // no eq for f64
 #[derive(Debug, PartialEq, Serialize, Clone)]
 pub enum Measure {
-    // http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
+    // https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
     Em(f64),
     Ex(f64),
     Mm(f64),
