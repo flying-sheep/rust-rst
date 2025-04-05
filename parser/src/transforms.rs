@@ -26,7 +26,7 @@ mod visit;
 use document_tree::Document;
 
 use self::references::TargetCollector;
-pub use self::transform::Transform;
+pub use self::transform::{IteratorMaker, Transform};
 pub use self::visit::Visit;
 
 #[must_use]

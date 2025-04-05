@@ -10,7 +10,6 @@ use document_tree::{
 };
 
 use super::{Transform, Visit};
-use crate::transform_children;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -183,7 +182,7 @@ impl Transform for TargetCollector {
             e.children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
-        transform_children!(e, self.transform_sub_footnote);
+        self.transform_children(&mut e, Self::transform_sub_footnote);
         once(e.into())
     }
     fn transform_reference(
