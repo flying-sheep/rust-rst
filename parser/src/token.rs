@@ -1,4 +1,4 @@
-//http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bullet-lists
+//https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#bullet-lists
 
 // *, +, -, •, ‣, ⁃
 pub enum BulletListType {

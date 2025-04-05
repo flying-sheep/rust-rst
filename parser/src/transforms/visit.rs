@@ -3,6 +3,7 @@ use document_tree::element_categories as c;
 use document_tree::elements as e;
 
 pub trait Visit<'tree> {
+    /// Visit a document tree.
     fn visit(&mut self, e: &'tree e::Document) {
         for c in e.children() {
             self.visit_structural_sub_element(c);
