@@ -37,6 +37,15 @@ use document_tree::{
 
 use super::{Transform, Visit};
 
+#[must_use]
+pub fn standard_transform(doc: Document) -> Document {
+    let mut pass1 = Pass1::default();
+    let doc = pass1.transform(doc);
+    let mut pass2 = Pass2::from(pass1);
+    pass2.visit(&doc);
+    Pass3::from(pass2).transform(doc)
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 enum NamedTargetType {
@@ -61,6 +70,95 @@ impl NamedTargetType {
     }
 }
 
+const ONE: NonZero<usize> = NonZero::<usize>::MIN;
+
+/// Pass 1: Assign IDs to footnotes and footnote references.
+///
+/// Needs to be separate pass, since resolving `refid`s for footnote references requires already-assigned footnote IDs.
+/// Therefore, we do that here, then resolve references in the visit part of the second pass, and finally transform the footnotes.
+#[derive(Default, Debug)]
+struct Pass1 {
+    /// Numbered footnotes can have gaps due to explicitly numbered ones.
+    footnotes_number: HashMap<ID, NonZero<usize>>,
+    /// Symbol footnotes can only be in order, so `_.values().sort() == 1..=_.len()`
+    footnotes_symbol: HashMap<ID, NonZero<usize>>,
+    /// Number of encountered footnotes. Usually `footnotes_number.len()+footnotes_symbol.len()`.
+    n_footnotes: usize,
+    /// Number of encountered footnote references.
+    n_footnote_refs: usize,
+}
+impl Pass1 {
+    /// Get next footnote number for a type.
+    ///
+    /// See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
+    fn next_footnote(&mut self, typ: AutoFootnoteType) -> NonZero<usize> {
+        match typ {
+            AutoFootnoteType::Number => self
+                .footnotes_number
+                .values()
+                .copied()
+                .min()
+                .map_or(ONE, |n| n.saturating_add(1)),
+            AutoFootnoteType::Symbol => {
+                if cfg!(debug_assertions) {
+                    let mut vals: Vec<usize> = self
+                        .footnotes_symbol
+                        .values()
+                        .copied()
+                        .map(Into::into)
+                        .collect();
+                    vals.sort();
+                    assert_eq!(vals, (1..=self.footnotes_symbol.len()).collect::<Vec<_>>());
+                }
+                ONE.saturating_add(self.footnotes_symbol.len())
+            }
+        }
+    }
+}
+
+impl Transform for Pass1 {
+    /// Add auto-id and running count to “ids” of footnotes
+    fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
+        // Get next or stored footnote number
+        let n = e
+            .extra()
+            .auto
+            .map(|t| Some(self.next_footnote(t)))
+            .unwrap_or_else(|| e.get_label().ok().and_then(|l| l.parse().ok()));
+        // If we got one, add it to the correct mapping
+        if let Some(n) = n {
+            for id in e.ids() {
+                match e.extra().auto {
+                    Some(AutoFootnoteType::Symbol) => self.footnotes_symbol.insert(id.clone(), n),
+                    _ => self.footnotes_number.insert(id.clone(), n),
+                };
+            }
+        }
+
+        // Add running count ID
+        self.n_footnotes += 1;
+        e.ids_mut()
+            .push(ID(format!("footnote-{}", self.n_footnotes)));
+
+        // Standard transform
+        self.transform_children(&mut e, Self::transform_sub_footnote);
+        once(e.into())
+    }
+    /// Give each reference an ID. We don’t need to do more.
+    fn transform_footnote_reference(
+        &mut self,
+        mut e: e::FootnoteReference,
+    ) -> impl Iterator<Item = c::TextOrInlineElement> {
+        // Add running count ID
+        self.n_footnote_refs += 1;
+        e.ids_mut()
+            .push(ID(format!("footnote-reference-{}", self.n_footnote_refs)));
+        // Standard transform
+        self.transform_children(&mut e, Self::transform_text_or_inline_element);
+        once(e.into())
+    }
+}
+
 #[derive(Clone, Debug)]
 struct Substitution {
     content: Vec<c::TextOrInlineElement>,
@@ -71,64 +169,25 @@ struct Substitution {
     rtrim: bool,
 }
 
-#[must_use]
-pub(super) fn pass_2(doc: Document) -> Document {
-    let mut pass_2 = Pass2::default();
-    pass_2.visit(&doc);
-    pass_2.transform(doc)
-}
-
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct Pass2 {
+    pass1: Pass1,
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
-    /// Holds used footnote numbers.
-    footnotes_number: HashMap<ID, NonZero<usize>>,
-    footnotes_symbol: HashMap<ID, NonZero<usize>>,
 }
-impl Pass2 {
-    fn target_url<'t>(self: &'t Pass2, refname: &[NameToken]) -> Option<&'t Url> {
-        // TODO: Check if the target would expand circularly
-        assert!(
-            refname.len() == 1,
-            "Expected exactly one name in a reference."
-        );
-        let name = refname[0].clone();
-        match self.named_targets.get(&name)? {
-            NamedTargetType::ExternalLink(url) => Some(url),
-            _ => unimplemented!(),
+impl From<Pass1> for Pass2 {
+    fn from(pass1: Pass1) -> Self {
+        Self {
+            pass1,
+            named_targets: HashMap::new(),
+            substitutions: HashMap::new(),
+            normalized_substitutions: HashMap::new(),
         }
-    }
-
-    fn substitution<'t>(self: &'t Pass2, refname: &[NameToken]) -> Option<&'t Substitution> {
-        // TODO: Check if the substitution would expand circularly
-        assert!(
-            refname.len() == 1,
-            "Expected exactly one name in a substitution reference."
-        );
-        let name = refname[0].clone();
-        self.substitutions
-            .get(&name)
-            .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
-    }
-
-    fn next_footnote(&mut self, typ: AutoFootnoteType, named: bool) -> NonZero<usize> {
-        // Auto-numbered named footnotes get the *lowest* available number.
-        // Auto-numbered anonymous footnotes get the *next* available number.
-        // See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
-        let it = match typ {
-            AutoFootnoteType::Number => &mut self.footnotes_number,
-            AutoFootnoteType::Symbol => &mut self.footnotes_symbol,
-        }
-        .values()
-        .copied();
-        if named { it.min() } else { it.max() }
-            .map_or(NonZero::new(1usize).unwrap(), |n| n.saturating_add(1))
     }
 }
 
-/// First pass
+/// 2nd pass
 impl<'tree> Visit<'tree> for Pass2 {
     fn visit_substitution_definition(&mut self, e: &'tree e::SubstitutionDefinition) {
         let subst = Substitution {
@@ -215,8 +274,44 @@ impl<'tree> Visit<'tree> for Pass2 {
     }
 }
 
-// Second pass
-impl Transform for Pass2 {
+#[derive(Debug)]
+struct Pass3(Pass2);
+impl Pass3 {
+    fn target_url<'t>(self: &'t Pass3, refname: &[NameToken]) -> Option<&'t Url> {
+        // TODO: Check if the target would expand circularly
+        assert!(
+            refname.len() == 1,
+            "Expected exactly one name in a reference."
+        );
+        let name = refname[0].clone();
+        match self.0.named_targets.get(&name)? {
+            NamedTargetType::ExternalLink(url) => Some(url),
+            _ => unimplemented!(),
+        }
+    }
+
+    fn substitution<'t>(self: &'t Pass3, refname: &[NameToken]) -> Option<&'t Substitution> {
+        // TODO: Check if the substitution would expand circularly
+        assert!(
+            refname.len() == 1,
+            "Expected exactly one name in a substitution reference."
+        );
+        let name = refname[0].clone();
+        self.0
+            .substitutions
+            .get(&name)
+            .or_else(|| self.normalized_substitutions.get(&name.0.to_lowercase()))
+    }
+}
+
+impl From<Pass2> for Pass3 {
+    fn from(p: Pass2) -> Self {
+        Pass3(p)
+    }
+}
+
+/// 3rd pass.
+impl Transform for Pass3 {
     fn transform_substitution_definition(
         &mut self,
         _: e::SubstitutionDefinition,
@@ -300,8 +395,8 @@ impl Transform for Pass2 {
             .ids()
             .iter()
             .find_map(|id| match e.extra().auto {
-                Some(AutoFootnoteType::Symbol) => refs.footnote_refs_symbol.get(id),
-                _ => refs.footnote_refs_number.get(id),
+                Some(AutoFootnoteType::Symbol) => self.footnote_refs_symbol.get(id),
+                _ => self.footnote_refs_number.get(id),
             })
             .expect("Footnote reference without id");
         e.extra_mut().refid = Some(ID(format!("footnote-{n}")));
