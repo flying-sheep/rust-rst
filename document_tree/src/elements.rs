@@ -350,12 +350,16 @@ impl<'a> From<&'a str> for TextOrInlineElement {
     }
 }
 
-impl Footnote {
-    /// Get the footnote’s label node, if available
+pub trait LabelledFootnote {
+    /// Get the footnote’s/footnote reference’s label node, if available
     ///
     /// # Errors
     /// Returns an error if the footnote has no label
-    pub fn get_label(&self) -> Result<&str, anyhow::Error> {
+    fn get_label(&self) -> Result<&str, anyhow::Error>;
+}
+
+impl LabelledFootnote for Footnote {
+    fn get_label(&self) -> Result<&str, anyhow::Error> {
         use anyhow::{Context, bail};
 
         let SubFootnote::Label(e) = self
@@ -372,6 +376,21 @@ impl Footnote {
         {
             TextOrInlineElement::String(s) => Ok(s.as_ref()),
             _ => bail!("Footnote label is not a string"),
+        }
+    }
+}
+
+impl LabelledFootnote for FootnoteReference {
+    fn get_label(&self) -> Result<&str, anyhow::Error> {
+        use anyhow::{Context, bail};
+
+        match self
+            .children()
+            .first()
+            .context("Footnote reference has no child")?
+        {
+            TextOrInlineElement::String(s) => Ok(s.as_ref()),
+            _ => bail!("Footnote reference is not a string"),
         }
     }
 }

@@ -21,6 +21,18 @@ pub enum AutoFootnoteType {
     Symbol,
 }
 
+impl TryFrom<char> for AutoFootnoteType {
+    type Error = ();
+
+    fn try_from(c: char) -> Result<Self, Self::Error> {
+        match c {
+            '#' => Ok(AutoFootnoteType::Number),
+            '*' => Ok(AutoFootnoteType::Symbol),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
 pub enum FixedSpace {
     Default,
