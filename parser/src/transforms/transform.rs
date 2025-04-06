@@ -36,9 +36,16 @@ pub trait Transform {
     /// Can be used in other `transform_<element>` methods to recurse, e.g.:
     ///
     /// ```rust
-    /// fn transform_header(&mut self, mut e: e::Header) -> impl Iterator<Item = c::DecorationElement> {
-    ///     self.transform_children(&mut e, Self::transform_body_element);
-    ///     std::iter::once(e.into())
+    /// use document_tree::elements as e;
+    /// use document_tree::element_categories as c;
+    /// use rst_parser::transforms::Transform;
+    ///
+    /// struct MyPass;
+    /// impl Transform for MyPass {
+    ///     fn transform_header(&mut self, mut e: e::Header) -> impl Iterator<Item = c::DecorationElement> {
+    ///         self.transform_children(&mut e, Self::transform_body_element);
+    ///         std::iter::once(e.into())
+    ///     }
     /// }
     /// ```
     fn transform_children<C, E>(
