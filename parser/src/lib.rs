@@ -15,7 +15,7 @@ use document_tree::Document;
 
 use self::conversion::convert_document;
 use self::pest_rst::{RstParser, Rule};
-use self::transforms::resolve_references;
+use self::transforms::standard_transform;
 
 /// Parse into a document tree and resolve sections, but not references.
 ///
@@ -31,5 +31,5 @@ pub fn parse_only(source: &str) -> Result<Document, Error> {
 /// # Errors
 /// Returns an error if parsing fails.
 pub fn parse(source: &str) -> Result<Document, Error> {
-    parse_only(source).map(resolve_references)
+    parse_only(source).map(standard_transform)
 }

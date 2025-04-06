@@ -1,32 +1,33 @@
-/*!
-See <https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#hyperlink-targets>
-
-Links can have internal or external targets.
-In the source, targets look like:
-
-```restructuredtext
-.. targetname1:
-.. targetname2:
-
-some paragraph or list item or so
-```
-
-or:
-
-```restructuredtext
-.. targetname1:
-.. targetname2: https://link
-```
-
-There’s also anonymous links and targets without names.
-
-TODO: continue documenting how it’s done via <https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py>
+/*! Perform standard transforms.
+ *
+ * See <https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#hyperlink-targets>
+ *
+ * Links can have internal or external targets.
+ * In the source, targets look like:
+ *
+ * ```restructuredtext
+ * .. targetname1:
+ * .. targetname2:
+ *
+ * some paragraph or list item or so
+ * ```
+ *
+ * or:
+ *
+ * ```restructuredtext
+ * .. targetname1:
+ * .. targetname2: https://link
+ * ```
+ *
+ * There’s also anonymous links and targets without names.
+ *
+ * TODO: continue documenting how it’s done via <https://repo.or.cz/docutils.git/blob/HEAD:/docutils/docutils/transforms/references.py>
 */
 
 use std::{collections::HashMap, iter::once, num::NonZero};
 
 use document_tree::{
-    HasChildren,
+    Document, HasChildren,
     attribute_types::{AutoFootnoteType, ID, NameToken},
     element_categories as c,
     elements::{self as e, Element},
@@ -70,8 +71,15 @@ struct Substitution {
     rtrim: bool,
 }
 
+#[must_use]
+pub(super) fn pass_2(doc: Document) -> Document {
+    let mut pass_2 = Pass2::default();
+    pass_2.visit(&doc);
+    pass_2.transform(doc)
+}
+
 #[derive(Default, Debug)]
-pub(super) struct TargetCollector {
+struct Pass2 {
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
@@ -79,8 +87,8 @@ pub(super) struct TargetCollector {
     footnotes_number: HashMap<ID, NonZero<usize>>,
     footnotes_symbol: HashMap<ID, NonZero<usize>>,
 }
-impl TargetCollector {
-    fn target_url<'t>(self: &'t TargetCollector, refname: &[NameToken]) -> Option<&'t Url> {
+impl Pass2 {
+    fn target_url<'t>(self: &'t Pass2, refname: &[NameToken]) -> Option<&'t Url> {
         // TODO: Check if the target would expand circularly
         assert!(
             refname.len() == 1,
@@ -93,10 +101,7 @@ impl TargetCollector {
         }
     }
 
-    fn substitution<'t>(
-        self: &'t TargetCollector,
-        refname: &[NameToken],
-    ) -> Option<&'t Substitution> {
+    fn substitution<'t>(self: &'t Pass2, refname: &[NameToken]) -> Option<&'t Substitution> {
         // TODO: Check if the substitution would expand circularly
         assert!(
             refname.len() == 1,
@@ -124,7 +129,7 @@ impl TargetCollector {
 }
 
 /// First pass
-impl<'tree> Visit<'tree> for TargetCollector {
+impl<'tree> Visit<'tree> for Pass2 {
     fn visit_substitution_definition(&mut self, e: &'tree e::SubstitutionDefinition) {
         let subst = Substitution {
             content: e.children().clone(),
@@ -183,43 +188,12 @@ impl<'tree> Visit<'tree> for TargetCollector {
 }
 
 // Second pass
-impl Transform for TargetCollector {
+impl Transform for Pass2 {
     fn transform_substitution_definition(
         &mut self,
         _: e::SubstitutionDefinition,
     ) -> impl Iterator<Item = c::BodyElement> {
         None.into_iter()
-    }
-    fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
-        /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
-        1. see above
-        2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
-        */
-        if e.get_label().is_err() {
-            let label = e
-                .ids()
-                .iter()
-                .find_map(|id| match e.extra().auto {
-                    Some(AutoFootnoteType::Symbol) => self.footnotes_symbol.get(id),
-                    _ => self.footnotes_number.get(id),
-                })
-                .map_or_else(|| "???".into(), ToString::to_string);
-            e.children_mut()
-                .insert(0, e::Label::with_children(vec![label.into()]).into());
-        }
-        self.transform_children(&mut e, Self::transform_sub_footnote);
-        once(e.into())
-    }
-    fn transform_reference(
-        &mut self,
-        mut e: e::Reference,
-    ) -> impl Iterator<Item = c::TextOrInlineElement> {
-        if e.extra().refuri.is_none() {
-            if let Some(uri) = self.target_url(&e.extra().refname) {
-                e.extra_mut().refuri = Some(uri.clone());
-            }
-        }
-        once(e.into())
     }
     fn transform_substitution_reference(
         &mut self,
@@ -256,5 +230,36 @@ impl Transform for TargetCollector {
             Box::new(once(c::TextOrInlineElement::Problematic(replacement)))
         };
         r
+    }
+    fn transform_reference(
+        &mut self,
+        mut e: e::Reference,
+    ) -> impl Iterator<Item = c::TextOrInlineElement> {
+        if e.extra().refuri.is_none() {
+            if let Some(uri) = self.target_url(&e.extra().refname) {
+                e.extra_mut().refuri = Some(uri.clone());
+            }
+        }
+        once(e.into())
+    }
+    fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
+        /* TODO: https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
+        1. see above
+        2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
+        */
+        if e.get_label().is_err() {
+            let label = e
+                .ids()
+                .iter()
+                .find_map(|id| match e.extra().auto {
+                    Some(AutoFootnoteType::Symbol) => self.footnotes_symbol.get(id),
+                    _ => self.footnotes_number.get(id),
+                })
+                .map_or_else(|| "???".into(), ToString::to_string);
+            e.children_mut()
+                .insert(0, e::Label::with_children(vec![label.into()]).into());
+        }
+        self.transform_children(&mut e, Self::transform_sub_footnote);
+        once(e.into())
     }
 }
