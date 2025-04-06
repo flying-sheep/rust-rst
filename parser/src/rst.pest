@@ -85,7 +85,7 @@ literal_lines      = { literal_line ~ (literal_line_blank* ~ PEEK[..] ~ literal_
 literal_line_blank = { " "* ~ NEWLINE }
 literal_line       = { (!NEWLINE ~ ANY)+ ~ NEWLINE }
 
-/* Directives: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
+/* Directives: https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#directives
  * .. name:: arguments ~ :options: ~ blank_line+ ~ content
  * Everything except for the first argument has to be indented
  */

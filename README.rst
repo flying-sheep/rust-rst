@@ -28,8 +28,8 @@ The contained packages are:
 
 This project is dual-licensed under Apache 2.0 and MIT.
 
-.. _Docutils Document Tree: http://docutils.sourceforge.net/docs/ref/doctree.html
-.. _reStructuredText specification: http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
+.. _Docutils Document Tree: https://docutils.sourceforge.net/docs/ref/doctree.html
+.. _reStructuredText specification: https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html
 
 .. note::
    If you are looking for the requirements tracking tool rst (Requirements, Specifications and Tests),
