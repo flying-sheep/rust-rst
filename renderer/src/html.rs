@@ -10,8 +10,6 @@ use anyhow::Error;
 // use crate::url::Url;
 use document_tree::{Document, HasChildren};
 
-// static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
-
 /// Render document as HTML
 ///
 /// # Errors
@@ -49,12 +47,28 @@ trait HTMLRender {
         W: Write;
 }
 
-static HEAD: &str = r#"<head>
+pub const FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
+
+pub fn footnote_symbol(n: usize) -> String {
+    FOOTNOTE_SYMBOLS
+        .iter()
+        .cycle()
+        .nth(n - 1)
+        .unwrap()
+        .to_string()
+}
+
+const HEAD: &str = r#"<head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark light">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-li.symbol {{ list-style-type: symbols(symbolic '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣'); }}
+@counter-style footnote {
+  system: symbolic;
+  symbols: '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣';
+  /*suffix: ' ';*/
+}
+li.symbol {{ list-style-type: footnote; }}
 </style>
 </head>"#;
 

@@ -5,7 +5,6 @@ use document_tree::{
     Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
     elements as e, extra_attributes as a,
 };
-use uuid::Uuid;
 
 use super::{inline::convert_inlines, whitespace_normalize_name};
 use crate::{pair_ext_parse::PairExt, pest_rst::Rule};
@@ -118,6 +117,9 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     Ok(elem)
 }
 
+/// Converts a footnote.
+/// - named auto-numbered footnotes get their name set
+/// - explicitly numbered footnotes get their label set
 fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();
@@ -128,23 +130,21 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
         children.push(convert_body_elem(p)?.into());
     }
     let mut footnote = e::Footnote::with_children(children);
-    match label.chars().next().unwrap() {
-        '#' => {
-            if label.len() >= 2 {
-                footnote.names_mut().push(label[1..].into());
+    footnote.extra_mut().auto = label.chars().next().unwrap().try_into().ok();
+    match footnote.extra().auto {
+        Some(at::AutoFootnoteType::Number) => {
+            if label.len() > 1 {
+                let name = whitespace_normalize_name(&label[1..]);
+                footnote.names_mut().push(at::NameToken(name));
             }
-            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Number);
         }
-        '*' => {
-            footnote.extra_mut().auto = Some(at::AutoFootnoteType::Symbol);
-        }
-        _ => {
+        Some(at::AutoFootnoteType::Symbol) => {}
+        None => {
             footnote
                 .children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
     }
-    footnote.ids_mut().push(at::ID(Uuid::new_v4().to_string()));
     Ok(footnote)
 }
 

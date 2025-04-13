@@ -3,13 +3,12 @@ use std::io::Write;
 use anyhow::{Error, bail};
 
 // use crate::url::Url;
-use super::{HTMLRender, HTMLRenderer, escape_html};
+use super::{HTMLRender, HTMLRenderer, escape_html, footnote_symbol};
 use document_tree::{
-    Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
-    elements as e, extra_attributes as a,
+    Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
+    element_categories as c, elements as e,
+    extra_attributes::{self as a, FootnoteType},
 };
-
-// static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
 macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
     impl HTMLRender for c::$cat {
@@ -324,26 +323,45 @@ impl HTMLRender for e::Footnote {
     {
         use c::SubFootnote::BodyElement;
 
+        // open <li>
+        let id = self.ids().first().unwrap().0.as_str();
         let mut children = self.children().iter();
-        match (self.get_label(), self.extra().auto) {
-            (Ok(label), Some(at::AutoFootnoteType::Symbol)) => {
-                children.next(); // skip over the label
-                write!(renderer.stream, "<li value=\"{label}\" class=\"symbol\">")?;
+        write!(renderer.stream, "<li id=\"{id}\"")?;
+        // render label and backrefs
+        if let Ok(label) = self.get_label() {
+            let n: usize = label.parse().unwrap();
+            children.next(); // skip over the label
+            write!(renderer.stream, " value=\"{n}\"")?;
+            if self.is_symbol() {
+                write!(renderer.stream, " class=\"symbol\"")?;
             }
-            (Ok(label), _) => {
-                children.next(); // skip over the label
-                write!(renderer.stream, "<li value=\"{label}\">")?;
+            write!(renderer.stream, ">[")?; // TODO: render <p> here instead
+            // render backrefs
+            for refid in &self.extra().backrefs {
+                let label = if self.is_symbol() {
+                    footnote_symbol(n).to_string()
+                } else {
+                    label.to_string()
+                };
+                write!(
+                    renderer.stream,
+                    "<a href=\"#{0}\">{1}</a>",
+                    refid.0.as_str(),
+                    label // TODO: differentiate? make independent from `label`?
+                )?;
             }
-            (Err(_), _) => {
-                write!(renderer.stream, "<li>")?;
-            }
+        } else {
+            write!(renderer.stream, ">")?;
         }
+        write!(renderer.stream, "]")?;
+        // render children
         for child in children {
             let BodyElement(child) = child else {
                 bail!("Cannot have a footnote label anywhere but as first child node");
             };
             child.render_html(renderer)?;
         }
+        // close <li>
         write!(renderer.stream, "</li>")?;
         Ok(())
     }
@@ -392,7 +410,7 @@ impl_html_render_cat!(TextOrInlineElement {
     RawInline,
     ImageInline
 });
-impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, FootnoteReference => a, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
+impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
 
 impl HTMLRender for String {
     fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
@@ -447,6 +465,37 @@ impl HTMLRender for e::Problematic {
     {
         // Broken inline markup leads to insertion of this in docutils
         unimplemented!();
+    }
+}
+
+impl HTMLRender for e::FootnoteReference {
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    where
+        W: Write,
+    {
+        // open <a/> tag
+        write!(
+            renderer.stream,
+            "<a id=\"{}\" href=\"#{}\"",
+            self.ids().first().unwrap().0,
+            self.extra().refid.as_ref().unwrap().0,
+        )?;
+        if self.is_symbol() {
+            write!(renderer.stream, " class=\"symbol\"")?;
+        }
+        write!(renderer.stream, ">")?;
+        // render label
+        if self.is_symbol() {
+            let n: usize = self.get_label().unwrap().parse().unwrap();
+            // TODO: handle duplication as CSS “symbolic” counters do
+            let sym = footnote_symbol(n);
+            write!(renderer.stream, "<data value=\"{n}\">{sym}</data>")?;
+        } else {
+            self.children().render_html(renderer)?;
+        }
+        // close <a/> tag
+        write!(renderer.stream, "</a>")?;
+        Ok(())
     }
 }
 
