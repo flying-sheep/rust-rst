@@ -335,25 +335,20 @@ impl HTMLRender for e::Footnote {
             if self.is_symbol() {
                 write!(renderer.stream, " class=\"symbol\"")?;
             }
-            write!(renderer.stream, ">[")?; // TODO: render <p> here instead
+            write!(renderer.stream, "><span class=\"backrefs\">(")?; // TODO: render <p> here instead
             // render backrefs
-            for refid in &self.extra().backrefs {
-                let label = if self.is_symbol() {
-                    footnote_symbol(n).to_string()
-                } else {
-                    label.to_string()
-                };
+            for (i, refid) in self.extra().backrefs.iter().enumerate() {
                 write!(
                     renderer.stream,
                     "<a href=\"#{0}\">{1}</a>",
                     refid.0.as_str(),
-                    label // TODO: differentiate? make independent from `label`?
+                    i + 1
                 )?;
             }
         } else {
             write!(renderer.stream, ">")?;
         }
-        write!(renderer.stream, "]")?;
+        write!(renderer.stream, ")&nbsp;</span>")?;
         // render children
         for child in children {
             let BodyElement(child) = child else {
@@ -476,14 +471,14 @@ impl HTMLRender for e::FootnoteReference {
         // open <a/> tag
         write!(
             renderer.stream,
-            "<a id=\"{}\" href=\"#{}\"",
+            "<sup id=\"{}\" class=\"footnote-reference\"><a href=\"#{}\"",
             self.ids().first().unwrap().0,
             self.extra().refid.as_ref().unwrap().0,
         )?;
         if self.is_symbol() {
             write!(renderer.stream, " class=\"symbol\"")?;
         }
-        write!(renderer.stream, ">")?;
+        write!(renderer.stream, ">[")?;
         // render label
         if self.is_symbol() {
             let n: usize = self.get_label().unwrap().parse().unwrap();
@@ -494,7 +489,7 @@ impl HTMLRender for e::FootnoteReference {
             self.children().render_html(renderer)?;
         }
         // close <a/> tag
-        write!(renderer.stream, "</a>")?;
+        write!(renderer.stream, "]</a></sup>")?;
         Ok(())
     }
 }

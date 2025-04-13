@@ -98,7 +98,7 @@ where
     if footnotes.is_empty() {
         return Ok(());
     }
-    writeln!(renderer.stream, "<ol>")?;
+    writeln!(renderer.stream, "<ol class=\"footnotes\">")?;
     for f in footnotes {
         f.render_html(renderer)?;
         writeln!(renderer.stream)?;
