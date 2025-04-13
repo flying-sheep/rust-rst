@@ -423,11 +423,9 @@ impl Transform for Pass3<'_, '_> {
         let n = self.0.footnote_refs[e.footnote_type()].get(refid).unwrap();
 
         // get referenced footnote ID
-        let num2footnote: HashMap<_, _> = self.0.pass1.footnotes[e.footnote_type()]
+        e.extra_mut().refid = self.0.pass1.footnotes[e.footnote_type()]
             .iter()
-            .map(|(k, v)| (*v, k.clone()))
-            .collect();
-        e.extra_mut().refid = num2footnote.get(n).cloned();
+            .find_map(|(k, v)| (v == n).then_some(k.clone()));
 
         // add label
         if e.get_label().is_err() {
