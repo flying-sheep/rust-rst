@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2](https://github.com/flying-sheep/rust-rst/compare/rst-v0.4.1...rst-v0.4.2) - 2025-04-13
+
+### Other
+
+- clippy ([#66](https://github.com/flying-sheep/rust-rst/pull/66))
+- bump edition again ([#64](https://github.com/flying-sheep/rust-rst/pull/64))
+- Clippy ([#62](https://github.com/flying-sheep/rust-rst/pull/62))
+
 ## [0.4.1](https://github.com/flying-sheep/rust-rst/compare/rst-v0.4.0...rst-v0.4.1) - 2024-11-20
 
 ### Other

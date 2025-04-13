@@ -1,6 +1,6 @@
 [package]
 name = 'document_tree'
-version = "0.4.1"
+version = "0.4.2"
 authors = ['Philipp A. <flying-sheep@web.de>']
 edition = '2024'
 description = 'reStructuredText’s DocumentTree representation'
