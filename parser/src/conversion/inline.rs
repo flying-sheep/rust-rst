@@ -3,7 +3,9 @@ use pest::iterators::Pair;
 
 use document_tree::{
     CommonAttributes, Element, ExtraAttributes, HasChildren, attribute_types as at,
-    element_categories as c, elements as e, extra_attributes as a, url::Url,
+    element_categories as c, elements as e,
+    extra_attributes::{self as a, FootnoteType},
+    url::Url,
 };
 use uuid::Uuid;
 
@@ -156,7 +158,7 @@ fn convert_footnote_reference(pair: Pair<Rule>) -> e::FootnoteReference {
         fr.names_mut().push(at::NameToken(name));
     }
     fr.extra_mut().auto = label.chars().next().unwrap().try_into().ok();
-    if fr.extra().auto.is_none() {
+    if !fr.is_auto() {
         fr.children_mut().push(label.into());
     }
     fr

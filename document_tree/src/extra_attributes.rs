@@ -4,6 +4,7 @@ use crate::attribute_types::{
     AlignH, AlignHV, AlignV, AutoFootnoteType, CanBeEmpty, EnumeratedListType, FixedSpace, ID,
     Measure, NameToken, TableAlignH, TableBorder, TableGroupCols,
 };
+use crate::elements as e;
 use crate::url::Url;
 
 pub trait ExtraAttributes<A> {
@@ -104,6 +105,40 @@ impl_extra!(TargetInline {
 });
 impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 pub type ImageInline = Image;
+
+pub trait FootnoteType {
+    /// Is this an auto-numbered footnote?
+    fn is_auto(&self) -> bool;
+    /// Is this a symbolic footnote and not a numeric one?
+    fn is_symbol(&self) -> bool;
+}
+
+impl FootnoteType for Option<AutoFootnoteType> {
+    fn is_auto(&self) -> bool {
+        self.is_some()
+    }
+    fn is_symbol(&self) -> bool {
+        matches!(self, Some(AutoFootnoteType::Symbol))
+    }
+}
+
+impl FootnoteType for e::Footnote {
+    fn is_auto(&self) -> bool {
+        self.extra().auto.is_auto()
+    }
+    fn is_symbol(&self) -> bool {
+        self.extra().auto.is_symbol()
+    }
+}
+
+impl FootnoteType for e::FootnoteReference {
+    fn is_auto(&self) -> bool {
+        self.extra().auto.is_auto()
+    }
+    fn is_symbol(&self) -> bool {
+        self.extra().auto.is_symbol()
+    }
+}
 
 impl Image {
     #[must_use]

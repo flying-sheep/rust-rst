@@ -6,7 +6,8 @@ use anyhow::{Error, bail};
 use super::{HTMLRender, HTMLRenderer, escape_html};
 use document_tree::{
     Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
-    element_categories as c, elements as e, extra_attributes as a,
+    element_categories as c, elements as e,
+    extra_attributes::{self as a, FootnoteType},
 };
 
 // static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
@@ -325,16 +326,16 @@ impl HTMLRender for e::Footnote {
         use c::SubFootnote::BodyElement;
 
         let mut children = self.children().iter();
-        match (self.get_label(), self.extra().auto) {
-            (Ok(label), Some(at::AutoFootnoteType::Symbol)) => {
+        match (self.get_label().ok(), self.is_symbol()) {
+            (Some(label), true) => {
                 children.next(); // skip over the label
                 write!(renderer.stream, "<li value=\"{label}\" class=\"symbol\">")?;
             }
-            (Ok(label), _) => {
+            (Some(label), false) => {
                 children.next(); // skip over the label
                 write!(renderer.stream, "<li value=\"{label}\">")?;
             }
-            (Err(_), _) => {
+            (None, _) => {
                 write!(renderer.stream, "<li>")?;
             }
         }
