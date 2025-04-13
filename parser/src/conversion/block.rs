@@ -132,13 +132,13 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut footnote = e::Footnote::with_children(children);
     footnote.extra_mut().auto = label.chars().next().unwrap().try_into().ok();
     match footnote.extra().auto {
-        Some(at::AutoFootnoteType::Number) => {
+        Some(at::FootnoteType::Number) => {
             if label.len() > 1 {
                 let name = whitespace_normalize_name(&label[1..]);
                 footnote.names_mut().push(at::NameToken(name));
             }
         }
-        Some(at::AutoFootnoteType::Symbol) => {}
+        Some(at::FootnoteType::Symbol) => {}
         None => {
             footnote
                 .children_mut()

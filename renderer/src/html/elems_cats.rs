@@ -7,7 +7,7 @@ use super::{HTMLRender, HTMLRenderer, escape_html, footnote_symbol};
 use document_tree::{
     Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
     element_categories as c, elements as e,
-    extra_attributes::{self as a, FootnoteType},
+    extra_attributes::{self as a, FootnoteTypeExt},
 };
 
 macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {

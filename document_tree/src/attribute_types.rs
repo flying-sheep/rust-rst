@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::{Error, bail, format_err};
+use linearize::Linearize;
 use regex::Regex;
 use serde_derive::Serialize;
 
@@ -15,19 +16,19 @@ pub enum EnumeratedListType {
     UpperRoman,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
-pub enum AutoFootnoteType {
+#[derive(Linearize, Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+pub enum FootnoteType {
     Number,
     Symbol,
 }
 
-impl TryFrom<char> for AutoFootnoteType {
+impl TryFrom<char> for FootnoteType {
     type Error = ();
 
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
-            '#' => Ok(AutoFootnoteType::Number),
-            '*' => Ok(AutoFootnoteType::Symbol),
+            '#' => Ok(FootnoteType::Number),
+            '*' => Ok(FootnoteType::Symbol),
             _ => Err(()),
         }
     }

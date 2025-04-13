@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 use document_tree::{
     CommonAttributes, Element, ExtraAttributes, HasChildren, attribute_types as at,
     element_categories as c, elements as e,
-    extra_attributes::{self as a, FootnoteType},
+    extra_attributes::{self as a, FootnoteTypeExt},
     url::Url,
 };
 

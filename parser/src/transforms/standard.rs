@@ -41,12 +41,13 @@ use std::{collections::HashMap, iter::once, num::NonZero, vec};
 
 use document_tree::{
     Document, HasChildren, LabelledFootnote as _,
-    attribute_types::{AutoFootnoteType, ID, NameToken},
+    attribute_types::{FootnoteType, ID, NameToken},
     element_categories as c,
     elements::{self as e, Element},
-    extra_attributes::{ExtraAttributes, FootnoteType},
+    extra_attributes::{ExtraAttributes, FootnoteTypeExt},
     url::Url,
 };
+use linearize::StaticMap;
 
 use super::{Transform, Visit};
 
@@ -85,10 +86,10 @@ const ONE: NonZero<usize> = NonZero::<usize>::MIN;
 /// Therefore, we do that here, then (in pass 2) resolve references, and finally (in pass 3) transform the footnotes.
 #[derive(Default, Debug)]
 struct Pass1 {
-    /// Store numbers for symbolic footnotes. They can only be in order, so `_.values().sort() == 1..=_.len()`
-    footnotes_symbol: HashMap<ID, NonZero<usize>>,
-    /// Store numbers for numbered footnotes. They can have gaps due to explicitly numbered ones.
-    footnotes_number: HashMap<ID, NonZero<usize>>,
+    /// Store numbers footnotes.
+    /// Symbol ones can only be in order, so `_.values().sort() == 1..=_.len()`
+    /// Number ones can have gaps due to explicitly numbered ones.
+    footnotes: StaticMap<FootnoteType, HashMap<ID, NonZero<usize>>>,
     /// Numbers of anonymous footnotes in order of appearance.
     auto_numbered_anon_footnotes: Vec<NonZero<usize>>,
     /// Numbers of named footnotes in order of appearance.
@@ -102,13 +103,14 @@ impl Pass1 {
     /// Get next footnote number for a type.
     ///
     /// See <https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#mixed-manual-and-auto-numbered-footnotes>
-    fn next_footnote(&mut self, typ: AutoFootnoteType) -> NonZero<usize> {
+    fn next_footnote(&mut self, typ: FootnoteType) -> NonZero<usize> {
+        let footnotes = &mut self.footnotes[typ];
         match typ {
-            AutoFootnoteType::Number => {
-                let Some(n) = NonZero::new(self.footnotes_number.len()) else {
+            FootnoteType::Number => {
+                let Some(n) = NonZero::new(footnotes.len()) else {
                     return ONE;
                 };
-                let mut ordered: Vec<_> = self.footnotes_number.values().copied().collect();
+                let mut ordered: Vec<_> = footnotes.values().copied().collect();
                 ordered.sort_unstable();
                 ordered
                     .iter()
@@ -118,18 +120,14 @@ impl Pass1 {
                     .find_map(|(i, (n1, n2))| (n1.get() != n2).then_some(ONE.saturating_add(i)))
                     .unwrap_or(n)
             }
-            AutoFootnoteType::Symbol => {
+            FootnoteType::Symbol => {
                 if cfg!(debug_assertions) {
-                    let mut vals: Vec<usize> = self
-                        .footnotes_symbol
-                        .values()
-                        .copied()
-                        .map(Into::into)
-                        .collect();
+                    let mut vals: Vec<usize> =
+                        footnotes.values().copied().map(Into::into).collect();
                     vals.sort_unstable();
-                    assert_eq!(vals, (1..=self.footnotes_symbol.len()).collect::<Vec<_>>());
+                    assert_eq!(vals, (1..=footnotes.len()).collect::<Vec<_>>());
                 }
-                ONE.saturating_add(self.footnotes_symbol.len())
+                ONE.saturating_add(footnotes.len())
             }
         }
     }
@@ -163,14 +161,10 @@ impl Transform for Pass1 {
         e.ids_mut().push(id.clone());
 
         // Add footnote to the correct mapping
-        if e.is_symbol() {
-            self.footnotes_symbol.insert(id.clone(), n);
-        } else {
-            self.footnotes_number.insert(id.clone(), n);
-        }
+        self.footnotes[e.footnote_type()].insert(id.clone(), n);
 
         // Keep track of named vs anonymous footnotes for auto-numbering refs later
-        if matches!(e.extra().auto, Some(AutoFootnoteType::Number)) {
+        if matches!(e.extra().auto, Some(FootnoteType::Number)) {
             if e.names().is_empty() {
                 self.auto_numbered_anon_footnotes.push(n);
             } else {
@@ -214,11 +208,9 @@ struct Pass2<'p1> {
     named_targets: HashMap<NameToken, NamedTargetType>,
     substitutions: HashMap<NameToken, Substitution>,
     normalized_substitutions: HashMap<String, Substitution>,
-    /// Footnote references that reference symbol footnotes.
-    symbol_footnote_refs: HashMap<ID, NonZero<usize>>,
-    /// Footnote references that reference numbered footnotes.
-    /// Multiple can point to the same number.
-    numbered_footnote_refs: HashMap<ID, NonZero<usize>>,
+    /// Footnote references.
+    /// Multiple numbered ones can point to the same number.
+    footnote_refs: StaticMap<FootnoteType, HashMap<ID, NonZero<usize>>>,
     /// Number of symbol footnote references.
     n_symbol_footnote_refs: usize,
     /// Number of anonymous numbered footnote references.
@@ -233,8 +225,7 @@ impl<'p1> From<&'p1 Pass1> for Pass2<'p1> {
             named_targets: HashMap::new(),
             substitutions: HashMap::new(),
             normalized_substitutions: HashMap::new(),
-            symbol_footnote_refs: HashMap::new(),
-            numbered_footnote_refs: HashMap::new(),
+            footnote_refs: StaticMap::default(),
             n_symbol_footnote_refs: 0,
             n_numbered_anon_footnote_refs: 0,
             n_numbered_named_footnote_refs: 0,
@@ -278,11 +269,11 @@ impl<'tree> Visit<'tree> for Pass2<'_> {
         let id = e.ids().first().unwrap();
         let name = e.names().first();
         let n = match e.extra().auto {
-            Some(AutoFootnoteType::Symbol) => {
+            Some(FootnoteType::Symbol) => {
                 self.n_symbol_footnote_refs += 1;
                 NonZero::new(self.n_symbol_footnote_refs).unwrap()
             }
-            Some(AutoFootnoteType::Number) => {
+            Some(FootnoteType::Number) => {
                 if name.is_some() {
                     self.n_numbered_named_footnote_refs += 1;
                     self.pass1.auto_numbered_named_footnotes
@@ -295,11 +286,7 @@ impl<'tree> Visit<'tree> for Pass2<'_> {
             None => e.get_label().unwrap().parse().unwrap(),
         };
 
-        if e.is_symbol() {
-            self.symbol_footnote_refs.insert(id.clone(), n);
-        } else {
-            self.numbered_footnote_refs.insert(id.clone(), n);
-        }
+        self.footnote_refs[e.footnote_type()].insert(id.clone(), n);
 
         for c in e.children() {
             self.visit_text_or_inline_element(c);
@@ -407,12 +394,7 @@ impl Transform for Pass3<'_, '_> {
         2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
         */
         let id = e.ids().first().unwrap();
-        let id2num = if e.is_symbol() {
-            &self.0.pass1.footnotes_symbol
-        } else {
-            &self.0.pass1.footnotes_number
-        };
-        let num = id2num.get(id).unwrap();
+        let num = self.0.pass1.footnotes[e.footnote_type()].get(id).unwrap();
         if e.get_label().is_err() {
             e.children_mut().insert(
                 0,
@@ -421,12 +403,7 @@ impl Transform for Pass3<'_, '_> {
         }
 
         // backrefs
-        let refid2num = if e.is_symbol() {
-            &self.0.symbol_footnote_refs
-        } else {
-            &self.0.numbered_footnote_refs
-        };
-        e.extra_mut().backrefs = refid2num
+        e.extra_mut().backrefs = self.0.footnote_refs[e.footnote_type()]
             .iter()
             .filter(|&(_, num2)| num == num2)
             .map(|(refid, _)| refid.clone())
@@ -443,21 +420,13 @@ impl Transform for Pass3<'_, '_> {
         // TODO: dedupe
         // https://docutils.sourceforge.io/docs/ref/doctree.html#footnote-reference
         let refid = e.ids().first().unwrap();
-        let refid2num = if e.is_symbol() {
-            &self.0.symbol_footnote_refs
-        } else {
-            &self.0.numbered_footnote_refs
-        };
-        let n = refid2num.get(refid).unwrap();
+        let n = self.0.footnote_refs[e.footnote_type()].get(refid).unwrap();
 
         // get referenced footnote ID
-        let footnote2num = if e.is_symbol() {
-            &self.0.pass1.footnotes_symbol
-        } else {
-            &self.0.pass1.footnotes_number
-        };
-        let num2footnote: HashMap<_, _> =
-            footnote2num.iter().map(|(k, v)| (*v, k.clone())).collect();
+        let num2footnote: HashMap<_, _> = self.0.pass1.footnotes[e.footnote_type()]
+            .iter()
+            .map(|(k, v)| (*v, k.clone()))
+            .collect();
         e.extra_mut().refid = num2footnote.get(n).cloned();
 
         // add label
