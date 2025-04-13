@@ -478,7 +478,7 @@ impl HTMLRender for e::FootnoteReference {
         if self.is_symbol() {
             write!(renderer.stream, " class=\"symbol\"")?;
         }
-        write!(renderer.stream, ">[")?;
+        write!(renderer.stream, ">")?;
         // render label
         if self.is_symbol() {
             let n: usize = self.get_label().unwrap().parse().unwrap();
@@ -486,10 +486,12 @@ impl HTMLRender for e::FootnoteReference {
             let sym = footnote_symbol(n);
             write!(renderer.stream, "<data value=\"{n}\">{sym}</data>")?;
         } else {
+            write!(renderer.stream, "[")?;
             self.children().render_html(renderer)?;
+            write!(renderer.stream, "]")?;
         }
         // close <a/> tag
-        write!(renderer.stream, "]</a></sup>")?;
+        write!(renderer.stream, "</a></sup>")?;
         Ok(())
     }
 }

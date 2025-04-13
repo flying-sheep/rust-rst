@@ -72,8 +72,8 @@ const HEAD: &str = r#"<head>
 @counter-style footnote-symbolic {
     system: symbolic;
     symbols: '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣';
-    prefix: '[';
-    suffix: '] ';
+    prefix: '';
+    suffix: ' ';
 }
 .footnote-reference:target,
 ol.footnotes > li:target {
