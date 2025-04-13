@@ -325,20 +325,17 @@ impl HTMLRender for e::Footnote {
     {
         use c::SubFootnote::BodyElement;
 
+        let id = self.ids().first().unwrap().0.as_str();
         let mut children = self.children().iter();
-        match (self.get_label().ok(), self.is_symbol()) {
-            (Some(label), true) => {
-                children.next(); // skip over the label
-                write!(renderer.stream, "<li value=\"{label}\" class=\"symbol\">")?;
-            }
-            (Some(label), false) => {
-                children.next(); // skip over the label
-                write!(renderer.stream, "<li value=\"{label}\">")?;
-            }
-            (None, _) => {
-                write!(renderer.stream, "<li>")?;
+        write!(renderer.stream, "<li id=\"{id}\"")?;
+        if let Ok(label) = self.get_label() {
+            children.next(); // skip over the label
+            write!(renderer.stream, " value=\"{label}\"")?;
+            if self.is_symbol() {
+                write!(renderer.stream, " class=\"symbol\"")?;
             }
         }
+        write!(renderer.stream, ">")?;
         for child in children {
             let BodyElement(child) = child else {
                 bail!("Cannot have a footnote label anywhere but as first child node");

@@ -7,7 +7,6 @@ use document_tree::{
     extra_attributes::{self as a, FootnoteType},
     url::Url,
 };
-use uuid::Uuid;
 
 use super::whitespace_normalize_name;
 use crate::pest_rst::Rule;
@@ -151,8 +150,6 @@ fn convert_footnote_reference(pair: Pair<Rule>) -> e::FootnoteReference {
     let label = pair.into_inner().next().unwrap().as_str();
 
     let mut fr = e::FootnoteReference::default();
-    fr.ids_mut()
-        .push(at::ID(format!("footnote-{}", Uuid::new_v4())));
     if label.len() > 1 {
         let name = whitespace_normalize_name(&label[1..]);
         fr.names_mut().push(at::NameToken(name));

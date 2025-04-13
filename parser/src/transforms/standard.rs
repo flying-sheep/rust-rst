@@ -275,12 +275,7 @@ impl<'tree> Visit<'tree> for Pass2<'_> {
                     self.pass1.numbered_anon_footnote_nums[self.n_numbered_anon_footnote_refs - 1]
                 }
             }
-            None => self
-                .pass1
-                .footnotes_number
-                .get(e.ids().first().unwrap())
-                .copied()
-                .unwrap(),
+            None => e.get_label().unwrap().parse().unwrap(),
         };
 
         if e.is_symbol() {

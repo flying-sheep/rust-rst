@@ -5,7 +5,6 @@ use document_tree::{
     Element, ExtraAttributes, HasChildren, attribute_types as at, element_categories as c,
     elements as e, extra_attributes as a,
 };
-use uuid::Uuid;
 
 use super::{inline::convert_inlines, whitespace_normalize_name};
 use crate::{pair_ext_parse::PairExt, pest_rst::Rule};
@@ -143,9 +142,6 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
     }
-    footnote
-        .ids_mut()
-        .push(at::ID(format!("footnote-{}", Uuid::new_v4())));
     Ok(footnote)
 }
 
