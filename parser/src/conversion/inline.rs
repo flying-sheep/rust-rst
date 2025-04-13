@@ -14,6 +14,7 @@ use crate::pest_rst::Rule;
 pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
     Ok(match pair.as_rule() {
         Rule::str | Rule::str_nested => pair.as_str().into(),
+        Rule::escaped_char => pair.as_str()[1..].into(),
         Rule::ws_newline => " ".to_owned().into(),
         Rule::reference => convert_reference(pair)?,
         Rule::substitution_name => convert_substitution_ref(&pair).into(),

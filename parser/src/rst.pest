@@ -184,7 +184,7 @@ inline_special = _{
 //     | code
 //     | application_depent
 //     | entity
-//     | escaped_char
+    | escaped_char
 //     | smart
 //     | symbol
 }
@@ -442,7 +442,7 @@ marker = _{ (bullet_marker | "..") ~ " " }
 // str = { normal_char+ ~ str_chunk* }
 // str_chunk = _{ (normal_char | "_"+ ~ &alphanumeric)+ }
 
-// escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "}" | "[" | "]" | "(" | ")" | "#" | "+" | "." | "!" | ">" | "<") }
+escaped_char = { "\\" ~ !NEWLINE ~ ("-" | "\\" | "`" | "|" | "*" | "_" | "{" | "}" | "[" | "]" | "(" | ")" | "#" | "+" | "." | "!" | ">" | "<") }
 
 // entity = { hex_entity | dec_entity | char_entity }
 

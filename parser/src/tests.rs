@@ -44,6 +44,8 @@ fn emph() {
     };
 }
 
+// TODO: escaped chars
+
 #[test]
 fn title() {
     parses_to! {

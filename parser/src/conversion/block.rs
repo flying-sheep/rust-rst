@@ -117,6 +117,9 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
     Ok(elem)
 }
 
+/// Converts a footnote.
+/// - named auto-numbered footnotes get their name set
+/// - explicitly numbered footnotes get their label set
 fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();
