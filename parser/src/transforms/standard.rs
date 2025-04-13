@@ -412,11 +412,27 @@ impl Transform for Pass3<'_, '_> {
         } else {
             &self.0.pass1.footnotes_number
         };
-        let label = id2num.get(id).unwrap().to_string();
+        let num = id2num.get(id).unwrap();
         if e.get_label().is_err() {
-            e.children_mut()
-                .insert(0, e::Label::with_children(vec![label.into()]).into());
+            e.children_mut().insert(
+                0,
+                e::Label::with_children(vec![num.to_string().into()]).into(),
+            );
         }
+
+        // backrefs
+        let refid2num = if e.is_symbol() {
+            &self.0.symbol_footnote_refs
+        } else {
+            &self.0.numbered_footnote_refs
+        };
+        e.extra_mut().backrefs = refid2num
+            .iter()
+            .filter(|&(_, num2)| num == num2)
+            .map(|(refid, _)| refid.clone())
+            .collect();
+
+        // standard transform
         self.transform_children(&mut e, Self::transform_sub_footnote);
         once(e.into())
     }

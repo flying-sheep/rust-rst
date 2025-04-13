@@ -49,6 +49,15 @@ trait HTMLRender {
 
 pub const FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
+pub fn footnote_symbol(n: usize) -> String {
+    FOOTNOTE_SYMBOLS
+        .iter()
+        .cycle()
+        .nth(n - 1)
+        .unwrap()
+        .to_string()
+}
+
 const HEAD: &str = r#"<head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark light">

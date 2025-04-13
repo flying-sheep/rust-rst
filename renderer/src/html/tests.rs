@@ -143,12 +143,12 @@ Footnotes 1: [#]_, 3: [#]_, 33: [33]_, \\*: [*]_, 2: [#named]_, 4: [#]_.
 2: <a id=\"footnote-reference-5\" href=\"#named\">2</a>, \
 4: <a id=\"footnote-reference-6\" href=\"#footnote-5\">4</a>.</p>
 <ol>
-<li id=\"footnote-1\" value=\"1\"><p>[<a href=\"#footnote-reference-1\">1</a>] Footnote <em>1</em></p></li>
-<li id=\"footnote-2\" value=\"33\"><p>[<a href=\"#footnote-reference-3\">33</a>] Footnote <em>33</em></p><p>More</p></li>
-<li id=\"named\" value=\"2\"><p>[<a href=\"#footnote-reference-5\">2</a>] Footnote <em>2</em></p></li>
-<li id=\"footnote-3\" value=\"3\"><p>[<a href=\"#footnote-reference-2\">3</a>] Footnote <em>2</em></p></li>
-<li id=\"footnote-4\" value=\"1\" class=\"symbol\"><p>[<a href=\"#footnote-reference-4\">*</a>] Symbol</p></li>
-<li id=\"footnote-5\" value=\"4\"><p>[<a href=\"#footnote-reference-6\">4</a>] Footnote <em>4</em></p></li>
+<li id=\"footnote-1\" value=\"1\">[<a href=\"#footnote-reference-1\">1</a>]<p>Footnote <em>1</em></p></li>
+<li id=\"footnote-2\" value=\"33\">[<a href=\"#footnote-reference-3\">33</a>]<p>Footnote <em>33</em></p><p>More</p></li>
+<li id=\"named\" value=\"2\">[<a href=\"#footnote-reference-5\">2</a>]<p>Footnote <em>2</em></p></li>
+<li id=\"footnote-3\" value=\"3\">[<a href=\"#footnote-reference-2\">3</a>]<p>Footnote <em>3</em></p></li>
+<li id=\"footnote-4\" value=\"1\" class=\"symbol\">[<a href=\"#footnote-reference-4\">*</a>]<p>Symbol</p></li>
+<li id=\"footnote-5\" value=\"4\">[<a href=\"#footnote-reference-6\">4</a>]<p>Footnote <em>4</em></p></li>
 </ol>\
 ",
     );

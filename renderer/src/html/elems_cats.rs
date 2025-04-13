@@ -3,7 +3,7 @@ use std::io::Write;
 use anyhow::{Error, bail};
 
 // use crate::url::Url;
-use super::{FOOTNOTE_SYMBOLS, HTMLRender, HTMLRenderer, escape_html};
+use super::{HTMLRender, HTMLRenderer, escape_html, footnote_symbol};
 use document_tree::{
     Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
     element_categories as c, elements as e,
@@ -323,23 +323,45 @@ impl HTMLRender for e::Footnote {
     {
         use c::SubFootnote::BodyElement;
 
+        // open <li>
         let id = self.ids().first().unwrap().0.as_str();
         let mut children = self.children().iter();
         write!(renderer.stream, "<li id=\"{id}\"")?;
+        // render label and backrefs
         if let Ok(label) = self.get_label() {
+            let n: usize = label.parse().unwrap();
             children.next(); // skip over the label
-            write!(renderer.stream, " value=\"{label}\"")?;
+            write!(renderer.stream, " value=\"{n}\"")?;
             if self.is_symbol() {
                 write!(renderer.stream, " class=\"symbol\"")?;
             }
+            write!(renderer.stream, ">[")?; // TODO: render <p> here instead
+            // render backrefs
+            for refid in &self.extra().backrefs {
+                let label = if self.is_symbol() {
+                    footnote_symbol(n).to_string()
+                } else {
+                    label.to_string()
+                };
+                write!(
+                    renderer.stream,
+                    "<a href=\"#{0}\">{1}</a>",
+                    refid.0.as_str(),
+                    label // TODO: differentiate? make independent from `label`?
+                )?;
+            }
+        } else {
+            write!(renderer.stream, ">")?;
         }
-        write!(renderer.stream, ">")?;
+        write!(renderer.stream, "]")?;
+        // render children
         for child in children {
             let BodyElement(child) = child else {
                 bail!("Cannot have a footnote label anywhere but as first child node");
             };
             child.render_html(renderer)?;
         }
+        // close <li>
         write!(renderer.stream, "</li>")?;
         Ok(())
     }
@@ -451,7 +473,7 @@ impl HTMLRender for e::FootnoteReference {
     where
         W: Write,
     {
-        // TODO: handle missing stuff
+        // open <a/> tag
         write!(
             renderer.stream,
             "<a id=\"{}\" href=\"#{}\"",
@@ -459,17 +481,19 @@ impl HTMLRender for e::FootnoteReference {
             self.extra().refid.as_ref().unwrap().0,
         )?;
         if self.is_symbol() {
+            write!(renderer.stream, " class=\"symbol\"")?;
+        }
+        write!(renderer.stream, ">")?;
+        // render label
+        if self.is_symbol() {
             let n: usize = self.get_label().unwrap().parse().unwrap();
             // TODO: handle duplication as CSS “symbolic” counters do
-            let sym = FOOTNOTE_SYMBOLS.iter().cycle().nth(n - 1).unwrap();
-            write!(
-                renderer.stream,
-                " class=\"symbol\"><data value=\"{n}\">{sym}</data>"
-            )?;
+            let sym = footnote_symbol(n);
+            write!(renderer.stream, "<data value=\"{n}\">{sym}</data>")?;
         } else {
-            write!(renderer.stream, ">")?;
             self.children().render_html(renderer)?;
         }
+        // close <a/> tag
         write!(renderer.stream, "</a>")?;
         Ok(())
     }
