@@ -63,12 +63,32 @@ const HEAD: &str = r#"<head>
 <meta name="color-scheme" content="dark light">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-@counter-style footnote {
-  system: symbolic;
-  symbols: '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣';
-  /*suffix: ' ';*/
+@counter-style footnote-numeric {
+    system: numeric;
+    symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
+    prefix: '[';
+    suffix: '] ';
 }
-li.symbol {{ list-style-type: footnote; }}
+@counter-style footnote-symbolic {
+    system: symbolic;
+    symbols: '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣';
+    prefix: '';
+    suffix: ' ';
+}
+.footnote-reference:target,
+ol.footnotes > li:target {
+    background-color: hsl(60 100% 50% / 0.2);
+}
+ol.footnotes > li {
+    list-style-type: footnote-numeric;
+}
+ol.footnotes > li.symbol {
+    list-style-type: footnote-symbolic;
+}
+ol.footnotes > li > .backrefs {
+    float: left;
+    font-size: 0.8em;
+}
 </style>
 </head>"#;
 

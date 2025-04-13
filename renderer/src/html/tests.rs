@@ -136,19 +136,19 @@ Footnotes 1: [#]_, 3: [#]_, 33: [33]_, \\*: [*]_, 2: [#named]_, 4: [#]_.
 ",
         "\
 <p>Footnotes \
-1: <a id=\"footnote-reference-1\" href=\"#footnote-1\">1</a>, \
-3: <a id=\"footnote-reference-2\" href=\"#footnote-3\">3</a>, \
-33: <a id=\"footnote-reference-3\" href=\"#footnote-2\">33</a>, \
-*: <a id=\"footnote-reference-4\" href=\"#footnote-4\" class=\"symbol\"><data value=\"1\">*</data></a>, \
-2: <a id=\"footnote-reference-5\" href=\"#named\">2</a>, \
-4: <a id=\"footnote-reference-6\" href=\"#footnote-5\">4</a>.</p>
-<ol>
-<li id=\"footnote-1\" value=\"1\">[<a href=\"#footnote-reference-1\">1</a>]<p>Footnote <em>1</em></p></li>
-<li id=\"footnote-2\" value=\"33\">[<a href=\"#footnote-reference-3\">33</a>]<p>Footnote <em>33</em></p><p>More</p></li>
-<li id=\"named\" value=\"2\">[<a href=\"#footnote-reference-5\">2</a>]<p>Footnote <em>2</em></p></li>
-<li id=\"footnote-3\" value=\"3\">[<a href=\"#footnote-reference-2\">3</a>]<p>Footnote <em>3</em></p></li>
-<li id=\"footnote-4\" value=\"1\" class=\"symbol\">[<a href=\"#footnote-reference-4\">*</a>]<p>Symbol</p></li>
-<li id=\"footnote-5\" value=\"4\">[<a href=\"#footnote-reference-6\">4</a>]<p>Footnote <em>4</em></p></li>
+1: <sup id=\"footnote-reference-1\" class=\"footnote-reference\"><a href=\"#footnote-1\">[1]</a></sup>, \
+3: <sup id=\"footnote-reference-2\" class=\"footnote-reference\"><a href=\"#footnote-3\">[3]</a></sup>, \
+33: <sup id=\"footnote-reference-3\" class=\"footnote-reference\"><a href=\"#footnote-2\">[33]</a></sup>, \
+*: <sup id=\"footnote-reference-4\" class=\"footnote-reference\"><a href=\"#footnote-4\" class=\"symbol\"><data value=\"1\">*</data></a></sup>, \
+2: <sup id=\"footnote-reference-5\" class=\"footnote-reference\"><a href=\"#named\">[2]</a></sup>, \
+4: <sup id=\"footnote-reference-6\" class=\"footnote-reference\"><a href=\"#footnote-5\">[4]</a></sup>.</p>
+<ol class=\"footnotes\">
+<li id=\"footnote-1\" value=\"1\"><span class=\"backrefs\">(<a href=\"#footnote-reference-1\">1</a>)&nbsp;</span><p>Footnote <em>1</em></p></li>
+<li id=\"footnote-2\" value=\"33\"><span class=\"backrefs\">(<a href=\"#footnote-reference-3\">1</a>)&nbsp;</span><p>Footnote <em>33</em></p><p>More</p></li>
+<li id=\"named\" value=\"2\"><span class=\"backrefs\">(<a href=\"#footnote-reference-5\">1</a>)&nbsp;</span><p>Footnote <em>2</em></p></li>
+<li id=\"footnote-3\" value=\"3\"><span class=\"backrefs\">(<a href=\"#footnote-reference-2\">1</a>)&nbsp;</span><p>Footnote <em>3</em></p></li>
+<li id=\"footnote-4\" value=\"1\" class=\"symbol\"><span class=\"backrefs\">(<a href=\"#footnote-reference-4\">1</a>)&nbsp;</span><p>Symbol</p></li>
+<li id=\"footnote-5\" value=\"4\"><span class=\"backrefs\">(<a href=\"#footnote-reference-6\">1</a>)&nbsp;</span><p>Footnote <em>4</em></p></li>
 </ol>\
 ",
     );
