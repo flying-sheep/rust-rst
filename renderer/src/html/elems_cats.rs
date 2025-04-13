@@ -3,14 +3,12 @@ use std::io::Write;
 use anyhow::{Error, bail};
 
 // use crate::url::Url;
-use super::{HTMLRender, HTMLRenderer, escape_html};
+use super::{FOOTNOTE_SYMBOLS, HTMLRender, HTMLRenderer, escape_html};
 use document_tree::{
     Element, ExtraAttributes, HasChildren, LabelledFootnote as _, attribute_types as at,
     element_categories as c, elements as e,
     extra_attributes::{self as a, FootnoteType},
 };
-
-// static FOOTNOTE_SYMBOLS: [char; 10] = ['*', '†', '‡', '§', '¶', '#', '♠', '♥', '♦', '♣'];
 
 macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
     impl HTMLRender for c::$cat {
@@ -456,11 +454,22 @@ impl HTMLRender for e::FootnoteReference {
         // TODO: handle missing stuff
         write!(
             renderer.stream,
-            "<a id=\"{}\" href=\"#{}\">",
+            "<a id=\"{}\" href=\"#{}\"",
             self.ids().first().unwrap().0,
             self.extra().refid.as_ref().unwrap().0,
         )?;
-        self.children().render_html(renderer)?;
+        if self.is_symbol() {
+            let n: usize = self.get_label().unwrap().parse().unwrap();
+            // TODO: handle duplication as CSS “symbolic” counters do
+            let sym = FOOTNOTE_SYMBOLS.iter().cycle().nth(n - 1).unwrap();
+            write!(
+                renderer.stream,
+                " class=\"symbol\"><data value=\"{n}\">{sym}</data>"
+            )?;
+        } else {
+            write!(renderer.stream, ">")?;
+            self.children().render_html(renderer)?;
+        }
         write!(renderer.stream, "</a>")?;
         Ok(())
     }

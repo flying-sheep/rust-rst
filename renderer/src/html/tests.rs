@@ -139,7 +139,7 @@ Footnotes 1: [#]_, 3: [#]_, 33: [33]_, \\*: [*]_, 2: [#named]_, 4: [#]_.
 1: <a id=\"footnote-reference-1\" href=\"#footnote-1\">1</a>, \
 3: <a id=\"footnote-reference-2\" href=\"#footnote-3\">3</a>, \
 33: <a id=\"footnote-reference-3\" href=\"#footnote-2\">33</a>, \
-*: <a id=\"footnote-reference-4\" href=\"#footnote-4\">*</a>, \
+*: <a id=\"footnote-reference-4\" href=\"#footnote-4\" class=\"symbol\"><data value=\"1\">*</data></a>, \
 2: <a id=\"footnote-reference-5\" href=\"#named\">2</a>, \
 4: <a id=\"footnote-reference-6\" href=\"#footnote-5\">4</a>.</p>
 <ol>

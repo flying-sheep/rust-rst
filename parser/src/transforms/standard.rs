@@ -406,14 +406,14 @@ impl Transform for Pass3<'_, '_> {
         1. see above
         2. (in resolve_refs) set `footnote_reference[refid]`s, `footnote[backref]`s and `footnote>label`
         */
+        let id = e.ids().first().unwrap();
+        let id2num = if e.is_symbol() {
+            &self.0.pass1.footnotes_symbol
+        } else {
+            &self.0.pass1.footnotes_number
+        };
+        let label = id2num.get(id).unwrap().to_string();
         if e.get_label().is_err() {
-            let id = e.ids().first().unwrap();
-            let id2num = if e.is_symbol() {
-                &self.0.pass1.footnotes_symbol
-            } else {
-                &self.0.pass1.footnotes_number
-            };
-            let label = id2num.get(id).unwrap().to_string();
             e.children_mut()
                 .insert(0, e::Label::with_children(vec![label.into()]).into());
         }
