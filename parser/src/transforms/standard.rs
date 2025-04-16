@@ -295,9 +295,9 @@ impl<'tree> Visit<'tree> for Pass2<'_> {
 }
 
 #[derive(Debug)]
-struct Pass3<'p1, 'p2: 'p1>(&'p2 Pass2<'p1>);
-impl<'p2> Pass3<'_, 'p2> {
-    fn target_url<'t>(self: &'t Pass3<'_, 'p2>, refname: &[NameToken]) -> Option<&'t Url> {
+struct Pass3<'p2>(&'p2 Pass2<'p2>);
+impl<'p2> Pass3<'p2> {
+    fn target_url<'t>(self: &'t Pass3<'p2>, refname: &[NameToken]) -> Option<&'t Url> {
         // TODO: Check if the target would expand circularly
         assert!(
             refname.len() == 1,
@@ -310,10 +310,7 @@ impl<'p2> Pass3<'_, 'p2> {
         }
     }
 
-    fn substitution<'t>(
-        self: &'t Pass3<'_, 'p2>,
-        refname: &[NameToken],
-    ) -> Option<&'t Substitution> {
+    fn substitution<'t>(self: &'t Pass3<'p2>, refname: &[NameToken]) -> Option<&'t Substitution> {
         // TODO: Check if the substitution would expand circularly
         assert!(
             refname.len() == 1,
@@ -327,14 +324,14 @@ impl<'p2> Pass3<'_, 'p2> {
     }
 }
 
-impl<'p1, 'p2: 'p1> From<&'p2 Pass2<'p1>> for Pass3<'p1, 'p2> {
-    fn from(p: &'p2 Pass2<'p1>) -> Self {
+impl<'p2> From<&'p2 Pass2<'p2>> for Pass3<'p2> {
+    fn from(p: &'p2 Pass2<'p2>) -> Self {
         Pass3(p)
     }
 }
 
 /// 3rd pass.
-impl Transform for Pass3<'_, '_> {
+impl Transform for Pass3<'_> {
     fn transform_substitution_definition(
         &mut self,
         _: e::SubstitutionDefinition,
