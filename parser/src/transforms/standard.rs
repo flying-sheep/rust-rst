@@ -47,7 +47,7 @@ use document_tree::{
     extra_attributes::{ExtraAttributes, FootnoteTypeExt},
     url::Url,
 };
-use linearize::StaticMap;
+use linearize::{Linearize, StaticMap};
 
 use super::{Transform, Visit};
 
@@ -90,10 +90,8 @@ struct Pass1 {
     /// Symbol ones can only be in order, so `_.values().sort() == 1..=_.len()`
     /// Number ones can have gaps due to explicitly numbered ones.
     footnotes: StaticMap<FootnoteType, HashMap<ID, NonZero<usize>>>,
-    /// Numbers of anonymous footnotes in order of appearance.
-    auto_numbered_anon_footnotes: Vec<NonZero<usize>>,
-    /// Numbers of named footnotes in order of appearance.
-    auto_numbered_named_footnotes: Vec<NonZero<usize>>,
+    /// Numbers of auto-nubered footnotes in order of appearance.
+    auto_numbered_footnotes: StaticMap<AutoNumberedFootnoteType, Vec<NonZero<usize>>>,
     /// Number of encountered anonymous footnotes. Only used for ID generation.
     n_anon_footnotes: usize,
     /// Number of encountered footnote references. Only used for ID generation.
@@ -133,6 +131,22 @@ impl Pass1 {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Linearize)]
+enum AutoNumberedFootnoteType {
+    Anomymous,
+    Named,
+}
+
+impl AutoNumberedFootnoteType {
+    fn from_names(names: &[NameToken]) -> Self {
+        if names.is_empty() {
+            Self::Anomymous
+        } else {
+            Self::Named
+        }
+    }
+}
+
 impl Transform for Pass1 {
     /// Add (auto-)id and running count to “ids” of footnotes
     fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
@@ -165,11 +179,8 @@ impl Transform for Pass1 {
 
         // Keep track of named vs anonymous footnotes for auto-numbering refs later
         if matches!(e.extra().auto, Some(FootnoteType::Number)) {
-            if e.names().is_empty() {
-                self.auto_numbered_anon_footnotes.push(n);
-            } else {
-                self.auto_numbered_named_footnotes.push(n);
-            }
+            let t = AutoNumberedFootnoteType::from_names(e.names());
+            self.auto_numbered_footnotes[t].push(n);
         }
 
         // Standard transform
@@ -192,7 +203,7 @@ impl Transform for Pass1 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Substitution {
     content: Vec<c::TextOrInlineElement>,
     /// If true and the sibling before the reference is a text node,
@@ -213,10 +224,8 @@ struct Pass2<'p1> {
     footnote_refs: StaticMap<FootnoteType, HashMap<ID, NonZero<usize>>>,
     /// Number of symbol footnote references.
     n_symbol_footnote_refs: usize,
-    /// Number of anonymous numbered footnote references.
-    n_numbered_anon_footnote_refs: usize,
-    /// Number of named numbered footnote references.
-    n_numbered_named_footnote_refs: usize,
+    /// Number of auto-numbered footnote references.
+    n_auto_num_footnote_refs: StaticMap<AutoNumberedFootnoteType, usize>,
 }
 impl<'p1> From<&'p1 Pass1> for Pass2<'p1> {
     fn from(pass1: &'p1 Pass1) -> Self {
@@ -227,8 +236,7 @@ impl<'p1> From<&'p1 Pass1> for Pass2<'p1> {
             normalized_substitutions: HashMap::new(),
             footnote_refs: StaticMap::default(),
             n_symbol_footnote_refs: 0,
-            n_numbered_anon_footnote_refs: 0,
-            n_numbered_named_footnote_refs: 0,
+            n_auto_num_footnote_refs: StaticMap::default(),
         }
     }
 }
@@ -267,21 +275,15 @@ impl<'tree> Visit<'tree> for Pass2<'_> {
     }
     fn visit_footnote_reference(&mut self, e: &'tree e::FootnoteReference) {
         let id = e.ids().first().unwrap();
-        let name = e.names().first();
         let n = match e.extra().auto {
             Some(FootnoteType::Symbol) => {
                 self.n_symbol_footnote_refs += 1;
                 NonZero::new(self.n_symbol_footnote_refs).unwrap()
             }
             Some(FootnoteType::Number) => {
-                if name.is_some() {
-                    self.n_numbered_named_footnote_refs += 1;
-                    self.pass1.auto_numbered_named_footnotes
-                        [self.n_numbered_named_footnote_refs - 1]
-                } else {
-                    self.n_numbered_anon_footnote_refs += 1;
-                    self.pass1.auto_numbered_anon_footnotes[self.n_numbered_anon_footnote_refs - 1]
-                }
+                let t = AutoNumberedFootnoteType::from_names(e.names());
+                self.n_auto_num_footnote_refs[t] += 1;
+                self.pass1.auto_numbered_footnotes[t][self.n_auto_num_footnote_refs[t] - 1]
             }
             None => e.get_label().unwrap().parse().unwrap(),
         };
