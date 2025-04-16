@@ -111,7 +111,7 @@ pub trait FootnoteTypeExt {
     fn is_auto(&self) -> bool;
     /// Is this a symbolic footnote and not a numeric one?
     fn is_symbol(&self) -> bool;
-    /// the footnote type
+    /// The footnote type independent of whether the footnote is auto-numbered.
     fn footnote_type(&self) -> FootnoteType;
 }
 
@@ -123,6 +123,7 @@ impl FootnoteTypeExt for Option<FootnoteType> {
         matches!(self, Some(FootnoteType::Symbol))
     }
     fn footnote_type(&self) -> FootnoteType {
+        // Explicitly numbered and auto-numbered footnotes are numbered
         self.unwrap_or(FootnoteType::Number)
     }
 }
