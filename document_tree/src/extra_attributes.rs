@@ -1,8 +1,8 @@
 use serde_derive::Serialize;
 
 use crate::attribute_types::{
-    AlignH, AlignHV, AlignV, AutoFootnoteType, CanBeEmpty, EnumeratedListType, FixedSpace, ID,
-    Measure, NameToken, TableAlignH, TableBorder, TableGroupCols,
+    AlignH, AlignHV, AlignV, CanBeEmpty, EnumeratedListType, FixedSpace, FootnoteType, ID, Measure,
+    NameToken, TableAlignH, TableBorder, TableGroupCols,
 };
 use crate::elements as e;
 use crate::url::Url;
@@ -64,7 +64,7 @@ impl_extra!(#[derive(Debug,PartialEq,Serialize,Clone)] Image {
 impl_extra!(BulletList { bullet: Option<String> });
 impl_extra!(EnumeratedList { enumtype: Option<EnumeratedListType>, prefix: Option<String>, suffix: Option<String> });
 
-impl_extra!(Footnote { backrefs: Vec<ID>, auto: Option<AutoFootnoteType> });
+impl_extra!(Footnote { backrefs: Vec<ID>, auto: Option<FootnoteType> });
 impl_extra!(Citation { backrefs: Vec<ID> });
 impl_extra!(SystemMessage { backrefs: Vec<ID>, level: Option<usize>, line: Option<usize>, type_: Option<NameToken> });
 impl_extra!(Figure { align: Option<AlignH>, width: Option<usize> });
@@ -88,7 +88,7 @@ impl_extra!(Reference {
     /// Internal reference to the names attribute of another element
     refname: Vec<NameToken>,
 });
-impl_extra!(FootnoteReference { refid: Option<ID>, refname: Vec<NameToken>, auto: Option<AutoFootnoteType> });
+impl_extra!(FootnoteReference { refid: Option<ID>, refname: Vec<NameToken>, auto: Option<FootnoteType> });
 impl_extra!(CitationReference { refid: Option<ID>, refname: Vec<NameToken> });
 impl_extra!(SubstitutionReference { refname: Vec<NameToken> });
 impl_extra!(Problematic { refid: Option<ID> });
@@ -106,37 +106,49 @@ impl_extra!(TargetInline {
 impl_extra!(RawInline { space: FixedSpace, format: Vec<NameToken> });
 pub type ImageInline = Image;
 
-pub trait FootnoteType {
+pub trait FootnoteTypeExt {
     /// Is this an auto-numbered footnote?
     fn is_auto(&self) -> bool;
     /// Is this a symbolic footnote and not a numeric one?
     fn is_symbol(&self) -> bool;
+    /// The footnote type independent of whether the footnote is auto-numbered.
+    fn footnote_type(&self) -> FootnoteType;
 }
 
-impl FootnoteType for Option<AutoFootnoteType> {
+impl FootnoteTypeExt for Option<FootnoteType> {
     fn is_auto(&self) -> bool {
         self.is_some()
     }
     fn is_symbol(&self) -> bool {
-        matches!(self, Some(AutoFootnoteType::Symbol))
+        matches!(self, Some(FootnoteType::Symbol))
+    }
+    fn footnote_type(&self) -> FootnoteType {
+        // Explicitly numbered and auto-numbered footnotes are numbered
+        self.unwrap_or(FootnoteType::Number)
     }
 }
 
-impl FootnoteType for e::Footnote {
+impl FootnoteTypeExt for e::Footnote {
     fn is_auto(&self) -> bool {
         self.extra().auto.is_auto()
     }
     fn is_symbol(&self) -> bool {
         self.extra().auto.is_symbol()
     }
+    fn footnote_type(&self) -> FootnoteType {
+        self.extra().auto.footnote_type()
+    }
 }
 
-impl FootnoteType for e::FootnoteReference {
+impl FootnoteTypeExt for e::FootnoteReference {
     fn is_auto(&self) -> bool {
         self.extra().auto.is_auto()
     }
     fn is_symbol(&self) -> bool {
         self.extra().auto.is_symbol()
+    }
+    fn footnote_type(&self) -> FootnoteType {
+        self.extra().auto.footnote_type()
     }
 }
 

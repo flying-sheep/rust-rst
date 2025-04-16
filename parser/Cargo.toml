@@ -17,3 +17,4 @@ document_tree = { path = '../document_tree', version = "0.4.2" }
 anyhow = '1.0.86'
 pest = '2.1.2'
 pest_derive = '2.1.0'
+linearize = { version = "0.1.4", features = ["derive"] }
