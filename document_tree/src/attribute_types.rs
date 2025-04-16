@@ -3,11 +3,12 @@ use std::str::FromStr;
 use anyhow::{Error, bail, format_err};
 use linearize::Linearize;
 use regex::Regex;
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 
 use crate::url::Url;
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum EnumeratedListType {
     Arabic,
     LowerAlpha,
@@ -16,7 +17,7 @@ pub enum EnumeratedListType {
     UpperRoman,
 }
 
-#[derive(Linearize, Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Linearize, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum FootnoteType {
     Number,
     Symbol,
@@ -34,7 +35,7 @@ impl TryFrom<char> for FootnoteType {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum FixedSpace {
     Default,
     // yes, default really is not “Default”
@@ -42,13 +43,13 @@ pub enum FixedSpace {
     Preserve,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum AlignH {
     Left,
     Center,
     Right,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum AlignHV {
     Top,
     Middle,
@@ -57,14 +58,14 @@ pub enum AlignHV {
     Center,
     Right,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum AlignV {
     Top,
     Middle,
     Bottom,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum TableAlignH {
     Left,
     Right,
@@ -72,7 +73,7 @@ pub enum TableAlignH {
     Justify,
     Char,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub enum TableBorder {
     Top,
     Bottom,
@@ -82,19 +83,20 @@ pub enum TableBorder {
     None,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub struct ID(pub String);
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub struct NameToken(pub String);
 
 // The table DTD has the cols attribute of tgroup as required, but having
 // TableGroupCols not implement Default would leave no possible implementation
 // for TableGroup::with_children.
-#[derive(Default, Debug, PartialEq, Eq, Hash, Serialize, Clone)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
 pub struct TableGroupCols(pub usize);
 
 // no eq for f64
-#[derive(Debug, PartialEq, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Serialize, JsonSchema)]
+#[serde(tag = "unit", content = "value")]
 pub enum Measure {
     // https://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#length-units
     Em(f64),

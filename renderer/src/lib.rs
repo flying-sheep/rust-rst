@@ -5,8 +5,11 @@ mod html;
 use std::io::Write;
 
 use anyhow::{Error, anyhow};
+use schemars::schema_for;
 
 use document_tree::Document;
+
+pub use html::render_html;
 
 /// Render a document tree as JSON.
 ///
@@ -18,6 +21,16 @@ where
 {
     serde_json::to_writer(stream, &document)?;
     Ok(())
+}
+
+#[expect(clippy::missing_panics_doc, reason = "infallible")]
+/// Render the JSON schema for [`document_tree::Document`].
+pub fn render_json_schema_document<W>(stream: W)
+where
+    W: Write,
+{
+    let schema = schema_for!(document_tree::Document);
+    serde_json::to_writer(stream, &schema).unwrap();
 }
 
 /// Render a document tree as XML.
@@ -32,5 +45,3 @@ where
         .map_err(|e| anyhow!("Failed to serialize XML: {}", e))?;
     Ok(())
 }
-
-pub use html::render_html;

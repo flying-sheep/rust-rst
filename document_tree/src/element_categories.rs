@@ -1,5 +1,6 @@
 use std::fmt::{self, Debug, Formatter};
 
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 
 #[allow(clippy::wildcard_imports)]
@@ -44,7 +45,8 @@ macro_rules! synonymous_enum {
         cartesian!(impl_into, [ $( ($subcat::$entry) ),+ ], [ $($supcat),+ ]);
     };
     ( $name:ident { $( $entry:ident ),+ $(,)* } ) => {
-        #[derive(PartialEq,Serialize,Clone)]
+        #[derive(Clone, PartialEq, Serialize, JsonSchema)]
+        #[serde(tag = "type")]
         pub enum $name { $(
             $entry(Box<$entry>),
         )* }
