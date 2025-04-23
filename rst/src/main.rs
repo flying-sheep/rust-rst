@@ -3,7 +3,7 @@
 use clap::Parser;
 
 use rst_parser::parse;
-use rst_renderer::{render_html, render_json, render_xml};
+use rst_renderer::{render_html, render_json, render_json_schema_document, render_xml};
 
 use std::io::{self, Read};
 
@@ -24,6 +24,9 @@ struct Cli {
     file: Option<String>,
     #[command(flatten)]
     verbosity: clap_verbosity_flag::Verbosity,
+    /// Print schema
+    #[arg(long)]
+    schema: bool,
 }
 
 fn main() -> Result<(), anyhow::Error> {
@@ -35,9 +38,15 @@ fn main() -> Result<(), anyhow::Error> {
         .filter(None, log::Level::Warn.to_level_filter())
         .try_init()?;
 
+    let stdout = std::io::stdout();
+
+    if args.schema {
+        render_json_schema_document(stdout);
+        return Ok(());
+    }
+
     let content = preprocess_content(args.file.as_deref())?;
     let document = parse(&content)?;
-    let stdout = std::io::stdout();
     match args.format {
         Format::json => render_json(&document, stdout)?,
         Format::xml => render_xml(&document, stdout)?,
