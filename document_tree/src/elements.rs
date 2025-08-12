@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 use std::path::PathBuf;
 
@@ -26,7 +27,7 @@ pub trait Element {
     fn classes_mut(&mut self) -> &mut Vec<String>;
 }
 
-#[derive(Debug, Default, PartialEq, Serialize, Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, JsonSchema)]
 pub struct CommonAttributes {
     #[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
     ids: Vec<ID>,
@@ -128,7 +129,7 @@ macro_rules! impl_new {(
     ),* $(,)* }
 ) => (
     $(#[$attr])*
-    #[derive(Debug,PartialEq,Serialize,Clone)]
+    #[derive(Clone, Debug, PartialEq, Serialize, JsonSchema)]
     pub struct $name { $(
         $(#[$fattr])* $field: $typ,
     )* }
@@ -208,7 +209,7 @@ macro_rules! impl_elems { ( $( ($($args:tt)*) )* ) => (
     $( impl_elem!($($args)*); )*
 )}
 
-#[derive(Default, Debug, Serialize)]
+#[derive(Default, Debug, Serialize, JsonSchema)]
 pub struct Document {
     children: Vec<StructuralSubElement>,
 }
