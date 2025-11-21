@@ -1,3 +1,4 @@
+use anyhow::{Context as _, Result, bail};
 use serde_derive::Serialize;
 use std::path::PathBuf;
 
@@ -355,13 +356,11 @@ pub trait LabelledFootnote {
     ///
     /// # Errors
     /// Returns an error if the footnote has no label
-    fn get_label(&self) -> Result<&str, anyhow::Error>;
+    fn get_label(&self) -> Result<&str>;
 }
 
 impl LabelledFootnote for Footnote {
-    fn get_label(&self) -> Result<&str, anyhow::Error> {
-        use anyhow::{Context, bail};
-
+    fn get_label(&self) -> Result<&str> {
         let SubFootnote::Label(e) = self
             .children()
             .first()
@@ -381,9 +380,7 @@ impl LabelledFootnote for Footnote {
 }
 
 impl LabelledFootnote for FootnoteReference {
-    fn get_label(&self) -> Result<&str, anyhow::Error> {
-        use anyhow::{Context, bail};
-
+    fn get_label(&self) -> Result<&str> {
         match self
             .children()
             .first()

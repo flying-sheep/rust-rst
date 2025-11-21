@@ -5,7 +5,7 @@ pub mod tests;
 
 use std::io::Write;
 
-use anyhow::Error;
+use anyhow::Result;
 
 // use crate::url::Url;
 use document_tree::{Document, HasChildren};
@@ -14,7 +14,7 @@ use document_tree::{Document, HasChildren};
 ///
 /// # Errors
 /// Returns error if serialization fails
-pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<(), Error>
+pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<()>
 where
     W: Write,
 {
@@ -42,7 +42,7 @@ where
 }
 
 trait HTMLRender {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write;
 }
@@ -69,7 +69,7 @@ const HEAD: &str = concat!(
 );
 
 impl HTMLRender for Document {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {

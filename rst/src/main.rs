@@ -1,5 +1,6 @@
 #![warn(clippy::pedantic)]
 
+use anyhow::Result;
 use clap::Parser;
 
 use rst_parser::parse;
@@ -26,7 +27,7 @@ struct Cli {
     verbosity: clap_verbosity_flag::Verbosity,
 }
 
-fn main() -> Result<(), anyhow::Error> {
+fn main() -> Result<()> {
     let args = Cli::parse();
 
     let level_filter = args.verbosity.log_level().unwrap().to_level_filter();

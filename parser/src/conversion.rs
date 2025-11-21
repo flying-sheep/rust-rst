@@ -3,7 +3,7 @@ mod inline;
 #[cfg(test)]
 mod tests;
 
-use anyhow::Error;
+use anyhow::Result;
 use pest::iterators::Pairs;
 
 use document_tree::{
@@ -33,7 +33,7 @@ fn get_level<'tl>(
     level
 }
 
-pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
+pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document> {
     use self::block::TitleOrSsubel::{Ssubel, Title};
 
     let mut toplevel: Vec<c::StructuralSubElement> = vec![];

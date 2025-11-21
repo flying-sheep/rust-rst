@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use anyhow::{Error, bail};
+use anyhow::{Result, bail};
 
 // use crate::url::Url;
 use super::{HTMLRender, HTMLRenderer, escape_html, footnote_symbol};
@@ -12,7 +12,7 @@ use document_tree::{
 
 macro_rules! impl_html_render_cat {($cat:ident { $($member:ident),+ }) => {
     impl HTMLRender for c::$cat {
-        fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
+        fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()> where W: Write {
             match self {$(
                 c::$cat::$member(elem) => elem.render_html(renderer),
             )+}
@@ -30,7 +30,7 @@ macro_rules! impl_html_render_simple {
     };
     ( $type:ident => $tag:ident ) => {
         impl HTMLRender for e::$type {
-            fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
+            fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()> where W: Write {
                 write!(renderer.stream, "<{}", stringify!($tag))?;
                 if self.classes().len() > 0 {
                     write!(renderer.stream, " class=\"{}\"", self.classes().join(" "))?;
@@ -46,7 +46,7 @@ macro_rules! impl_html_render_simple {
 
 macro_rules! impl_html_render_simple_nochildren {( $($type:ident => $tag:ident),+ ) => { $(
     impl HTMLRender for e::$type {
-        fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> where W: Write {
+        fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()> where W: Write {
             write!(renderer.stream, "<{0}></{0}>", stringify!($tag))?;
             Ok(())
         }
@@ -65,7 +65,7 @@ impl_html_render_cat!(StructuralSubElement {
 impl_html_render_simple!(Subtitle => h2);
 
 impl HTMLRender for e::Title {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -82,7 +82,7 @@ impl HTMLRender for e::Title {
 }
 
 impl HTMLRender for e::Docinfo {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -92,7 +92,7 @@ impl HTMLRender for e::Docinfo {
 }
 
 impl HTMLRender for e::Decoration {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -111,7 +111,7 @@ impl_html_render_cat!(SubStructure {
 impl_html_render_simple!(Sidebar => aside);
 
 impl HTMLRender for e::Section {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -125,7 +125,7 @@ impl HTMLRender for e::Section {
 }
 
 impl HTMLRender for e::Transition {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -135,7 +135,7 @@ impl HTMLRender for e::Transition {
 }
 
 impl HTMLRender for e::Topic {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -192,7 +192,7 @@ impl<I> HTMLRender for I
 where
     I: e::Element + a::ExtraAttributes<a::Image> + IMark,
 {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -225,7 +225,7 @@ where
 }
 
 impl HTMLRender for e::LiteralBlock {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -250,7 +250,7 @@ impl HTMLRender for e::LiteralBlock {
 }
 
 impl HTMLRender for e::DoctestBlock {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -260,7 +260,7 @@ impl HTMLRender for e::DoctestBlock {
 }
 
 impl HTMLRender for e::SubstitutionDefinition {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -270,7 +270,7 @@ impl HTMLRender for e::SubstitutionDefinition {
 }
 
 impl HTMLRender for e::Comment {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -282,7 +282,7 @@ impl HTMLRender for e::Comment {
 }
 
 impl HTMLRender for e::Pending {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -292,7 +292,7 @@ impl HTMLRender for e::Pending {
 }
 
 impl HTMLRender for e::Target {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -302,7 +302,7 @@ impl HTMLRender for e::Target {
 }
 
 impl HTMLRender for e::Raw {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -317,7 +317,7 @@ impl HTMLRender for e::Raw {
 }
 
 impl HTMLRender for e::Footnote {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -363,7 +363,7 @@ impl HTMLRender for e::Footnote {
 }
 
 impl HTMLRender for e::Citation {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -372,7 +372,7 @@ impl HTMLRender for e::Citation {
 }
 
 impl HTMLRender for e::SystemMessage {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -408,7 +408,7 @@ impl_html_render_cat!(TextOrInlineElement {
 impl_html_render_simple!(Emphasis => em, Strong => strong, Literal => code, CitationReference => a, TitleReference => a, Abbreviation => abbr, Acronym => acronym, Superscript => sup, Subscript => sub, Inline => span, Math => math, TargetInline => a);
 
 impl HTMLRender for String {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -418,7 +418,7 @@ impl HTMLRender for String {
 }
 
 impl HTMLRender for e::Reference {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -444,7 +444,7 @@ impl HTMLRender for e::Reference {
 }
 
 impl HTMLRender for e::SubstitutionReference {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -454,7 +454,7 @@ impl HTMLRender for e::SubstitutionReference {
 }
 
 impl HTMLRender for e::Problematic {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -464,7 +464,7 @@ impl HTMLRender for e::Problematic {
 }
 
 impl HTMLRender for e::FootnoteReference {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -497,7 +497,7 @@ impl HTMLRender for e::FootnoteReference {
 }
 
 impl HTMLRender for e::Generated {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -507,7 +507,7 @@ impl HTMLRender for e::Generated {
 }
 
 impl HTMLRender for e::RawInline {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -529,7 +529,7 @@ impl_html_render_cat!(SubSidebar {
 impl_html_render_simple!(ListItem => li);
 
 impl HTMLRender for e::DefinitionListItem {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -539,7 +539,7 @@ impl HTMLRender for e::DefinitionListItem {
 }
 
 impl HTMLRender for e::Field {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -549,7 +549,7 @@ impl HTMLRender for e::Field {
 }
 
 impl HTMLRender for e::OptionListItem {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -561,7 +561,7 @@ impl HTMLRender for e::OptionListItem {
 impl_html_render_cat!(SubLineBlock { LineBlock, Line });
 
 impl HTMLRender for e::Line {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {
@@ -585,7 +585,7 @@ impl_html_render_cat!(SubFigure {
 impl_html_render_simple!(Caption => caption);
 
 impl HTMLRender for e::Legend {
-    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, _renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {

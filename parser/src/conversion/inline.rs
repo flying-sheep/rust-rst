@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use pest::iterators::Pair;
 
 use document_tree::{
@@ -11,7 +11,7 @@ use document_tree::{
 use super::whitespace_normalize_name;
 use crate::pest_rst::Rule;
 
-pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
+pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement> {
     Ok(match pair.as_rule() {
         Rule::str | Rule::str_nested => pair.as_str().into(),
         Rule::escaped_char => pair.as_str()[1..].into(),
@@ -26,11 +26,11 @@ pub fn convert_inline(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error>
     })
 }
 
-pub fn convert_inlines(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
+pub fn convert_inlines(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>> {
     pair.into_inner().map(convert_inline).collect()
 }
 
-fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> {
+fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement> {
     let concrete = pair.into_inner().next().unwrap();
     match concrete.as_rule() {
         Rule::reference_target => convert_reference_target(concrete).map(Into::into),
@@ -40,7 +40,7 @@ fn convert_reference(pair: Pair<Rule>) -> Result<c::TextOrInlineElement, Error> 
     }
 }
 
-fn convert_reference_target(concrete: Pair<'_, Rule>) -> Result<e::Reference, Error> {
+fn convert_reference_target(concrete: Pair<'_, Rule>) -> Result<e::Reference> {
     let rt_inner = concrete.into_inner().next().unwrap();
     Ok(match rt_inner.as_rule() {
         Rule::reference_target_uq => e::Reference::new(

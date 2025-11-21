@@ -1,4 +1,4 @@
-use anyhow::{Error, bail};
+use anyhow::{Result, bail};
 use pest::iterators::Pair;
 
 use document_tree::{
@@ -20,7 +20,7 @@ pub(super) enum TitleOrSsubel {
     Ssubel(c::StructuralSubElement),
 }
 
-pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, Error> {
+pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>> {
     use self::TitleOrSsubel::{Ssubel, Title};
     Ok(Some(match pair.as_rule() {
         Rule::title => {
@@ -33,7 +33,7 @@ pub(super) fn convert_ssubel(pair: Pair<Rule>) -> Result<Option<TitleOrSsubel>, 
     }))
 }
 
-fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure, Error> {
+fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure> {
     #[allow(clippy::match_single_binding)]
     Ok(match pair.as_rule() {
         // TODO: Topic, Sidebar, Transition
@@ -42,7 +42,7 @@ fn convert_substructure(pair: Pair<Rule>) -> Result<c::SubStructure, Error> {
     })
 }
 
-fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
+fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement> {
     Ok(match pair.as_rule() {
         Rule::paragraph => convert_paragraph(pair)?.into(),
         Rule::target => convert_target(pair)?.into(),
@@ -61,7 +61,7 @@ fn convert_body_elem(pair: Pair<Rule>) -> Result<c::BodyElement, Error> {
     })
 }
 
-fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
+fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind)> {
     let mut title: Option<String> = None;
     let mut title_inlines: Option<Vec<c::TextOrInlineElement>> = None;
     let mut adornment_char: Option<char> = None;
@@ -96,11 +96,11 @@ fn convert_title(pair: Pair<Rule>) -> Result<(e::Title, TitleKind), Error> {
     Ok((elem, title_kind))
 }
 
-fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph, Error> {
+fn convert_paragraph(pair: Pair<Rule>) -> Result<e::Paragraph> {
     Ok(e::Paragraph::with_children(convert_inlines(pair)?))
 }
 
-fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
+fn convert_target(pair: Pair<Rule>) -> Result<e::Target> {
     let mut elem = e::Target::default();
     elem.extra_mut().anonymous = false;
     for p in pair.into_inner() {
@@ -120,7 +120,7 @@ fn convert_target(pair: Pair<Rule>) -> Result<e::Target, Error> {
 /// Converts a footnote.
 /// - named auto-numbered footnotes get their name set
 /// - explicitly numbered footnotes get their label set
-fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
+fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote> {
     let mut pairs = pair.into_inner();
     let label = pairs.next().unwrap().as_str();
     let mut children: Vec<c::SubFootnote> = vec![];
@@ -148,7 +148,7 @@ fn convert_footnote(pair: Pair<Rule>) -> Result<e::Footnote, Error> {
     Ok(footnote)
 }
 
-fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition, Error> {
+fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinition> {
     let mut pairs = pair.into_inner();
     let name = whitespace_normalize_name(pairs.next().unwrap().as_str()); // Rule::substitution_name
     let inner_pair = pairs.next().unwrap();
@@ -162,13 +162,13 @@ fn convert_substitution_def(pair: Pair<Rule>) -> Result<e::SubstitutionDefinitio
     Ok(subst_def)
 }
 
-fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>, Error> {
+fn convert_replace(pair: Pair<Rule>) -> Result<Vec<c::TextOrInlineElement>> {
     let mut pairs = pair.into_inner();
     let paragraph = pairs.next().unwrap();
     convert_inlines(paragraph)
 }
 
-fn convert_image<I>(pair: Pair<Rule>) -> Result<I, Error>
+fn convert_image<I>(pair: Pair<Rule>) -> Result<I>
 where
     I: Element + ExtraAttributes<a::Image>,
 {
@@ -195,7 +195,7 @@ where
     Ok(image)
 }
 
-fn parse_scale(pair: &Pair<Rule>) -> Result<u8, Error> {
+fn parse_scale(pair: &Pair<Rule>) -> Result<u8> {
     use pest::error::{Error, ErrorVariant};
 
     let input = pair.as_str().trim();
@@ -233,7 +233,7 @@ fn convert_admonition_gen(pair: Pair<Rule>) -> document_tree::element_categories
     }
 }
 
-fn convert_bullet_list(pair: Pair<Rule>) -> Result<e::BulletList, Error> {
+fn convert_bullet_list(pair: Pair<Rule>) -> Result<e::BulletList> {
     Ok(e::BulletList::with_children(
         pair.into_inner()
             .map(convert_bullet_item)
@@ -241,7 +241,7 @@ fn convert_bullet_list(pair: Pair<Rule>) -> Result<e::BulletList, Error> {
     ))
 }
 
-fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
+fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem> {
     let mut iter = pair.into_inner();
     let mut children: Vec<c::BodyElement> = vec![convert_paragraph(iter.next().unwrap())?.into()];
     for p in iter {
@@ -250,7 +250,7 @@ fn convert_bullet_item(pair: Pair<Rule>) -> Result<e::ListItem, Error> {
     Ok(e::ListItem::with_children(children))
 }
 
-fn convert_block_quote(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
+fn convert_block_quote(pair: Pair<Rule>) -> Result<e::BlockQuote> {
     Ok(e::BlockQuote::with_children(
         pair.into_inner()
             .map(convert_block_quote_inner)
@@ -258,7 +258,7 @@ fn convert_block_quote(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
     ))
 }
 
-fn convert_block_quote_directive(pair: Pair<Rule>) -> Result<e::BlockQuote, Error> {
+fn convert_block_quote_directive(pair: Pair<Rule>) -> Result<e::BlockQuote> {
     let mut iter = pair.into_inner();
     let typ = iter.next().unwrap().as_str();
     let children: Vec<c::SubBlockQuote> = iter
@@ -269,7 +269,7 @@ fn convert_block_quote_directive(pair: Pair<Rule>) -> Result<e::BlockQuote, Erro
     Ok(bq)
 }
 
-fn convert_block_quote_inner(pair: Pair<Rule>) -> Result<c::SubBlockQuote, Error> {
+fn convert_block_quote_inner(pair: Pair<Rule>) -> Result<c::SubBlockQuote> {
     Ok(if pair.as_rule() == Rule::attribution {
         e::Attribution::with_children(convert_inlines(pair)?).into()
     } else {

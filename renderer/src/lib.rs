@@ -4,7 +4,7 @@ mod html;
 
 use std::io::Write;
 
-use anyhow::{Error, anyhow};
+use anyhow::{Result, anyhow};
 
 use document_tree::Document;
 
@@ -12,7 +12,7 @@ use document_tree::Document;
 ///
 /// # Errors
 /// Returns an error if serialization fails.
-pub fn render_json<W>(document: &Document, stream: W) -> Result<(), Error>
+pub fn render_json<W>(document: &Document, stream: W) -> Result<()>
 where
     W: Write,
 {
@@ -24,7 +24,7 @@ where
 ///
 /// # Errors
 /// Returns an error if serialization fails.
-pub fn render_xml<W>(document: &Document, stream: W) -> Result<(), Error>
+pub fn render_xml<W>(document: &Document, stream: W) -> Result<()>
 where
     W: Write,
 {
