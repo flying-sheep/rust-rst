@@ -230,7 +230,7 @@ impl HTMLRender for e::LiteralBlock {
         W: Write,
     {
         let mut cls_iter = self.classes().iter();
-        let is_code = cls_iter.next() == Some(&"code".to_owned());
+        let is_code = cls_iter.next().is_some_and(|e| e == "code");
         write!(renderer.stream, "<pre>")?;
         if is_code {
             // TODO: support those classes not being at the start
@@ -307,7 +307,7 @@ impl HTMLRender for e::Raw {
         W: Write,
     {
         let extra = self.extra();
-        if extra.format.contains(&at::NameToken("html".to_owned())) {
+        if extra.format.iter().any(|at::NameToken(n)| n == "html") {
             for c in self.children() {
                 write!(renderer.stream, "{c}")?;
             }
