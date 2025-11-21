@@ -118,7 +118,7 @@ impl FromStr for AlignHV {
             "left" => A::Left,
             "center" => A::Center,
             "right" => A::Right,
-            s => bail!("Invalid Alignment {}", s),
+            s => bail!("Invalid Alignment {s}"),
         })
     }
 }

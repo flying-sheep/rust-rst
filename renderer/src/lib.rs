@@ -29,7 +29,7 @@ where
     W: Write,
 {
     serde_xml_rs::to_writer(stream, &document)
-        .map_err(|e| anyhow!("Failed to serialize XML: {}", e))?;
+        .map_err(|e| anyhow!("Failed to serialize XML: {e}"))?;
     Ok(())
 }
 
