@@ -5,7 +5,7 @@ pub mod tests;
 
 use std::io::Write;
 
-use anyhow::Error;
+use anyhow::Result;
 
 // use crate::url::Url;
 use document_tree::{Document, HasChildren};
@@ -14,7 +14,7 @@ use document_tree::{Document, HasChildren};
 ///
 /// # Errors
 /// Returns error if serialization fails
-pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<(), Error>
+pub fn render_html<W>(document: &Document, stream: W, standalone: bool) -> Result<()>
 where
     W: Write,
 {
@@ -42,7 +42,7 @@ where
 }
 
 trait HTMLRender {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write;
 }
@@ -58,42 +58,18 @@ pub fn footnote_symbol(n: usize) -> String {
         .to_string()
 }
 
-const HEAD: &str = r#"<head>
+const HEAD: &str = concat!(
+    r#"<head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark light">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-@counter-style footnote-numeric {
-    system: numeric;
-    symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
-    prefix: '[';
-    suffix: '] ';
-}
-@counter-style footnote-symbolic {
-    system: symbolic;
-    symbols: '*' '†' '‡' '§' '¶' '#' '♠' '♥' '♦' '♣';
-    prefix: '';
-    suffix: ' ';
-}
-.footnote-reference:target,
-ol.footnotes > li:target {
-    background-color: hsl(60 100% 50% / 0.2);
-}
-ol.footnotes > li {
-    list-style-type: footnote-numeric;
-}
-ol.footnotes > li.symbol {
-    list-style-type: footnote-symbolic;
-}
-ol.footnotes > li > .backrefs {
-    float: left;
-    font-size: 0.8em;
-}
-</style>
-</head>"#;
+<style>"#,
+    include_str!("main.css"),
+    "</style>\n</head>",
+);
 
 impl HTMLRender for Document {
-    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+    fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
     where
         W: Write,
     {

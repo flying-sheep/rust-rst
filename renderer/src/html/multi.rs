@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, io::Write};
 
-use anyhow::Error;
+use anyhow::Result;
 
 use super::{HTMLRender, HTMLRenderer};
 
@@ -19,12 +19,12 @@ macro_rules! impl_html_render_multi {
     };
     ( $type:path [ $post:expr ] ) => {
         impl HTMLRender for [&$type] {
-            fn render_html<W: Write>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> {
+            fn render_html<W: Write>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()> {
                 write_optional_newlines::<$type, _, _>(renderer, self, $post)
             }
         }
         impl HTMLRender for [$type] {
-            fn render_html<W: Write>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error> {
+            fn render_html<W: Write>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()> {
                 write_optional_newlines::<$type, _, _>(renderer, self, $post)
             }
         }
@@ -35,7 +35,7 @@ fn write_optional_newlines<R, E, W>(
     renderer: &mut HTMLRenderer<W>,
     elems: &[E],
     post: &str,
-) -> Result<(), Error>
+) -> Result<()>
 where
     R: HTMLRender,
     E: Borrow<R>,
@@ -61,7 +61,7 @@ macro_rules! impl_html_render_multi_body {
     };
     ( $type:path ) => {
         impl HTMLRender for [$type] {
-            fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<(), Error>
+            fn render_html<W>(&self, renderer: &mut HTMLRenderer<W>) -> Result<()>
             where
                 W: Write,
             {
@@ -88,10 +88,7 @@ macro_rules! impl_html_render_multi_body {
     };
 }
 
-fn write_footnotes<W>(
-    renderer: &mut HTMLRenderer<W>,
-    footnotes: &[&e::Footnote],
-) -> Result<(), Error>
+fn write_footnotes<W>(renderer: &mut HTMLRenderer<W>, footnotes: &[&e::Footnote]) -> Result<()>
 where
     W: Write,
 {

@@ -17,7 +17,7 @@ jobs:
     name: Build, check, and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         filter: blob:none
@@ -35,6 +35,6 @@ jobs:
       id: fmt
     - run: just fmt
       if: failure()
-    - uses: stefanzweifel/git-auto-commit-action@v5
+    - uses: stefanzweifel/git-auto-commit-action@v7
       if: failure()
     - run: just test

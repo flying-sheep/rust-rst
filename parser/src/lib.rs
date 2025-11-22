@@ -8,7 +8,7 @@ pub mod tests;
 pub mod token;
 pub mod transforms;
 
-use anyhow::Error;
+use anyhow::Result;
 use pest::Parser;
 
 use document_tree::Document;
@@ -21,7 +21,7 @@ use self::transforms::standard_transform;
 ///
 /// # Errors
 /// Returns an error if parsing fails.
-pub fn parse_only(source: &str) -> Result<Document, Error> {
+pub fn parse_only(source: &str) -> Result<Document> {
     let pairs = RstParser::parse(Rule::document, source)?;
     convert_document(pairs)
 }
@@ -30,6 +30,6 @@ pub fn parse_only(source: &str) -> Result<Document, Error> {
 ///
 /// # Errors
 /// Returns an error if parsing fails.
-pub fn parse(source: &str) -> Result<Document, Error> {
+pub fn parse(source: &str) -> Result<Document> {
     parse_only(source).map(standard_transform)
 }
