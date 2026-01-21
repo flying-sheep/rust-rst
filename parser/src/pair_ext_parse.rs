@@ -8,7 +8,7 @@ pub trait PairExt<R>
 where
     R: pest::RuleType,
 {
-    fn parse<T, E>(&self) -> Result<T, Box<Error<R>>>
+    fn parse<T, E>(&self) -> Result<T, Error<R>>
     where
         T: FromStr<Err = E>,
         E: ToString;
@@ -18,7 +18,7 @@ impl<R> PairExt<R> for Pair<'_, R>
 where
     R: pest::RuleType,
 {
-    fn parse<T, E>(&self) -> Result<T, Box<Error<R>>>
+    fn parse<T, E>(&self) -> Result<T, Error<R>>
     where
         T: FromStr<Err = E>,
         E: ToString,
@@ -29,7 +29,7 @@ where
     }
 }
 
-pub(crate) fn to_parse_error<E, R>(span: Span, e: &E) -> Box<Error<R>>
+pub(crate) fn to_parse_error<E, R>(span: Span, e: &E) -> Error<R>
 where
     E: ToString,
     R: pest::RuleType,
@@ -37,5 +37,5 @@ where
     let var: ErrorVariant<R> = ErrorVariant::CustomError {
         message: e.to_string(),
     };
-    Box::new(Error::new_from_span(var, span))
+    Error::new_from_span(var, span)
 }
