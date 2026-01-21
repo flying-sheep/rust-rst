@@ -380,10 +380,10 @@ impl Transform for Pass3<'_> {
         &mut self,
         mut e: e::Reference,
     ) -> impl Iterator<Item = c::TextOrInlineElement> {
-        if e.extra().refuri.is_none() {
-            if let Some(uri) = self.target_url(&e.extra().refname) {
-                e.extra_mut().refuri = Some(uri.clone());
-            }
+        if e.extra().refuri.is_none()
+            && let Some(uri) = self.target_url(&e.extra().refname)
+        {
+            e.extra_mut().refuri = Some(uri.clone());
         }
         once(e.into())
     }
