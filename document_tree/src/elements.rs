@@ -29,13 +29,13 @@ pub trait Element {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, JsonSchema)]
 pub struct CommonAttributes {
-    #[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+    #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
     ids: Vec<ID>,
-    #[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+    #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
     names: Vec<NameToken>,
-    #[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+    #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
     source: Option<PathBuf>,
-    #[serde(skip_serializing_if = "CanBeEmpty::is_empty")]
+    #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
     classes: Vec<String>,
     //TODO: dupnames
 }
@@ -182,6 +182,7 @@ macro_rules! impl_elem {
             pub struct $name {
                 #[serde(flatten)]
                 common: CommonAttributes,
+                #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
                 children: Vec<$childtype>,
             }
         );
@@ -196,6 +197,7 @@ macro_rules! impl_elem {
                 common: CommonAttributes,
                 #[serde(flatten)]
                 extra: extra_attributes::$name,
+                #[serde(default, skip_serializing_if = "CanBeEmpty::is_empty")]
                 children: Vec<$childtype>,
             }
         );

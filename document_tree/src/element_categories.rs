@@ -53,6 +53,7 @@ macro_rules! synonymous_enum {
     } ) => {
         #[derive(Clone, PartialEq, Serialize, JsonSchema)]
         #[serde(tag = "type")]
+        #[schemars(_unstable_ref_variants)]
         pub enum $name { $(
             $(#[$attr])?
             $entry(Box<$entry>),
