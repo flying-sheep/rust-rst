@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3](https://github.com/flying-sheep/rust-rst/compare/rst-v0.4.2...rst-v0.4.3) - 2026-01-21
+
+### Other
+
+- Schema ([#72](https://github.com/flying-sheep/rust-rst/pull/72))
+
 ## [0.4.2](https://github.com/flying-sheep/rust-rst/compare/rst-v0.4.1...rst-v0.4.2) - 2025-04-13
 
 ### Other
