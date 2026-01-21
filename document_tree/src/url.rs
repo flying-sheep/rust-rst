@@ -1,6 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
 
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 use url::{self, ParseError};
 
@@ -24,7 +25,7 @@ fn starts_with_scheme(input: &str) -> bool {
 
 /// The string representation of a URL, either absolute or relative, that has
 /// been verified as a valid URL on construction.
-#[derive(Debug, PartialEq, Serialize, Clone)]
+#[derive(Clone, Debug, PartialEq, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct Url(String);
 

@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 
 use crate::attribute_types::{
@@ -16,7 +17,7 @@ pub trait ExtraAttributes<A> {
 macro_rules! impl_extra {
     ( $name:ident { $( $(#[$pattr:meta])* $param:ident : $type:ty ),* $(,)* } ) => (
         impl_extra!(
-            #[derive(Default,Debug,PartialEq,Serialize,Clone)]
+            #[derive(Clone, Default, Debug, PartialEq, Serialize, JsonSchema)]
             $name { $( $(#[$pattr])* $param : $type, )* }
         );
     );
@@ -48,7 +49,7 @@ impl_extra!(Target {
     anonymous: bool,
 });
 impl_extra!(Raw { space: FixedSpace, format: Vec<NameToken> });
-impl_extra!(#[derive(Debug,PartialEq,Serialize,Clone)] Image {
+impl_extra!(#[derive(Clone, Debug, PartialEq, Serialize, JsonSchema)] Image {
     uri: Url,
     align: Option<AlignHV>,
     alt: Option<String>,

@@ -1,5 +1,6 @@
 use std::fmt::{self, Debug, Formatter};
 
+use schemars::JsonSchema;
 use serde_derive::Serialize;
 
 #[allow(clippy::wildcard_imports)]
@@ -35,17 +36,26 @@ macro_rules! impl_into {
 }
 
 macro_rules! synonymous_enum {
-    ( $subcat:ident : $($supcat:ident),+ ; $midcat:ident : $supsupcat:ident { $($entry:ident),+ $(,)* } ) => {
-        synonymous_enum!($subcat : $( $supcat ),+ , $midcat { $($entry,)* });
+    ( $subcat:ident : $($supcat:ident),+ ; $midcat:ident : $supsupcat:ident {
+        $($(#[$attr:meta])? $entry:ident),+ $(,)*
+    } ) => {
+        synonymous_enum!($subcat : $( $supcat ),+ , $midcat { $($(#[$attr])? $entry,)+ });
         $( impl_into!($midcat::$entry => $supsupcat); )+
     };
-    ( $subcat:ident : $($supcat:ident),+ { $($entry:ident),+ $(,)* } ) => {
-        synonymous_enum!($subcat { $( $entry, )* });
+    ( $subcat:ident : $($supcat:ident),+ {
+        $($(#[$attr:meta])? $entry:ident),+ $(,)*
+    } ) => {
+        synonymous_enum!($subcat { $($(#[$attr])? $entry,)* });
         cartesian!(impl_into, [ $( ($subcat::$entry) ),+ ], [ $($supcat),+ ]);
     };
-    ( $name:ident { $( $entry:ident ),+ $(,)* } ) => {
-        #[derive(PartialEq,Serialize,Clone)]
+    ( $name:ident {
+        $($(#[$attr:meta])? $entry:ident),+ $(,)*
+    } ) => {
+        #[derive(Clone, PartialEq, Serialize, JsonSchema)]
+        #[serde(tag = "type")]
+        #[schemars(_unstable_ref_variants)]
         pub enum $name { $(
+            $(#[$attr])?
             $entry(Box<$entry>),
         )* }
 
@@ -70,9 +80,12 @@ synonymous_enum!(StructuralSubElement {
     Subtitle,
     Decoration,
     Docinfo,
+    #[serde(untagged)]
     SubStructure
 });
-synonymous_enum!(SubStructure: StructuralSubElement { Topic, Sidebar, Transition, Section, BodyElement });
+synonymous_enum!(SubStructure: StructuralSubElement {
+    Topic, Sidebar, Transition, Section, #[serde(untagged)] BodyElement
+});
 synonymous_enum!(BodyElement: SubTopic, SubSidebar, SubBlockQuote, SubFootnote, SubFigure; SubStructure: StructuralSubElement {
     //Simple
     Paragraph, LiteralBlock, DoctestBlock, MathBlock, Rubric, SubstitutionDefinition, Comment, Pending, Target, Raw, Image,

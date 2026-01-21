@@ -189,7 +189,7 @@ where
             "scale" => image.extra_mut().scale = Some(parse_scale(&opt_val)?),
             "align" => image.extra_mut().align = Some(opt_val.parse()?),
             "target" => image.extra_mut().target = Some(opt_val.parse()?),
-            name => bail!("Unknown Image option {}", name),
+            name => bail!("Unknown Image option {name}"),
         }
     }
     Ok(image)
