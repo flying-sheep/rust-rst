@@ -70,7 +70,7 @@ pub fn convert_document(pairs: Pairs<Rule>) -> Result<e::Document, Error> {
                         .next()
                         .map(|at::NameToken(name)| at::ID(name.to_owned()));
                     let mut section = e::Section::with_children(vec![title.into()]);
-                    section.ids_mut().extend(slug.into_iter());
+                    section.ids_mut().extend(slug);
                     super_level.push(section.into());
                     section_idxs.push(Some(super_level.len() - 1));
                 }

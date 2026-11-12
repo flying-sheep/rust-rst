@@ -63,7 +63,6 @@ pub trait Transform {
     }
 
     /// Transform a whole document tree.
-    #[must_use]
     fn transform(&mut self, mut d: e::Document) -> e::Document {
         self.transform_children(&mut d, Self::transform_structural_sub_element);
         d
@@ -73,7 +72,6 @@ pub trait Transform {
     // categories //
     ////////////////
 
-    #[must_use]
     fn transform_structural_sub_element(
         &mut self,
         c: c::StructuralSubElement,
@@ -87,7 +85,7 @@ pub trait Transform {
             S::SubStructure(e) => box_iter(self.transform_substructure(*e).map(S::from)),
         }
     }
-    #[must_use]
+
     fn transform_substructure(
         &mut self,
         c: c::SubStructure,
@@ -101,7 +99,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_body_element(
         &mut self,
         c: c::BodyElement,
@@ -145,7 +143,7 @@ pub trait Transform {
             B::Table(e) => box_iter(self.transform_table(*e)),
         }
     }
-    #[must_use]
+
     fn transform_bibliographic_element(
         &mut self,
         c: c::BibliographicElement,
@@ -165,7 +163,7 @@ pub trait Transform {
             B::Field(e) => box_iter(self.transform_field(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_text_or_inline_element(
         &mut self,
         c: c::TextOrInlineElement,
@@ -194,7 +192,7 @@ pub trait Transform {
             T::ImageInline(e) => box_iter(self.transform_image_inline(*e)),
         }
     }
-    #[must_use]
+
     fn transform_author_info(&mut self, c: c::AuthorInfo) -> impl Iterator<Item = c::AuthorInfo> {
         use c::AuthorInfo as A;
         match c {
@@ -204,7 +202,7 @@ pub trait Transform {
             A::Contact(e) => box_iter(self.transform_contact(*e)),
         }
     }
-    #[must_use]
+
     fn transform_decoration_element(
         &mut self,
         c: c::DecorationElement,
@@ -215,7 +213,7 @@ pub trait Transform {
             D::Footer(e) => box_iter(self.transform_footer(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_topic(&mut self, c: c::SubTopic) -> impl Iterator<Item = c::SubTopic> {
         use c::SubTopic as S;
         match c {
@@ -223,7 +221,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_sub_sidebar(&mut self, c: c::SubSidebar) -> impl Iterator<Item = c::SubSidebar> {
         use c::SubSidebar as S;
         match c {
@@ -233,7 +231,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_sub_dl_item(&mut self, c: c::SubDLItem) -> impl Iterator<Item = c::SubDLItem> {
         use c::SubDLItem as S;
         match c {
@@ -242,7 +240,7 @@ pub trait Transform {
             S::Definition(e) => box_iter(self.transform_definition(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_field(&mut self, c: c::SubField) -> impl Iterator<Item = c::SubField> {
         use c::SubField as S;
         match c {
@@ -250,7 +248,7 @@ pub trait Transform {
             S::FieldBody(e) => box_iter(self.transform_field_body(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_option_list_item(
         &mut self,
         c: c::SubOptionListItem,
@@ -261,7 +259,7 @@ pub trait Transform {
             S::Description(e) => box_iter(self.transform_description(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_option(&mut self, c: c::SubOption) -> impl Iterator<Item = c::SubOption> {
         use c::SubOption as S;
         match c {
@@ -269,7 +267,7 @@ pub trait Transform {
             S::OptionArgument(e) => box_iter(self.transform_option_argument(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_line_block(
         &mut self,
         c: c::SubLineBlock,
@@ -280,7 +278,7 @@ pub trait Transform {
             S::Line(e) => box_iter(self.transform_line(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_block_quote(
         &mut self,
         c: c::SubBlockQuote,
@@ -291,7 +289,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_sub_footnote(
         &mut self,
         c: c::SubFootnote,
@@ -302,7 +300,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_sub_figure(&mut self, c: c::SubFigure) -> impl Iterator<Item = c::SubFigure> {
         use c::SubFigure as S;
         match c {
@@ -311,7 +309,7 @@ pub trait Transform {
             S::BodyElement(e) => box_iter(self.transform_body_element(*e).map(Into::into)),
         }
     }
-    #[must_use]
+
     fn transform_sub_table(&mut self, c: c::SubTable) -> impl Iterator<Item = c::SubTable> {
         use c::SubTable as S;
         match c {
@@ -319,7 +317,7 @@ pub trait Transform {
             S::TableGroup(e) => box_iter(self.transform_table_group(*e)),
         }
     }
-    #[must_use]
+
     fn transform_sub_table_group(
         &mut self,
         c: c::SubTableGroup,
@@ -337,35 +335,35 @@ pub trait Transform {
     //////////////
 
     //structual elements
-    #[must_use]
+
     fn transform_section(&mut self, mut e: e::Section) -> impl Iterator<Item = c::SubStructure> {
         self.transform_children(&mut e, Self::transform_structural_sub_element);
         once(e.into())
     }
-    #[must_use]
+
     // TODO: introduce and return category for topic|bodyelement
     fn transform_topic(&mut self, mut e: e::Topic) -> impl Iterator<Item = e::Topic> {
         self.transform_children(&mut e, Self::transform_sub_topic);
         once(e)
     }
-    #[must_use]
+
     fn transform_sidebar(&mut self, mut e: e::Sidebar) -> impl Iterator<Item = c::SubStructure> {
         self.transform_children(&mut e, Self::transform_sub_sidebar);
         once(e.into())
     }
 
     //structural subelements
-    #[must_use]
+
     fn transform_title(&mut self, mut e: e::Title) -> impl Iterator<Item = e::Title> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e)
     }
-    #[must_use]
+
     fn transform_subtitle(&mut self, mut e: e::Subtitle) -> impl Iterator<Item = c::SubSidebar> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_decoration(
         &mut self,
         mut e: e::Decoration,
@@ -373,7 +371,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_decoration_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_docinfo(
         &mut self,
         mut e: e::Docinfo,
@@ -381,13 +379,13 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_bibliographic_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_transition(&mut self, e: e::Transition) -> impl Iterator<Item = c::SubStructure> {
         once(e.into())
     }
 
     //bibliographic elements
-    #[must_use]
+
     fn transform_authors(
         &mut self,
         mut e: e::Authors,
@@ -395,12 +393,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_author_info);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_author(&mut self, mut e: e::Author) -> impl Iterator<Item = c::AuthorInfo> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_organization(
         &mut self,
         mut e: e::Organization,
@@ -408,17 +406,17 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_address(&mut self, mut e: e::Address) -> impl Iterator<Item = c::AuthorInfo> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_contact(&mut self, mut e: e::Contact) -> impl Iterator<Item = c::AuthorInfo> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_version(
         &mut self,
         mut e: e::Version,
@@ -426,7 +424,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_revision(
         &mut self,
         mut e: e::Revision,
@@ -434,7 +432,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_status(
         &mut self,
         mut e: e::Status,
@@ -442,12 +440,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_date(&mut self, mut e: e::Date) -> impl Iterator<Item = c::BibliographicElement> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_copyright(
         &mut self,
         mut e: e::Copyright,
@@ -455,31 +453,31 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_field(&mut self, mut e: e::Field) -> impl Iterator<Item = e::Field> {
         self.transform_children(&mut e, Self::transform_sub_field);
         once(e)
     }
 
     //decoration elements
-    #[must_use]
+
     fn transform_header(&mut self, mut e: e::Header) -> impl Iterator<Item = c::DecorationElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_footer(&mut self, mut e: e::Footer) -> impl Iterator<Item = c::DecorationElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
 
     //simple body elements
-    #[must_use]
+
     fn transform_paragraph(&mut self, mut e: e::Paragraph) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_literal_block(
         &mut self,
         mut e: e::LiteralBlock,
@@ -487,7 +485,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_doctest_block(
         &mut self,
         mut e: e::DoctestBlock,
@@ -495,7 +493,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_math_block(
         &mut self,
         mut e: e::MathBlock,
@@ -503,12 +501,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_rubric(&mut self, mut e: e::Rubric) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_substitution_definition(
         &mut self,
         mut e: e::SubstitutionDefinition,
@@ -516,41 +514,41 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_comment(&mut self, mut e: e::Comment) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_pending(&mut self, e: e::Pending) -> impl Iterator<Item = c::BodyElement> {
         once(e.into())
     }
-    #[must_use]
+
     fn transform_target(&mut self, e: e::Target) -> impl Iterator<Item = c::BodyElement> {
         once(e.into())
     }
-    #[must_use]
+
     fn transform_raw(&mut self, mut e: e::Raw) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_image(&mut self, e: e::Image) -> impl Iterator<Item = c::BodyElement> {
         once(e.into())
     }
 
     //compound body elements
-    #[must_use]
+
     fn transform_compound(&mut self, mut e: e::Compound) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_container(&mut self, mut e: e::Container) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_bullet_list(
         &mut self,
         mut e: e::BulletList,
@@ -558,7 +556,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_list_item);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_enumerated_list(
         &mut self,
         mut e: e::EnumeratedList,
@@ -566,7 +564,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_list_item);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_definition_list(
         &mut self,
         mut e: e::DefinitionList,
@@ -574,7 +572,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_definition_list_item);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_field_list(
         &mut self,
         mut e: e::FieldList,
@@ -582,7 +580,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_field);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_option_list(
         &mut self,
         mut e: e::OptionList,
@@ -590,12 +588,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_option_list_item);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_line_block(&mut self, mut e: e::LineBlock) -> impl Iterator<Item = e::LineBlock> {
         self.transform_children(&mut e, Self::transform_sub_line_block);
         once(e)
     }
-    #[must_use]
+
     fn transform_block_quote(
         &mut self,
         mut e: e::BlockQuote,
@@ -603,7 +601,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_sub_block_quote);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_admonition(
         &mut self,
         mut e: e::Admonition,
@@ -611,62 +609,62 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_sub_topic);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_attention(&mut self, mut e: e::Attention) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_hint(&mut self, mut e: e::Hint) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_note(&mut self, mut e: e::Note) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_caution(&mut self, mut e: e::Caution) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_danger(&mut self, mut e: e::Danger) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_error(&mut self, mut e: e::Error) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_important(&mut self, mut e: e::Important) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_tip(&mut self, mut e: e::Tip) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_warning(&mut self, mut e: e::Warning) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_footnote(&mut self, mut e: e::Footnote) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_sub_footnote);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_citation(&mut self, mut e: e::Citation) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_sub_footnote);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_system_message(
         &mut self,
         mut e: e::SystemMessage,
@@ -674,24 +672,24 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_figure(&mut self, mut e: e::Figure) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_sub_figure);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_table(&mut self, mut e: e::Table) -> impl Iterator<Item = c::BodyElement> {
         self.transform_children(&mut e, Self::transform_sub_table);
         once(e.into())
     }
 
     //table elements
-    #[must_use]
+
     fn transform_table_group(&mut self, mut e: e::TableGroup) -> impl Iterator<Item = c::SubTable> {
         self.transform_children(&mut e, Self::transform_sub_table_group);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_table_head(
         &mut self,
         mut e: e::TableHead,
@@ -699,7 +697,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_table_row);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_table_body(
         &mut self,
         mut e: e::TableBody,
@@ -707,12 +705,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_table_row);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_table_row(&mut self, mut e: e::TableRow) -> impl Iterator<Item = e::TableRow> {
         self.transform_children(&mut e, Self::transform_table_entry);
         once(e)
     }
-    #[must_use]
+
     fn transform_table_entry(
         &mut self,
         mut e: e::TableEntry,
@@ -720,7 +718,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e)
     }
-    #[must_use]
+
     fn transform_table_colspec(
         &mut self,
         e: e::TableColspec,
@@ -729,12 +727,12 @@ pub trait Transform {
     }
 
     //body sub elements
-    #[must_use]
+
     fn transform_list_item(&mut self, mut e: e::ListItem) -> impl Iterator<Item = e::ListItem> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e)
     }
-    #[must_use]
+
     fn transform_definition_list_item(
         &mut self,
         mut e: e::DefinitionListItem,
@@ -742,32 +740,32 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_sub_dl_item);
         once(e)
     }
-    #[must_use]
+
     fn transform_term(&mut self, mut e: e::Term) -> impl Iterator<Item = c::SubDLItem> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_classifier(&mut self, mut e: e::Classifier) -> impl Iterator<Item = c::SubDLItem> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_definition(&mut self, mut e: e::Definition) -> impl Iterator<Item = c::SubDLItem> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_field_name(&mut self, mut e: e::FieldName) -> impl Iterator<Item = c::SubField> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_field_body(&mut self, mut e: e::FieldBody) -> impl Iterator<Item = c::SubField> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_option_list_item(
         &mut self,
         mut e: e::OptionListItem,
@@ -775,7 +773,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_sub_option_list_item);
         once(e)
     }
-    #[must_use]
+
     fn transform_option_group(
         &mut self,
         mut e: e::OptionGroup,
@@ -783,7 +781,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_option);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_description(
         &mut self,
         mut e: e::Description,
@@ -791,12 +789,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_option(&mut self, mut e: e::Option_) -> impl Iterator<Item = e::Option_> {
         self.transform_children(&mut e, Self::transform_sub_option);
         once(e)
     }
-    #[must_use]
+
     fn transform_option_string(
         &mut self,
         mut e: e::OptionString,
@@ -804,7 +802,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_option_argument(
         &mut self,
         mut e: e::OptionArgument,
@@ -812,12 +810,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_line(&mut self, mut e: e::Line) -> impl Iterator<Item = c::SubLineBlock> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_attribution(
         &mut self,
         mut e: e::Attribution,
@@ -825,28 +823,28 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_label(&mut self, mut e: e::Label) -> impl Iterator<Item = c::SubFootnote> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_caption(&mut self, mut e: e::Caption) -> impl Iterator<Item = c::SubFigure> {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_legend(&mut self, mut e: e::Legend) -> impl Iterator<Item = c::SubFigure> {
         self.transform_children(&mut e, Self::transform_body_element);
         once(e.into())
     }
 
     //inline elements
-    #[must_use]
+
     fn transform_string(&mut self, e: String) -> impl Iterator<Item = String> {
         once(e)
     }
-    #[must_use]
+
     fn transform_emphasis(
         &mut self,
         mut e: e::Emphasis,
@@ -854,7 +852,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_literal(
         &mut self,
         mut e: e::Literal,
@@ -862,7 +860,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_reference(
         &mut self,
         mut e: e::Reference,
@@ -870,7 +868,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_strong(
         &mut self,
         mut e: e::Strong,
@@ -878,7 +876,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_footnote_reference(
         &mut self,
         mut e: e::FootnoteReference,
@@ -886,7 +884,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_citation_reference(
         &mut self,
         mut e: e::CitationReference,
@@ -894,7 +892,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_substitution_reference(
         &mut self,
         mut e: e::SubstitutionReference,
@@ -902,7 +900,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_title_reference(
         &mut self,
         mut e: e::TitleReference,
@@ -910,7 +908,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_abbreviation(
         &mut self,
         mut e: e::Abbreviation,
@@ -918,7 +916,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_acronym(
         &mut self,
         mut e: e::Acronym,
@@ -926,7 +924,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_superscript(
         &mut self,
         mut e: e::Superscript,
@@ -934,7 +932,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_subscript(
         &mut self,
         mut e: e::Subscript,
@@ -942,7 +940,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_inline(
         &mut self,
         mut e: e::Inline,
@@ -950,7 +948,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_problematic(
         &mut self,
         mut e: e::Problematic,
@@ -958,7 +956,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_generated(
         &mut self,
         mut e: e::Generated,
@@ -966,12 +964,12 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_text_or_inline_element);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_math(&mut self, mut e: e::Math) -> impl Iterator<Item = c::TextOrInlineElement> {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_target_inline(
         &mut self,
         mut e: e::TargetInline,
@@ -979,7 +977,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_raw_inline(
         &mut self,
         mut e: e::RawInline,
@@ -987,7 +985,7 @@ pub trait Transform {
         self.transform_children(&mut e, Self::transform_string);
         once(e.into())
     }
-    #[must_use]
+
     fn transform_image_inline(
         &mut self,
         e: e::ImageInline,
