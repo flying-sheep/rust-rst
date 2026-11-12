@@ -12,4 +12,12 @@ repos:
     rev: '0.4.0'
     hooks:
       - id: cargo-fmt
-      - id: cargo-clippy
+  - repo: local
+    hooks:
+      # applies fixes only; `just check` in CI enforces warnings for all feature combinations
+      - id: cargo-clippy-fix
+        name: cargo clippy --fix
+        entry: cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features
+        language: system
+        types: [rust]
+        pass_filenames: false
