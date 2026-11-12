@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3](https://github.com/flying-sheep/rust-rst/compare/rst_parser-v0.4.2...rst_parser-v0.4.3) - 2026-11-12
+
+### Other
+
+- switch from pre-commit.ci to autofix.ci ([#75](https://github.com/flying-sheep/rust-rst/pull/75))
+- Schema ([#72](https://github.com/flying-sheep/rust-rst/pull/72))
+- [pre-commit.ci] pre-commit autoupdate ([#73](https://github.com/flying-sheep/rust-rst/pull/73))
+- Refactor standard transform ([#71](https://github.com/flying-sheep/rust-rst/pull/71))
+
 ## [0.4.2](https://github.com/flying-sheep/rust-rst/compare/rst_parser-v0.4.1...rst_parser-v0.4.2) - 2025-04-13
 
 ### Other
