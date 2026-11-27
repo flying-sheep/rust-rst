@@ -17,18 +17,16 @@ jobs:
     name: Build, check, and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
         filter: blob:none
         token: ${{ secrets.RELEASE_PLZ_TOKEN }}
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        components: clippy
-    - uses: taiki-e/install-action@v2
+    - run: rustup toolchain install stable --profile minimal --component clippy && rustup default stable
+    - uses: taiki-e/install-action@v2.90.11
       with:
         tool: cargo-hack,just
-    - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v2.9.3
     - run: just build
     - run: just check
     - run: just test
