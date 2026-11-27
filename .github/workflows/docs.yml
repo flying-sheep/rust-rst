@@ -25,19 +25,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
         filter: blob:none
-    - uses: actions/configure-pages@v6
-    - uses: dtolnay/rust-toolchain@nightly
-    - uses: taiki-e/install-action@v2
+    - uses: actions/configure-pages@v6.0.0
+    - run: rustup toolchain install nightly --profile minimal && rustup default nightly
+    - uses: taiki-e/install-action@v2.90.11
       with:
         tool: just
-    - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v2.9.3
     - run: just doc
-    - uses: actions/upload-pages-artifact@v5
+    - uses: actions/upload-pages-artifact@v5.0.0
       with:
         path: target/doc
-    - uses: actions/deploy-pages@v5
+    - uses: actions/deploy-pages@v5.0.1
       id: deployment
